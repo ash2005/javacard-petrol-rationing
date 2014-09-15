@@ -3,6 +3,8 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="com.ibm.bluez.jcop.eclipse.containers.cardconfig/com.ibm.bluez.jcop.eclipse.cardconfigs.njcop"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/home/javacard/jc/CryptoTest/lib/bcpkix-jdk15on-151.jar"/>
+	<classpathentry kind="lib" path="/home/javacard/jc/CryptoTest/lib/bcprov-jdk15on-151.jar"/>
 	<classpathentry kind="lib" path="/home/javacard/jc/CryptoTest/lib/jcardsim-2.2.1-all.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
