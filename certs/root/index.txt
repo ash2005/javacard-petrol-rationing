@@ -1,0 +1,3 @@
+V	150917135258Z		01	unknown	/C=NL/ST=Noord-Brabant/O=TU/e/OU=IST/CN=TeamARA Card Intermediate Certificate
+V	150917135300Z		02	unknown	/C=NL/ST=Noord-Brabant/O=TU/e/OU=IST/CN=TeamARA Pump Terminal Intermediate Certificate
+V	150917135301Z		03	unknown	/C=NL/ST=Noord-Brabant/O=TU/e/OU=IST/CN=TeamARA Charging Terminal Intermediate Certificate
