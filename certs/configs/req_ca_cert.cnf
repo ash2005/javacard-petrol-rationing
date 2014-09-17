@@ -1,0 +1,21 @@
+[ req ]
+distinguished_name	    = req_distinguished_name
+
+[ req_distinguished_name ]
+countryName			            = Country Name (2 letter code)
+countryName_default		        = NL
+countryName_min			        = 2
+countryName_max			        = 2
+stateOrProvinceName		        = State or Province Name (full name)
+stateOrProvinceName_default	    = Noord-Brabant
+localityName			        = Locality Name (eg, city)
+localityName_default            = Eindhoven
+0.organizationName		        = Organization Name (eg, company)
+0.organizationName_default	    = TU/e
+organizationalUnitName		    = Organizational Unit Name (eg, section)
+organizationalUnitName_default	= IST
+commonName			            = Common Name (e.g. server FQDN or YOUR name)
+commonName_max			        = 64
+commonName_default              = TeamARA Root Certificate
+emailAddress			        = Email Address
+emailAddress_max		        = 64

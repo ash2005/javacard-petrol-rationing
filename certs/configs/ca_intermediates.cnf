@@ -1,0 +1,23 @@
+[ ca ]
+default_ca	                    = CA_default
+
+[ CA_default ]
+dir                             = root
+database	                    = $dir/index.txt
+certificate	                    = $dir/cert.pem
+private_key                     = $dir/priv.pem
+new_certs_dir                   = $dir/newcerts
+serial                          = $dir/serial
+default_days	                = 365
+default_md                      = default
+policy                          = policy_match
+
+[ policy_match ]
+countryName		                = match
+stateOrProvinceName	            = match
+organizationName	            = match
+organizationalUnitName	        = optional
+commonName		                = optional
+emailAddress		            = optional
+
+
