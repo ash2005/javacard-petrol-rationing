@@ -1,0 +1,8 @@
+# generate an ecdsa signature
+openssl dgst -ecdsa-with-SHA1 -sign root/priv.pem < base16.hex > signature
+
+# output pem-formatted curve specs to a file
+openssl ecparam -name secp112r1 -text > secp112r1.pem
+
+# output text-formatted curve specs to the screen
+openssl ecparam -in secp112r1.pem -text -param_enc explicit
