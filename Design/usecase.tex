@@ -11,33 +11,23 @@ The ration card is personalised in the backend before it is issued to the user. 
 	  \item Intermediate Pump CA and Intermediate Charging CA
 	  \item Randomly generated secret PIN.
 	\end{itemize}
-  \item The card and secret PIN are delivered to the car owner through a secure physical channel. For instance, self-collection from municipal hall together with identity checks.
+  \item The card and secret PIN are delivered to the car owner through a secure physical channel.
+  \item Disabled cards can be brought to personalisation centers to be unlocked.
 \end{enumerate}
 
-\subsection{Withdraw Petrol and Charge Card}
+\subsection{Petrol Withdrawal and Card Charging}
 \subsubsection{Authentication Phase}
-Petrol terminals and rationing terminals contain a PKI certificate identifying the terminal, signed by an Intermediate CA. Each terminal also stores its private key and all of the Intermediate CAs.
-
-These certificates are used by the smartcard and petrol terminal to mutually authenticate each other and establish an encrypted and authenticated connection. Thereafter, the card owner enters his secret PIN into the terminal. A maximum of three consecutive wrong attempts are allowed before the card is disabled.
-
-If the PIN is correct, then the user can proceed to the petrol withdrawal or charging phase, depending on which terminal he is at.
+Petrol terminals and charging terminals contain a PKI certificate identifying the terminal, signed by an Intermediate CA. Each terminal also stores its private key and all of the Intermediate CAs. These certificates are used by the smartcard and terminal to mutually authenticate each other and establish an encrypted and authenticated connection. Thereafter, the card owner enters his secret PIN into the terminal. A maximum of three consecutive wrong attempts are allowed before the card is disabled. If the PIN is correct, then the user can proceed to the petrol withdrawal or charging phase, depending on the terminal.
 
 \subsubsection{Petrol Withdrawal Phase}
-Personalisation and Issue}
 
 \begin{enumerate}
   \item The card owner send to the terminal its current balance. The balance is signed by the terminal with which it had completed its previous transaction.
-  \item The card owner inputs the amount of petrol he would like to withdraw into the terminal.
-  \item The petrol pump terminal allows the transaction if and only if the following conditions are satisfied:
-	\begin{itemize}
-	  \item The amount is less than or equal to the available petrol ration on the card.
-	  \item The total amount withdrawn since the last update in a charging terminal is less than or equal to 250 liters (125% of fixed monthly allowance). 
-	  \item The total transactions since the last update in a charging terminal are no more than 5 (log capacity).
-	\end{itemize}
-  \item The pump then atomically reduces the requested amount on the card.
+  \item The card owner inputs the amount of petrol he would like to withdraw into the terminal. The petrol pump terminal allows the transaction if and only if some security conditions are satisfied.
+  \item The pump then atomically reduces the balance on the card accordingly.
   \item The fuel is released.
-  \item If the tank cannot fit all the prepaid fuel, the terminal asks for a new signature for the actual amount and the balance on the card is updated again.
-  \item The card is released.
+  \item If the tank cannot fit all the prepaid fuel, the terminal updates the balance on the card again.
+  \item The card can be released.
 \end{enumerate}
 
 
@@ -53,8 +43,8 @@ Personalisation and Issue}
 \subsubsection{Decomissioned Card}
 
 \begin{enumerate}
-  \item Cards may be decomissioned when they are lost, or are expired. 
+  \item Cards may be decomissioned when they are lost or are expired.
   \item Lost cards are reported to the government agency.
   \item The status of these cards are updated as revoked in the government CA database.
-  \item ...
+  \item Charging Terminals no longer accept revoked cards.
 \end{enumerate}
