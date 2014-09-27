@@ -1,0 +1,7 @@
+The primary goal of attackers is to obtain more petrol than allowed by their allocated petrol ration. The attacker might also want to conduct a denial of service to frustrate legitimate car owners.
+
+The attacker model ranges from car owners with limited to high attack resources. Attackers with limited resources may claim to have lost their cards, pull out their cards mid-way during transactions or steal the cards of other users. Attackers with high resources are able to install a new fake terminal in a plausible location, or place shimming devices to eavesdrop on legitimate transmissions. They have good knowledge of protocol details and can program custom smartcards to replay a recorded transactions or to relay a live, eavesdropped transaction. Through MITM, they may also modify data in an ongoing transaction.
+
+We do not protect against insiders who may have access to the private keys of charging terminals or CAs. We also do not protect against attacks which bypass the security checks of the petrol pump terminal to directly access petrol, nor the confidentiality of card PIN from shoulder surfing or other visual peeking
+
+We also assume that both smartcards and terminals are tamper resistant; Confidentiality and integrity of software and data on the card is guaranteed, and cannot be observed or altered by side-channel or physical attacks
