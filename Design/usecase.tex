@@ -1,4 +1,4 @@
-The ration card is personalised in the backend before it is issued to the user. Users charge their ration cards at charging terminals to increase the petrol balance in their card. Petrol pumps are equipped with card terminals and will only supply petrol upon presentation of a valid ration card with sufficient petrol balance.
+The ration card is personalised in the backend before it is issued to the user. Users charge their ration cards at charging terminals to increase the petrol balance. Petrol pumps are equipped with card terminals and they only supply petrol upon presentation of a valid ration card with sufficient balance.
 
 \subsection{Card Personalisation and Issue}
 
@@ -11,16 +11,15 @@ The ration card is personalised in the backend before it is issued to the user. 
 	  \item Intermediate Pump CA and Intermediate Charging CA
 	  \item Randomly generated secret PIN.
 	\end{itemize}
-  \item The card and secret PIN are delivered to the car owner through a secure physical channel.
+  \item The smartcard and secret PIN are delivered to the car owner through a secure physical channel.
   \item Disabled cards can be brought to personalisation centers to be unlocked.
 \end{enumerate}
 
 \subsection{Petrol Withdrawal and Card Charging}
 \subsubsection{Authentication Phase}
-Petrol terminals and charging terminals contain a PKI certificate identifying the terminal, signed by an Intermediate CA. Each terminal also stores its private key and the Intermediate Card CA. These certificates are used by the smartcard and terminal to mutually authenticate each other and establish an encrypted and authenticated connection. Thereafter, the card owner enters his secret PIN into the terminal. A maximum of three consecutive wrong attempts are allowed before the card is disabled. If the PIN is correct, then the user can proceed to the petrol withdrawal or charging phase, depending on the terminal.
+Petrol terminals and charging terminals contain a PKI certificate identifying the terminal, signed by an Intermediate CA. Each terminal also stores its private key and the Intermediate Card CA. These certificates are used by the smartcard and terminal to mutually authenticate each other and establish an encrypted and authenticated connection. Thereafter, the card owner enters his secret PIN into the terminal. A maximum of three consecutive wrong attempts are allowed before the card is disabled. If the PIN is correct, then the user can proceed with filling petrol or charging the card, depending on the terminal.
 
-\subsubsection{Petrol Withdrawal Phase}
-
+\subsubsection{Petrol Filling Phase}
 \begin{enumerate}
   \item The card sends to the pump terminal its current balance.
   \item The card owner inputs the amount of petrol he would like to fill into the vehicular and the terminal verifies that he has available balance.
@@ -30,14 +29,12 @@ Petrol terminals and charging terminals contain a PKI certificate identifying th
   \item The card can be released.
 \end{enumerate}
 
-
 \subsubsection{Charging Phase}
-
 \begin{enumerate}
-  \item Charging terminals are connected to a backend database which maintains records of each car owner and their available petrol ration.
+  \item Charging terminals are connected to a backend database which maintains records of each card owner and their available petrol ration.
   \item Immediately after the mutual authentication, the charging terminal grabs the logs of the smartcard to clear the memory.  In addition, the terminal safely store the evidence of the performed transaction (logs) to the database in order to ensure non-repudiation.
   \item If the card has not been charged already that month, the charging terminal increases the petrol ration in the card by the fixed monthly allowance ( 200 liters ) and updates the backend database. 
-  \item If a car owner did not charge the card for the previous month, it does not carry over to the current month, but is forfeit.
+  \item If a card owner did not charge the card for the previous month, it does not carry over to the current month, but is forfeit.
 \end{enumerate}
 
 
