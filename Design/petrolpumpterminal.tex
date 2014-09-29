@@ -1,5 +1,7 @@
 After mutual authentication and PIN entry, the petrol pump and ration card follow the communication protocol described in Figure \ref{figure:petrol}, to securely deduct the card balance in exchange for fuel. Signatures are performed on the transaction and stored in the log file of the card for non-repudiation purpose.
 
+All necessary information required for this protocol are stored locally in the petrol terminal and card. As such, there is no need for online access to the backend database thus avoiding the risk of network based DoS attacks. However, if OCSP is implemented as described in \ref{section:lost} then a network connection is required. In this case, a DoS attack prevents checking of the revocation status but not the core functionality.
+
 \usetikzlibrary{matrix,shapes,arrows,positioning,chains, calc}
 
 \begin{figure}[h!]
