@@ -4,7 +4,7 @@ The system {\bf must} ensure that the following requirements are met:
 \begin{enumerate}
   \item The private keys of the root certificate need to remain confidential at all times. Only the appropriate staff (appointed by the government) may have access to it. 
   \item The private keys of the three intermediate certificates need to remain secret and only parties which are responsible for isuing new device certificates may have access to it.
-  \item The private keys of the cards and terminals may not be made public and should only be stored on the devices themselves and in the backend on secure hardware.
+  \item The private keys of the cards and terminals may not be made public and should only be stored on the devices themselves.
   \item Each card requires a PIN code which needs to remain secret. Only the owner of the card may know this code. The PIN is used to authenticate the owner to the card during operation.
   \item The protocol requires that the card and terminals be authenticated to each other. Integrity of the messages and freshness of the shared secrets between protocol executions also need to be ensured.
   \item The integrity of the balance value stored on the card needs to be assured. Changes to the balance, when topping up at charging terminals or subtracting at pump terminals, need to be logged accordingly. The system needs to be support non-repudiation of transactions which modify the balance.
@@ -15,6 +15,7 @@ The system {\bf should} ensure that the following requirements are met:
 \begin{enumerate}
   \item A certificate revocation list (CRL) or similar should be implemented such that terminals connected to the backend will be able to verify if a card has been invalidated.
   \item It should be made possible for individual card owners to change their PINs.
+  \item The private
 \end{enumerate}
 
 The system {\bf could} ensure the following features:
