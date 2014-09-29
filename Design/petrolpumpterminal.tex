@@ -9,7 +9,7 @@ After mutual authentication and PIN entry, the petrol pump and ration cards foll
 Smart Card & & Pump terminal\\
 Perform basic checks $($Sect \ref{section:lost}$)$ & & & $(1)$ \\
 $B\leftarrow$Balance & & & $(2)$ \\[-1mm]
-& Send $B$ & & $(3)$ \\
+& Send $B$ & & $(3)$ \\[-1mm]
 &  & Display $B$ & $(4)$ \\
 &  & $A\leftarrow$Read amount & $(5)$ \\
 &  & Verify $A\leq$$B$ & $(6)$ \\
@@ -23,11 +23,10 @@ Date\\
 \color{blue}&\color{blue} Send $m$,$S_{t}$ & & $(9)$ \\[-1mm]
 \color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(10)$ \\ 
 \color{blue}Store $\{m,S_{t},S_{c}$\} in log &  & & $(11)$ \\ 
-\color{blue}Update log index &  & & $(12)$ \\ 
-
-\color{blue}&\color{blue} Send ACK & & $(13)$ \\
+\color{blue}Update log index &  & & $(12)$ \\[-1mm]
+\color{blue}&\color{blue} Send ACK & & $(13)$ \\[-1mm]
 &  & $F\leftarrow$Release fuel & $(14)$ \\
-&  & If $F<A$, repeat steps 7-12, where $A=F$ & $(15)$ \\
+&  & If $F<A$, repeat steps 7-13, where $A=F$ & $(15)$ \\
 &  &  & \\
 };
 
