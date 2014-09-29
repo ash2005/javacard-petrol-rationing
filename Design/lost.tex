@@ -1,5 +1,7 @@
 \subsubsection{Lost Cards}
-Cards may be misplaced or stolen. The first layer of defence against abuse by an attacker is the card PIN. Cards only allow three consecutive wrong PIN entries before the card is locked and all functionality prohibited. Locked cards can be re-activated by the legitimate card owner at government centres where human staff can physically authenticate the card owner e.g. against identity cards.
+Cards may be misplaced or stolen. The first layer of defence against abuse by an attacker is the card PIN. This 4-digit PIN would have been randomly generated during card personalisation and not known to the attacker. PIN authentication is also carried out only after an authenticated and encrypted channel is created between the card and terminal - it cannot be eavesdropped by a MITM or a fake terminal. 
+
+Additionally, cards only allow three consecutive wrong PIN entries before the card is locked and all functionality prohibited. Locked cards can be re-activated by the legitimate card owner at government centres where human staff can physically authenticate the card owner e.g. against identity cards.
 
 The next layer of defence is for the Government CA to revoke cards which are reported to be misplaced or stolen. This is updated in the back-end database to which charging terminals are connected. When a revoked card is presented to a charging terminal, the charging terminal will disable the card by toggling a 'REVOKE-FLAG' within the card.
 
