@@ -8,24 +8,22 @@ After mutual authentication and PIN entry, the charging terminal and ration card
 
 \begin{tikzpicture}
 \matrix (m)[matrix of nodes, column  sep=1cm,row  sep=0.4mm, nodes={draw=none, anchor=center,text depth=0pt} ]{
-Smart Card & & Pump terminal\\
+Smart Card & & Charging terminal\\
 Perform basic checks $($Sect \ref{section:lost}$)$ & & & $(1)$ \\
-& Send $ID_{s}$ & & $(2)$ \\
-\color{blue}&\color{blue} Send $Logs$ & & $(3)$ \\[-1mm]
-\color{blue}&  &\color{blue} Store $Logs$ & $(4)$ \\[-1mm]
-\color{blue}&\color{blue} Send $ACK$  & & $(5)$ \\[-1mm]
-\color{blue} Clear $Logs$ &  &  & $(6)$ \\
-$B\leftarrow$Balance & & & $(7)$ \\[-1mm]
-& Send $B$ & & $(8)$ \\[-1mm]
-& & Verify $B$ to DB & $(9)$ \\
-\color{red}& &\color{red} If 'error': & $(10)$ \\[-1mm]
-\color{red}&\color{red}REVOKE & & $(11)$ \\[-1mm]
-& & If 'ok': release card & $(12)$ \\
-& & If 'charge': $B'=B+200$ & $(13)$ \\[-1mm]
-\color{blue}&\color{blue}Send $B'$ & & $(14)$ \\[-1mm]
-\color{blue}Replace $B=B'$& & & $(15)$ \\[-1mm]
-\color{blue}&\color{blue} Send ACK & & $(16)$ \\[-1mm]
-& & Finish & $(17)$ \\[-1mm]
+\color{blue}&\color{blue} Send $Logs$ & & $(2)$ \\[-1mm]
+\color{blue}&  &\color{blue} Store $Logs$ & $(3)$ \\[-1mm]
+\color{blue}&\color{blue} Send $ACK$  & & $(4)$ \\[-1mm]
+\color{blue} Clear $Logs$ &  &  & $(5)$ \\
+& & $B\leftarrow$Extract balance from $Logs$ & $(6)$ \\
+& & Verify $B$ to DB & $(7)$ \\
+\color{red}& &\color{red} If 'error': & $(8)$ \\[-1mm]
+\color{red}&\color{red}REVOKE & & $(9)$ \\[-1mm]
+& & If 'ok': release card & $(10)$ \\
+& & If 'charge': $B'=B+200$ & $(11)$ \\[-1mm]
+\color{blue}&\color{blue}Send $B'$ & & $(12)$ \\[-1mm]
+\color{blue}Replace $B=B'$& & & $(13)$ \\[-1mm]
+\color{blue}&\color{blue} Send ACK & & $(14)$ \\[-1mm]
+& & Finish & $(15)$ \\[-1mm]
 };
 
 % Header
@@ -34,15 +32,13 @@ $B\leftarrow$Balance & & & $(7)$ \\[-1mm]
 
 % Arrows
 \draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-3-2.south west)--(m-3-2.south east);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-4-2.south west)--(m-4-2.south east);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-6-2.south east)--(m-6-2.south west);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-9-2.south west)--(m-9-2.south east);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-12-2.south east)--(m-12-2.south west);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-15-2.south east)--(m-15-2.south west);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-17-2.south west)--(m-17-2.south east);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-5-2.south east)--(m-5-2.south west);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-10-2.south east)--(m-10-2.south west);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-13-2.south east)--(m-13-2.south west);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-15-2.south west)--(m-15-2.south east);
 
 \end{tikzpicture}
-\\Note: Steps 3 to 6 as well as 14 to 16 (in Blue) are atomic operations.
+\\Note: Steps 2 to 5 as well as 12 to 14 (in Blue) are atomic operations.
 \caption{\label{figure:charging}Charging Terminal and Smartcard Communication}
 \end{figure}
 
