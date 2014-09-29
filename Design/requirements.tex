@@ -26,4 +26,12 @@ The system {\bf could} ensure the following features:
 The system {\bf will not} ensure any of the following:
 \begin{enumerate}
   \item In case a card is lost, the exact balance available on the card will not be available anymore. As such, a fee equal to the maximum gas refill amount will be deducted as described in section (TODO add section where we describe how this works).
+  \item The system will not offer any protection against inside attackers who have access to the private keys of certificates and who attempt to use them in malicious ways.
+  \item The system does not protect against attacks which bypass the security checks of the petrol pump terminal to directly access petrol.
+  \item We cannot assure the confidentiality of card PIN from shoulder surfing or other visual peeking.
+\end{enumerate}
+
+Next to these requirements, we also make the following assumptions regarding the hardware of the system (cards and terminals):
+\begin{enumerate}
+  \item The hardware is tamper resistent: (1) we assume that confidentiality and integrity of the data on the smartcard is guaranteed as-is and (2) in-transit data cannot be observed or altered by side-channel or physical attacks.
 \end{enumerate}

@@ -1,7 +1,20 @@
-The primary goal of attackers is to obtain more petrol than allowed by their allocated petrol ration. The attacker might also want to conduct a denial of service to frustrate legitimate car owners.
+We define the opponent of the petrol rationing system based on his abilities and resources. Furthermore, we take into consideration the possible reasons why an opponent might want to attack the system. We take these assumptions into consideration when designing the security requirements for the system.
 
-The attacker model ranges from car owners with limited to high attack resources. Attackers with limited resources may claim to have lost their cards, pull out their cards mid-way during transactions or steal the cards of other users. Attackers with high resources are able to install a new fake terminal in a plausible location, or place shimming devices to eavesdrop on legitimate transmissions. They have good knowledge of protocol details and can program custom smartcards to replay a recorded transactions or to relay a live, eavesdropped transaction. Through MITM, they may also modify data in an ongoing transaction.
+Assumptions regarding the capabilities of an opponent:
+\begin{enumerate}
+	\item The attacker is unable to solve the Elliptic Curve Discrete Logarithm Problem for curves over prime fields of sizes more than 128 bits.
+	\item The attacker is unable to break AES encryption with key sizes of more than 128 bits.
+	\item The attacker is unable to find meaningfull collisions for digest of the SHA1 hashing algorithm.
+\end{enumerate}
 
-We do not protect against insiders who may have access to the private keys of charging terminals or CAs. We also do not protect against attacks which bypass the security checks of the petrol pump terminal to directly access petrol, nor the confidentiality of card PIN from shoulder surfing or other visual peeking
-
-We also assume that both smartcards and terminals are tamper resistant; Confidentiality and integrity of software and data on the card is guaranteed, and cannot be observed or altered by side-channel or physical attacks
+Assumptions regarding the end goals of an opponent:
+\begin{enumerate}
+	\item The opponent might try to obtain more petrol than the allowed monthly ration.
+	\item The opponent may try to decrease the available balance of another person, without the victim getting his fuel.
+	\item A denial of service attack may be desired in order to prevent other car owners from obtaining their legitimate fuel.
+	\item Card owners may try to remove the card in the middle of the transaction in the hopes that fuel may be given without subtracting the fee from the available balance.
+	\item People may try to steal the cards of other car owners in order to use the victim's montly ration.
+	\item Card owners with a low balance may declare their cards as stolen and request a new card with more credits than they have.
+	\item Opponents may try to place skimming devices and attempt to clone cards in order to steal the monthly ration of the victims.
+	\item Opponenints with a good knowledge of the protocol details may try to create invalid smartcards and impersonate other people or create malicious terminals which replay transactions, steal PINs, do man-in-the-middle attacks or modify data in transit.
+\end{enumerate}
