@@ -1,30 +1,21 @@
 The implementation of a nation-wide petrol rationing system involves multiple parties. This section describes all engaged bodies and clearly states what aspects of the project are of concern to each of the stakeholders.
 
-\subsubsection{Government}
+\subsection{Government}
 
-The government can be considered the main stakeholder in this project. They are the ones who initiated the project and who will manage the it throughout its lifespan.
+The government can be considered one of the two main stakeholders in this project. They are the ones who initiated the project and who will manage the it throughout its lifespan.
 
 The main task of the government is to run the certificate authority system which is used to properly authenticate cards and terminals. They will have to keep the private keys secret and to generate and sign or revoke certificates for new or invalid harware accordingly.
 
 The end result of this project will help the government with distribution aspect of petrol on a nation-wide scale.
 
-\subsubsection{Petrol companies}
+\subsection{Petrol companies}
 
-Petrol companies are responsible for issuing fuel to card owners upon presentation of legitimate cards.
-\begin{enumerate}
-  \item Ensure that fuel is issued only upon presentation of legitimate cards
-  \item Ensures the physical amount of fuel withdrawn is updated in ration card
-\end{enumerate}
+Petrol companies are responsible for issuing fuel to card owners upon presentation of legitimate cards. Gas stations are required to issue the correct amount of fuel according to the value that is subtracted from the balance. The actual verification of the cards as well as the proper functioning of the terminals is not of concern to the petrol companies, but to the dedicated hardware.
 
-\subsection{Gas station managers}
+\subsection{Car owners}
 
-\subsubsection{Car owners}
-\begin{enumerate}
-  \item Use ration cards to obtain their allocated petrol ration. 
-  \item Use this petrol ration at petrol pumps
-\end{enumerate}
+Car owners form the second set of stakeholders (next to the government) who will make use of this system. Each card owner will obtain his monthly allocated share of fuel. They are required to keep their cards safe and the PIN secret. In case the card is lost, then a fee is subtracted from the total balance stored in the back end, as described in section (todo add section here).
 
 \subsection{Hardware manufacturers}
 
-
-
+Manufacturers deal with creating the hardware and software required to run the system. They are responsible for properly implementing the protocols in software.
