@@ -9,19 +9,20 @@ The system {\bf must} ensure that the following requirements are met:
   \item The protocol requires that the card and terminals be authenticated to each other. Integrity of the messages and freshness of the shared secrets between protocol executions also need to be ensured.
   \item The integrity of the balance value stored on the card needs to be assured. Changes to the balance, when topping up at charging terminals or subtracting at pump terminals, need to be logged accordingly. The system needs to be support non-repudiation of transactions which modify the balance.
   \item The charging terminals should always be connected to the backend (e.g. via internet or a private network) so that the logs are transfered from the card as described in section (TODO add section where this is described).
+  \item The availability of the petrol terminals should be guaranteed even in the event of network loss. 
+  
 \end{enumerate}
 
 The system {\bf should} ensure that the following requirements are met:
 \begin{enumerate}
   \item A certificate revocation list (CRL) or similar should be implemented such that terminals connected to the backend will be able to verify if a card has been invalidated.
-  \item It should be made possible for individual card owners to change their PINs.
-  \item The private
 \end{enumerate}
 
 The system {\bf could} ensure the following features:
 \begin{enumerate}
   \item Secret keys on cards could be changed automatically at certain periods of time (e.g. every year) when topping up the balance at charging terminals.
   \item The software running on the pump terminals could be implemented such that, if a connection to the backend is available, the logs are transfered from the card.
+  \item It should be made possible for individual card owners to change their PINs.
 \end{enumerate}
 
 The system {\bf will not} ensure any of the following:

@@ -1,6 +1,6 @@
 
 
-After mutual authentication and PIN entry, the charging terminal and ration card follow the communication protocol described in Figure \ref{figure:charging}. Charging terminal is also used to retrieve the logs and clear the memory of the smartcard. The logs constitute the non-repudiation evidence for any smartcard or terminal. Immediately after transferring the logs, the terminal verifies that the card is valid and that the balance is correct. Afterwards there are three different cases according to the result of the verification. An error means that the card must be revoked and the process ends. Otherwise, we distinct two cases for whether the card has been charged that month. 
+After mutual authentication and PIN entry, the charging terminal and ration card follow the communication protocol described in Figure \ref{figure:charging}. The charging terminal is also used to retrieve the logs thus freeing the memory of the smartcard for additional logs. The logs constitute the non-repudiation evidence for any smartcard or terminal. Immediately after transferring the logs, the terminal verifies that the card is valid and that the balance is correct. Afterwards there are three different cases according to the result of the verification. An error means that the card must be revoked and the process ends. Otherwise, we distinct two cases for whether the card had already been charged that month. 
 
 \usetikzlibrary{matrix,shapes,arrows,positioning,chains, calc}
 
