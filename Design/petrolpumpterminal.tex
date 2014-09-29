@@ -5,9 +5,9 @@ After mutual authentication and PIN entry, the petrol pump and ration cards foll
 \begin{figure}[h!]
 
 \begin{tikzpicture}
-\matrix (m)[matrix of nodes, column  sep=2cm,row  sep=0.5mm, nodes={draw=none, anchor=center,text depth=0pt} ]{
+\matrix (m)[matrix of nodes, column  sep=1.2cm,row  sep=0.5mm, nodes={draw=none, anchor=center,text depth=0pt} ]{
 Smart Card & & Pump terminal\\
-Perform basic checks $($Sec \ref{section:lost}$)$ & & & $(1)$ \\
+Perform basic checks $($Sect \ref{section:lost}$)$ & & & $(1)$ \\
 $B\leftarrow$Balance & & & $(2)$ \\[-1mm]
 & Send $B$ & & $(3)$ \\
 &  & Display $B$ & $(4)$ \\
@@ -40,7 +40,7 @@ Date\\
 \draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-10-2.south east)--(m-10-2.south west);
 \draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-14-2.south west)--(m-14-2.south east);
 \end{tikzpicture}
-Note: Steps 9 to 13 (in Blue) are an atomic operation
+\\Note: Steps 9 to 13 (in Blue) are an atomic operation
 \caption{\label{figure:petrol}Petrol Terminal and Card communications}
 \end{figure}
 
