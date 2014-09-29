@@ -1,0 +1,43 @@
+
+
+\usetikzlibrary{matrix,shapes,arrows,positioning,chains, calc}
+
+\begin{figure}[h!]
+
+\begin{tikzpicture}
+\matrix (m)[matrix of nodes, column  sep=2cm,row  sep=0.5mm, nodes={draw=none, anchor=center,text depth=0pt} ]{
+Smart Card & & Pump terminal\\
+Perform basic checks & & & $(1)$ \\
+$B\leftarrow$Balance & & & $(2)$ \\[-1mm]
+& Send $B$ & & $(3)$ \\
+&  & Display $B$ & $(4)$ \\
+&  & $A\leftarrow$Read amount & $(5)$ \\
+&  & Verify $A\leq$$B$ & $(6)$ \\
+&  & $m\leftarrow$ 
+$\begin{cases}
+Certificate ID\\
+B-A\\
+Date\\
+\end{cases}$ & $(7)$ \\[+4mm]
+&  & $S_{t}\leftarrow\{|\#(m)|\}C_{t}$ & $(8)$ \\[-1mm]
+\color{blue}&\color{blue} Send $m$,$S_{c}$ & & $(9)$ \\[-1mm]
+\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(10)$ \\ 
+\color{blue}Store $\{m,S_{t},S_{c}$\} &  & & $(11)$ \\ 
+\color{blue}&\color{blue} Send ACK & & $(12)$ \\
+&  & $F\leftarrow$Release fuel & $(13)$ \\
+&  & If $F<A$, repeat steps 7-12, where $A=F$ & $(14)$ \\
+&  &  & \\
+};
+
+% Header
+\draw[shorten <=-1cm,shorten >=-1cm] (m-1-1.south east)--(m-1-1.south west);
+\draw[shorten <=-1cm,shorten >=-1cm] (m-1-3.south east)--(m-1-3.south west);
+
+% Arrows
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-4-2.south west)--(m-4-2.south east);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-10-2.south east)--(m-10-2.south west);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-13-2.south west)--(m-13-2.south east);
+\end{tikzpicture}
+
+\caption{Blue is atomic operation}
+\end{figure}

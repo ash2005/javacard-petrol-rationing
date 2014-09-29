@@ -17,16 +17,16 @@ The ration card is personalised in the backend before it is issued to the user. 
 
 \subsection{Petrol Withdrawal and Card Charging}
 \subsubsection{Authentication Phase}
-Petrol terminals and charging terminals contain a PKI certificate identifying the terminal, signed by an Intermediate CA. Each terminal also stores its private key and all of the Intermediate CAs. These certificates are used by the smartcard and terminal to mutually authenticate each other and establish an encrypted and authenticated connection. Thereafter, the card owner enters his secret PIN into the terminal. A maximum of three consecutive wrong attempts are allowed before the card is disabled. If the PIN is correct, then the user can proceed to the petrol withdrawal or charging phase, depending on the terminal.
+Petrol terminals and charging terminals contain a PKI certificate identifying the terminal, signed by an Intermediate CA. Each terminal also stores its private key and the Intermediate Card CA. These certificates are used by the smartcard and terminal to mutually authenticate each other and establish an encrypted and authenticated connection. Thereafter, the card owner enters his secret PIN into the terminal. A maximum of three consecutive wrong attempts are allowed before the card is disabled. If the PIN is correct, then the user can proceed to the petrol withdrawal or charging phase, depending on the terminal.
 
 \subsubsection{Petrol Withdrawal Phase}
 
 \begin{enumerate}
-  \item The card owner send to the terminal its current balance. The balance is signed by the terminal with which it had completed its previous transaction.
+  \item The card sends to the terminal its current balance.
   \item The card owner inputs the amount of petrol he would like to withdraw into the terminal. The petrol pump terminal allows the transaction if and only if some security conditions are satisfied.
   \item The pump then atomically reduces the balance on the card accordingly.
   \item The fuel is released.
-  \item If the tank cannot fit all the prepaid fuel, the terminal updates the balance on the card again.
+  \item If the tank could not fit all the prepaid fuel, the terminal updates the balance on the card again.
   \item The card can be released.
 \end{enumerate}
 
@@ -40,10 +40,10 @@ Petrol terminals and charging terminals contain a PKI certificate identifying th
 \end{enumerate}
 
 
-\subsubsection{Decomissioned Card}
+\subsubsection{Decommissioned Card}
 
 \begin{enumerate}
-  \item Cards may be decomissioned when they are lost or are expired.
+  \item Cards may be decommissioned when they are lost or are expired.
   \item Lost cards are reported to the government agency.
   \item The status of these cards are updated as revoked in the government CA database.
   \item Charging Terminals no longer accept revoked cards.

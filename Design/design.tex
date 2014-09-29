@@ -1,6 +1,11 @@
 \documentclass[a4paper,10pt]{llncs}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=0.8in]{geometry}
+
+% Packages for protocol graph.
+\usepackage{amsmath}
+\usepackage{tikz}
+
 %opening
 \title{Petrol rationing smartcard project}
 \subtitle{Design document}
@@ -46,9 +51,16 @@
 \input{handshake}
 
 \subsection{Petrol Pumping Terminal}
-\subsection{Petrol Charging Terminal}
-\subsection{Non-repudiation}
-\subsection{Logs}
-\subsection{Lost Cards and Compromised Terminals}
+\input{petrolpumpterminal}
 
+\subsection{Petrol Charging Terminal}
+
+\subsection{Non-repudiation}
+\input{nonrepud}
+
+\subsection{Logs}
+\input{logs}
+
+\subsection{Lost Cards and Compromised Terminals}
+\input{lost}
 \end{document}
