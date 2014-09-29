@@ -1,9 +1,22 @@
+The implementation of a nation-wide petrol rationing system involves multiple parties. This section describes all engaged bodies and clearly states what aspects of the project are of concern to each of the stakeholders.
 
 \subsubsection{Government}
+
+The government can be considered the main stakeholder in this project. They are the ones who initiated the project and who will manage the it throughout its lifespan.
+
+The main task of the government is to run the certificate authority system which is used to properly authenticate cards and terminals. They will have to keep the private keys secret and to generate and sign or revoke certificates for new or invalid harware accordingly.
+
+The end result of this project will help the government with distribution aspect of petrol on a nation-wide scale.
+
+\subsubsection{Petrol companies}
+
+Petrol companies are responsible for issuing fuel to card owners upon presentation of legitimate cards.
 \begin{enumerate}
-  \item Acts as Certifying Authority. Issues and revokes certificates to petrol terminals, charging terminals and ration cards
-  \item Manages charging terminals and the database of car owners, certificates and monthly ration
+  \item Ensure that fuel is issued only upon presentation of legitimate cards
+  \item Ensures the physical amount of fuel withdrawn is updated in ration card
 \end{enumerate}
+
+\subsection{Gas station managers}
 
 \subsubsection{Car owners}
 \begin{enumerate}
@@ -11,9 +24,7 @@
   \item Use this petrol ration at petrol pumps
 \end{enumerate}
 
-\subsubsection{Petrol pumps}
-\begin{enumerate}
-  \item Ensure that fuel is issued only upon presentation of legitimate cards
-  \item Ensures the physical amount of fuel withdrawn is updated in ration card
-\end{enumerate}
+\subsection{Hardware manufacturers}
+
+
 

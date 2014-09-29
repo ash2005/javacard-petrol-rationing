@@ -19,4 +19,5 @@ Design/*.tex.backup
 hs_err_pid*
 
 # log and tmp files
-*.aux *.log
+*.aux
+*.log
