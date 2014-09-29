@@ -22,8 +22,8 @@ Petrol terminals and charging terminals contain a PKI certificate identifying th
 \subsubsection{Petrol Withdrawal Phase}
 
 \begin{enumerate}
-  \item The card sends to the terminal its current balance.
-  \item The card owner inputs the amount of petrol he would like to withdraw into the terminal. The petrol pump terminal allows the transaction if and only if some security conditions are satisfied.
+  \item The card sends to the pump terminal its current balance.
+  \item The card owner inputs the amount of petrol he would like to fill into the vehicular and the terminal verifies that he has available balance.
   \item The pump then atomically reduces the balance on the card accordingly.
   \item The fuel is released.
   \item If the tank could not fit all the prepaid fuel, the terminal updates the balance on the card again.
@@ -35,7 +35,8 @@ Petrol terminals and charging terminals contain a PKI certificate identifying th
 
 \begin{enumerate}
   \item Charging terminals are connected to a backend database which maintains records of each car owner and their available petrol ration.
-  \item If the card hasn't been charged already that month, the charging terminal increases the petrol ration in the card by the fixed monthly allowance ( 200 liters ) and updates the backend database. 
+  \item Immediately after the mutual authentication, the charging terminal grabs the logs of the smartcard to clear the memory.  In addition, the terminal safely store the evidence of the performed transaction (logs) to the database in order to ensure non-repudiation.
+  \item If the card has not been charged already that month, the charging terminal increases the petrol ration in the card by the fixed monthly allowance ( 200 liters ) and updates the backend database. 
   \item If a car owner did not charge the card for the previous month, it does not carry over to the current month, but is forfeit.
 \end{enumerate}
 
