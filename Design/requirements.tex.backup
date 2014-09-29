@@ -13,8 +13,7 @@ The system {\bf must} ensure that the following requirements are met:
 
 The system {\bf should} ensure that the following requirements are met:
 \begin{enumerate}
-  \item A certificate revocation list (CRL) or similar should be implemented such that terminals connected to the backend will be able to verify if a card has been invalidated.
-  \item It should be made possible for individual card owners to change their PINs.
+  \item
 \end{enumerate}
 
 The system {\bf could} ensure the following features:
