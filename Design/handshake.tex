@@ -4,8 +4,9 @@ The initial data exchange between a card and a terminal (either of the two termi
 
 The steps of this initial handshake are as follows:
 \begin{enumerate}
- \item The card sends to the terminal an initial CARD-HELLO message which includes a random nonce.
- \item The terminal receives the CARD-HELLO message and sends back a TERMINAL-HELLO message which includes a different nonce. Subsequently, the terminal also sends to the card its public key and a signature of it and informs the card what type of terminal it is. The signature is made using the private key of the responsible intermediate certificate depending on the type of the terminal. The terminal does not send a timestamp since the card cannot accurately hold time on its own.
+ \item The terminal sends to the card an initial TERMINAL-HELLO message which includes a random nonce.
+ \item The card receives the TERMINAL-HELLO message and sends back a CARD-HELLO message which includes a different nonce.
+ \item The terminal sends to the card its public key and a signature of it and informs the card what type of terminal it is. The signature is made using the private key of the responsible intermediate certificate depending on the type of the terminal. The terminal does not send a timestamp since the card cannot accurately hold time on its own.
  \item After receiving the data from the terminal, the card verifies the signature against the stored public keys and in this way also verifies the type of terminal it is communicating with. If the signature matches, then the card sends to the terminal its own public key, the stored timestamp when the card's keypair expires and a signature of the two items. The trust store of the card contains the two public keys of the intermediate certificates used for the terminals. The public key of the root certificate is not used for verification purposes. The reason for this is that (a) for the root certificate we use keys much bigger than what the card supports, and (b) also to reduce the processing time required for signature verification.
  \item The terminal receives the data and verifies it accordingly. If the verification is passed, the terminal sends a CHANGE-CIPHER-SPEC message to the card, indicating that from then onwards all transmitted data will be encrypted.
  \item The card receives this message and sends its own CHANGE-CIPHER-SPEC.
