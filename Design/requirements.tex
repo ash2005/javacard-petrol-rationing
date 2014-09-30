@@ -3,12 +3,12 @@ In order for the system to remain secure against possible attacks, a set of requ
 The system {\bf must} ensure that the following requirements are met:
 \begin{enumerate}
   \item The private keys of the root certificate need to remain confidential at all times. Only the appropriate staff (appointed by the government) may have access to it. 
-  \item The private keys of the three intermediate certificates need to remain secret and only parties which are responsible for isuing new device certificates may have access to it.
+  \item The private keys of the three intermediate certificates need to remain secret and only parties which are responsible for issuing new device certificates may have access to it.
   \item The private keys of the cards and terminals may not be made public and should only be stored on the devices themselves.
   \item Each card requires a PIN code which needs to remain secret. Only the owner of the card may know this code. The PIN is used to authenticate the owner to the card during operation.
   \item The protocol requires that the card and terminals be authenticated to each other. Integrity of the messages and freshness of the shared secrets between protocol executions also need to be ensured.
   \item The integrity of the balance value stored on the card needs to be assured. Changes to the balance, when topping up at charging terminals or subtracting at pump terminals, need to be logged accordingly. The system needs to be support non-repudiation of transactions which modify the balance.
-  \item The charging terminals should always be connected to the backend (for instance, via internet or a private network) so that the logs are transfered from the card as described in Section (\ref{subsection:chargingterminal}).
+  \item The charging terminals should always be connected to the backend (for instance, via internet or a private network) so that the logs are transferred from the card as described in Section (\ref{subsection:chargingterminal}).
   \item The availability of the petrol pumping terminals should be guaranteed even in the event of network loss. 
   
 \end{enumerate}
@@ -21,13 +21,13 @@ The system {\bf should} ensure that the following requirements are met:
 The system {\bf could} ensure the following features:
 \begin{enumerate}
   \item Secret keys on cards could be automatically renewed at certain periods of time (for example, every year) when topping up the balance at charging terminals.
-  \item The software running on the pump terminals could be implemented such that, if a connection to the backend is available, the logs are transfered from the card.
+  \item The software running on the pump terminals could be implemented such that, if a connection to the backend is available, the logs are transferred from the card.
   \item It could be made possible for individual card owners to change their PINs.
 \end{enumerate}
 
 The system {\bf will not} ensure any of the following:
 \begin{enumerate}
-  \item In case a card is lost, the exact balance available on the card will not be available anymore. As such, a fee equal to the maximum petrol filling amount will be deducted as described in Section \ref{subsection:nonrepud}.
+  \item In case a card is lost, the exact balance available on the card will not be available any more. As such, a fee equal to the maximum petrol filling amount will be deducted as described in Section \ref{subsection:nonrepud}.
   \item The system will not offer any protection against inside attackers who have access to the private keys of certificates and who attempt to use them in malicious ways.
   \item The system does not protect against attacks which bypass the security checks of the petrol pump terminal to directly access petrol.
   \item We cannot assure the confidentiality of card PIN from shoulder surfing or other visual peeking.
@@ -35,5 +35,5 @@ The system {\bf will not} ensure any of the following:
 
 Next to these requirements, we also make the following assumptions regarding the hardware of the system (cards and terminals):
 \begin{enumerate}
-  \item The hardware is tamper resistent: (1) we assume that confidentiality and integrity of the data on the smartcard is guaranteed as-is and (2) in-transit data cannot be observed or altered by side-channel or physical attacks.
+  \item The hardware is tamper resistant: (1) we assume that confidentiality and integrity of the data on the smartcard is guaranteed as-is and (2) in-transit data cannot be observed or altered by side-channel or physical attacks.
 \end{enumerate}

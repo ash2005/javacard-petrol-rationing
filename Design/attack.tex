@@ -2,9 +2,9 @@ We define the opponent of the petrol rationing system based on his abilities and
 
 Assumptions regarding the capabilities of an opponent:
 \begin{enumerate}
-	\item The attacker is unable to solve the Elliptic Curve Discrete Logarithm Problem for curves over prime fields of sizes more than 128 bits.
+	\item The attacker is unable to solve the Elliptic Curve Discrete Logarithm Problem for curves over prime fields of sizes more than 193 bits.
 	\item The attacker is unable to break AES encryption with key sizes of more than 128 bits.
-	\item The attacker is unable to find meaningfull collisions for digest of the SHA1 hashing algorithm.
+	\item The attacker is unable to find meaningful collisions for digest of the SHA1 hashing algorithm.
 \end{enumerate}
 
 Assumptions regarding the end goals of an opponent:
@@ -13,8 +13,8 @@ Assumptions regarding the end goals of an opponent:
 	\item The opponent may try to decrease the available balance of another person, without the victim getting his fuel.
 	\item A denial of service attack may be desired in order to prevent other car owners from obtaining their legitimate fuel.
 	\item Card owners may try to remove the card in the middle of the transaction in the hopes that fuel may be given without subtracting the fee from the available balance.
-	\item People may try to steal the cards of other car owners in order to use the victim's montly ration.
+	\item People may try to steal the cards of other car owners in order to use the victim's monthly ration.
 	\item Card owners with a low balance may declare their cards as stolen and request a new card with more credits than they have.
 	\item Opponents may try to place skimming devices and attempt to clone cards in order to steal the monthly ration of the victims.
-	\item Opponenints with a good knowledge of the protocol details may try to create invalid smartcards and impersonate other people or create malicious terminals which replay transactions, steal PINs, do man-in-the-middle attacks or modify data in transit.
+	\item Opponents with a good knowledge of the protocol details may try to create invalid smartcards and impersonate other people or create malicious terminals which replay transactions, steal PINs, do man-in-the-middle attacks or modify data in transit.
 \end{enumerate}
