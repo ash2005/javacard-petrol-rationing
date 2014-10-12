@@ -14,7 +14,7 @@ mkdir -p $CHRG
 mkdir $DIR
 
 # generate private key for card cert
-openssl ecparam -outform pem -out $DIR/priv.pem -name secp112r1 -genkey
+openssl ecparam -outform pem -out $DIR/priv.pem -name $CURVE -genkey
 
 # generate certificate signing request
 openssl req -new -nodes -key $DIR/priv.pem -outform pem -out $DIR/csr.pem -config $CNF/req_low_certs.cnf
