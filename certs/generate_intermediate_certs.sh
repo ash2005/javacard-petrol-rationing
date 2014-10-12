@@ -1,10 +1,13 @@
-#! /bin/sh
+#! /bin/bash
 
 # vars
 CI=card_intermediate
 PTI=pump_terminal_intermediate
 CTI=charging_terminal_intermediate
 CNF=configs
+
+# set CURVE variable
+source set_curve.sh
 
 # clean up
 rm -rf $CI $PTI $CTI
@@ -23,9 +26,9 @@ echo "01" > $PTI/serial
 echo "01" > $CTI/serial
 
 # generate private keys for client intermediate certs
-openssl ecparam -outform pem -out $CI/priv.pem -name secp112r1 -genkey
-openssl ecparam -outform pem -out $PTI/priv.pem -name secp112r1 -genkey
-openssl ecparam -outform pem -out $CTI/priv.pem -name secp112r1 -genkey
+openssl ecparam -outform pem -out $CI/priv.pem -name $CURVE -genkey
+openssl ecparam -outform pem -out $PTI/priv.pem -name $CURVE -genkey
+openssl ecparam -outform pem -out $CTI/priv.pem -name $CURVE -genkey
 
 # generate certificate signing requests
 openssl req -new -nodes -key $CI/priv.pem -outform pem -out $CI/csr.pem -config $CNF/req_$CI.cnf

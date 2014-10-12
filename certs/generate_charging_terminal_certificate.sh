@@ -1,10 +1,13 @@
-#! /bin/sh
+#! /bin/bash
 
 # vars
 CI=card_intermediate
 CHRG=charging_terminal_certs
 DIR=$CHRG/$1
 CNF=configs
+
+# set CURVE variable
+source set_curve.sh
 
 # create directory
 mkdir -p $CHRG

@@ -1,0 +1,10 @@
+#package specification
+#Sun Oct 12 23:11:09 CEST 2014
+masktools-version=2.2
+ru.hwsec.teamara-clazzes=ru.hwsec.teamara.AraApplet
+ru.hwsec.teamara-major=1
+jcop-packages=ru.hwsec.teamara
+ru.hwsec.teamara-base=internal
+ru.hwsec.teamara-minor=0
+ru.hwsec.teamara-aid=DEADBEEF01
+ru.hwsec.teamara.AraApplet-aid=DEADBABE01
