@@ -23,12 +23,13 @@ Date\\
 \end{cases}$ & $(7)$ \\[+4mm]
 &  & $S_{t}\leftarrow\{|\#(m)|\}C_{t}$ & $(8)$ \\[-1mm]
 \color{blue}&\color{blue} Send $m$,$S_{t}$ & & $(9)$ \\[-1mm]
-\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(10)$ \\ 
-\color{blue}Store $\{m,S_{t},S_{c}$\} in log &  & & $(11)$ \\ 
-\color{blue}Update log index &  & & $(12)$ \\[-1mm]
-\color{blue}&\color{blue} Send ACK & & $(13)$ \\[-1mm]
-&  & $F\leftarrow$Release fuel & $(14)$ \\
-&  & If $F<A$, repeat steps 7-13, where $A=F$ & $(15)$ \\
+\color{blue}Verify $B'<B$ & & & $(10)$ \\
+\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(11)$ \\ 
+\color{blue}Store $\{m,S_{t},S_{c}$\} in log &  & & $(12)$ \\ 
+\color{blue}Update log index &  & & $(13)$ \\[-1mm]
+\color{blue}&\color{blue} Send ACK & & $(14)$ \\[-1mm]
+&  & $F\leftarrow$Release fuel & $(15)$ \\
+&  & If $F<A$, repeat steps 7-13, where $A=F$ & $(16)$ \\
 &  &  & \\
 };
 
@@ -39,9 +40,9 @@ Date\\
 % Arrows
 \draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-4-2.south west)--(m-4-2.south east);
 \draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-10-2.south east)--(m-10-2.south west);
-\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-14-2.south west)--(m-14-2.south east);
+\draw[shorten <=-1cm,shorten >=-1cm,-latex] (m-15-2.south west)--(m-15-2.south east);
 \end{tikzpicture}
-\\Note: Steps 9 to 13 (in Blue) are an atomic operation
+\\Note: Steps 9 to 14 (in Blue) are an atomic operation
 \caption{\label{figure:petrol}Petrol Terminal and Smartcard Communication}
 \end{figure}
 
