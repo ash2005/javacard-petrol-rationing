@@ -1,7 +1,7 @@
 #package specification
-#Sun Oct 12 23:11:09 CEST 2014
+#Mon Oct 13 13:10:23 CEST 2014
 masktools-version=2.2
-ru.hwsec.teamara-clazzes=ru.hwsec.teamara.AraApplet
+ru.hwsec.teamara-clazzes=ru.hwsec.teamara.CurveParameters ru.hwsec.teamara.PublicKeys ru.hwsec.teamara.AraApplet
 ru.hwsec.teamara-major=1
 jcop-packages=ru.hwsec.teamara
 ru.hwsec.teamara-base=internal

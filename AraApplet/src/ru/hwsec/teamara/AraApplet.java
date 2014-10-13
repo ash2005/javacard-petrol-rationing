@@ -7,7 +7,6 @@ import javacard.framework.APDU;
 import javacard.framework.ISO7816;
 import javacard.framework.Applet;
 import javacard.framework.ISOException;
-import javacard.framework.Util;
 
 /**
  * @author javacard

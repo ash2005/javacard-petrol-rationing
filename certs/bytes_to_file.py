@@ -9,17 +9,22 @@ if len(sys.argv) < 2:
 if len(sys.argv) == 3:
 	count = int(sys.argv[2])
 else:
-	count = 512
+	count = 192 * 2 + 1
 
 b = bytearray()
-while count > 0:
+done = False
+while not done:
 	vals = raw_input()
 	vals = vals.split(':')
 	for val in vals:
 		val = val.replace(' ', '')
-		if val != '' and count > 0:
+		if val != '':
 			b.append(int(val, 16))
 			count -= 8
+			if count < 0:
+				done = True
+				break
+	print 'Need ' + str(count / 8) + ' more bytes...'
 f = open(sys.argv[1], 'wb')
 f.write(b)
 f.close()
