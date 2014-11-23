@@ -11,6 +11,8 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 
+// Question: Should we do APDU communication inside the individual functions or inside execute() ?
+
 public abstract class Terminal {
 
     //Fields
@@ -45,7 +47,7 @@ public abstract class Terminal {
 
     // Methods
 
-    private Terminal(){ };
+    public Terminal(){ };
 
     /* verify that the certificate of card is correctly signed by card CA
      * and that the certificate is not expired */
@@ -53,20 +55,44 @@ public abstract class Terminal {
 
     /* Perform mutual authentication with the card.
      * Establish shared Diffie-Hellman Secret from Public Keys
-     * Calculate secret key from DH Secret and nonces (used later in encrypt/decrypt) */
+     * Return secret key from DH Secret and nonces (used later in encrypt/decrypt)
+     *  - client write MAC key
+     *  - server write MAC key
+     *  - client write encryption key
+     *  - server write encryption key
+     *  - client write IV
+     *  - server write IV
+     */
     abstract byte[] mutualAuth(int nonceCard, int nonceTerminal, byte[] cardPublicKey);
 
     /* Makes digital signature on transaction for non-repudiation */
     abstract byte[] signTransaction(byte[] transaction);
 
-     /* Decrypt a received APDU payload.
-     * Output plaintext */
-   abstract byte[] decrypt(byte[] ciphertext, byte[] key);
+    /* Decrypt a received APDU payload.
+    * Ciphertext Block comprises:
+    *   - 16 byte IV
+    *   - Ciphertext AES_CBC(msg + padding)
+    *   - Integrity check (MAC(MAC_write_key, seq_num + plaintext))
+    *   Ref: RFC 5246 6.2.3.2 (CBC) and 6.2.3.1 (HMAC)
+    * Returns plaintext */
+    abstract byte[] decrypt(byte[] ciphertext, byte[] cardEncKey, byte[] cardMACKey);
 
 
     /* Encrypt an APDU payload for sending.
      * Output ciphertext */
-    abstract byte[] encrypt(byte[] plaintext, byte[] key);
+    abstract byte[] encrypt(byte[] plaintext, byte[] terminalEncKey, byte[] terminalMACKey);
+
+
+    /* Ask user for a pin.
+     * Send pin to card
+     * return true if card returns success, else return false */
+    abstract boolean pinCheck();
+
+
+    /* Check the revocation status of the card.
+     * Return false if revoked.
+     * Do not proceed further and end all communications with the card.*/
+    abstract boolean checkRevoke();
 
 
     /* Main state machine that calls the various methods defined above? */
@@ -93,6 +119,8 @@ public abstract class Terminal {
 	    	    		byte[] data = resp.getData();
 	    	    		int x;
 	    	    		x = 2;
+
+
 	    	    	}
 	    		}
 	    	}
