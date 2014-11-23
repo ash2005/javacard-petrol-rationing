@@ -56,12 +56,12 @@ public abstract class Terminal {
     /* Perform mutual authentication with the card.
      * Establish shared Diffie-Hellman Secret from Public Keys
      * Return secret key from DH Secret and nonces (used later in encrypt/decrypt)
-     *  - client write MAC key
-     *  - server write MAC key
-     *  - client write encryption key
-     *  - server write encryption key
-     *  - client write IV
-     *  - server write IV
+     *  - Card write MAC key
+     *  - Terminal write MAC key
+     *  - Card write encryption key
+     *  - Terminal write encryption key
+     *  - Card write IV
+     *  - Terminal write IV
      */
     abstract byte[] mutualAuth(int nonceCard, int nonceTerminal, byte[] cardPublicKey);
 
