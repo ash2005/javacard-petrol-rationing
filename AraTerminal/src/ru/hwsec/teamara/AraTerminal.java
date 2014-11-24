@@ -11,6 +11,8 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 
+import ru.hwsec.teamara.constants.Instruction;
+
 public class AraTerminal {
 
 	static final byte[] ARA_APPLET_AID = { (byte) 0xde, (byte) 0xad, (byte) 0xba, (byte) 0xbe, (byte) 0x01 };
@@ -39,15 +41,15 @@ public class AraTerminal {
 	    	    		if (resp.getSW() != 0x9000) {
 	    	    			throw new CardException("Could no select AraApplet.");
 	    	    		}
-	    	    		resp = this.applet.transmit(new CommandAPDU(0, 0x0a, 0, 0));
+	    	    		resp = this.applet.transmit(new CommandAPDU(0, Instruction.TERMINAL_HELLO, 0, 0));
 	    	    		byte[] data = resp.getData();
 	    	    		int x;
 	    	    		x = 2;
 	    	    	}
 	    		}
 	    	}
-			
-			
+
+
 		} catch (CardException e) { }
     }
 

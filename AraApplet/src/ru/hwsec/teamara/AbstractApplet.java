@@ -1,20 +1,9 @@
-/**
- *
- */
 package ru.hwsec.teamara;
 
 import javacard.framework.APDU;
 import javacard.framework.ISO7816;
 import javacard.framework.Applet;
 import javacard.framework.ISOException;
-
-/**
- * @author javacard
- *
- */
-
-
-// Different applet for Charging Terminal and Pump Terminal??
 
 public abstract class AbstractApplet extends Applet {
 
@@ -37,7 +26,7 @@ public abstract class AbstractApplet extends Applet {
      *  - Card write IV
      *  - Terminal write IV
      */
-    abstract byte[] mutualAuth(int nonceCard, int nonceTerminal, byte[] cardPublicKey);
+    abstract byte[] mutualAuth(short nonceCard, short nonceTerminal, byte[] cardPublicKey);
 
 
     /* Decrypt a received APDU payload.

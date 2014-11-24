@@ -21,3 +21,6 @@ hs_err_pid*
 # log and tmp files
 *.aux
 *.log
+
+# vim swp files... damnit
+*.swp
