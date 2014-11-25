@@ -19,7 +19,7 @@ import java.security.spec.InvalidParameterSpecException;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-public class ECC {
+public class ECCTerminal {
 
 	static {
         Security.addProvider(new BouncyCastleProvider());

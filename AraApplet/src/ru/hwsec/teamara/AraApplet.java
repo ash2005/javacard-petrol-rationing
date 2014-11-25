@@ -7,11 +7,6 @@ import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
-import javacard.security.CryptoException;
-import javacard.security.ECKey;
-import javacard.security.ECPublicKey;
-import javacard.security.KeyBuilder;
-import javacard.security.RSAPublicKey;
 import javacard.security.RandomData;
 
 public class AraApplet extends Applet {
@@ -44,7 +39,7 @@ public class AraApplet extends Applet {
     final static byte MAX_PIN_SIZE = (byte) 0x04;
     OwnerPIN pin;
 
-	public AraApplet(byte[] bArray, short bOffset, byte bLength) {
+	public AraApplet() {
         // It is good programming practice to allocate
         // all the memory that an applet needs during
         // its lifetime inside the constructor
@@ -63,12 +58,13 @@ public class AraApplet extends Applet {
         this.transmem = JCSystem.makeTransientByteArray((short)59, JCSystem.CLEAR_ON_DESELECT);
         // The installation parameters contain the PIN
         // initialization value
-        pin.update(bArray, (short) (bOffset + 1), (byte) 0x04);
+        //pin.update(bArray, (short) (bOffset + 1), (byte) 0x04);
         register();
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
-		new AraApplet(bArray, bOffset, bLength);
+		//new AraApplet(bArray, bOffset, bLength);
+		new AraApplet();
 	}
 
 	public void process(APDU apdu) {
@@ -127,9 +123,9 @@ public class AraApplet extends Applet {
         // Verify signature on the received public key
         boolean valid = false;
         if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)1)
-            valid = ECC.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+            valid = ECCCard.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         else if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)2)
-            valid = ECC.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+            valid = ECCCard.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         if(!valid) {
             // If verification fails then we abort
             this.currentState = CurrentState.ZERO;
