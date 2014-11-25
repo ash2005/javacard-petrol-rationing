@@ -22,9 +22,12 @@ public class Instruction {
     // Checks
 
     // Petrol Terminal
-
+    public static final byte GET_BALANCE    = (byte)0x20;
+    public static final byte UPDATE_BALANCE = (byte)0x21;
+    
     // Charging Terminal
-    //
+    public static final byte GET_LOGS    = (byte)0x30;
+    public static final byte CHARGE = (byte)0x31;
 
     private Instruction() { }
 }
