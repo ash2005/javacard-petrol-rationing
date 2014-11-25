@@ -10,10 +10,11 @@ import javax.smartcardio.CardTerminals;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
+import java.io.*;
 
 // Question: Should we do APDU communication inside the individual functions or inside execute() ?
 
-public abstract class Terminal {
+public class Terminal {
 
     //Fields
 
@@ -51,7 +52,9 @@ public abstract class Terminal {
 
     /* verify that the certificate of card is correctly signed by card CA
      * and that the certificate is not expired */
-    abstract boolean verifyCert(byte[] cardSerialNumber, byte[] cardPublicKey, byte[] cardExpiry, byte[] cardSignature);
+    boolean verifyCert(byte[] cardSerialNumber, byte[] cardPublicKey, byte[] cardExpiry, byte[] cardSignature){
+        return true;
+    }
 
     /* Perform mutual authentication with the card.
      * Establish shared Diffie-Hellman Secret from Public Keys
@@ -63,10 +66,16 @@ public abstract class Terminal {
      *  - Card write IV
      *  - Terminal write IV
      */
-    abstract byte[] mutualAuth(int nonceCard, int nonceTerminal, byte[] cardPublicKey);
+    byte[] mutualAuth(int nonceCard, int nonceTerminal, byte[] cardPublicKey){
+        byte [] temp = {(byte) 0x00, (byte) 0x01};
+        return temp;
+    }
 
     /* Makes digital signature on transaction for non-repudiation */
-    abstract byte[] signTransaction(byte[] transaction);
+    byte[] signTransaction(byte[] transaction){
+        byte [] temp = {(byte) 0x00, (byte) 0x01};
+        return temp;
+    }
 
     /* Decrypt a received APDU payload.
     * Ciphertext Block comprises:
@@ -75,24 +84,45 @@ public abstract class Terminal {
     *   - Integrity check (MAC(MAC_write_key, seq_num + plaintext))
     *   Ref: RFC 5246 6.2.3.2 (CBC) and 6.2.3.1 (HMAC)
     * Returns plaintext */
-    abstract byte[] decrypt(byte[] ciphertext, byte[] cardEncKey, byte[] cardMACKey);
+    byte[] decrypt(byte[] ciphertext, byte[] cardEncKey, byte[] cardMACKey){
+        byte [] temp = {(byte) 0x00, (byte) 0x01};
+        return temp;
+    }
 
 
     /* Encrypt an APDU payload for sending.
      * Output ciphertext */
-    abstract byte[] encrypt(byte[] plaintext, byte[] terminalEncKey, byte[] terminalMACKey);
+    byte[] encrypt(byte[] plaintext, byte[] terminalEncKey, byte[] terminalMACKey){
+        byte [] temp = {(byte) 0x00, (byte) 0x01};
+        return temp;
+    }
 
 
     /* Ask user for a pin.
      * Send pin to card
      * return true if card returns success, else return false */
-    abstract boolean pinCheck();
+    public boolean pinCheck(){
+        System.out.println("");
+        System.out.print("Enter PIN: ");
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
+        String userName = null;
+        try{
+            userName = buffer.readLine();
+        } catch (IOException ioe) {
+            System.out.println("IO error trying to read your name!");
+            System.exit(1);
+        }
+        System.out.println("");
+        return true;
+    }
 
 
     /* Check the revocation status of the card.
      * Return false if revoked.
      * Do not proceed further and end all communications with the card.*/
-    abstract boolean checkRevoke();
+    boolean checkRevoke(){
+        return true;
+    }
 
 
     /* Main state machine that calls the various methods defined above? */
@@ -128,5 +158,4 @@ public abstract class Terminal {
 
 		} catch (CardException e) { }
     }
-
 }

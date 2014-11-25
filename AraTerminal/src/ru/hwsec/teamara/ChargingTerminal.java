@@ -11,8 +11,7 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 
-
-public abstract class ChargingTerminal extends Terminal {
+public class ChargingTerminal extends Terminal {
 
 
     // Methods
@@ -24,7 +23,9 @@ public abstract class ChargingTerminal extends Terminal {
     /* Reference sec 7.6 of Design Document
      * Get card logs and ask card to clear logs
      */
-    abstract boolean getLogs();
+    boolean getLogs(){
+        return true;
+    }
 
 
 
@@ -34,14 +35,21 @@ public abstract class ChargingTerminal extends Terminal {
      *  - corresponds with backend
      *  - Only 5 withdrawals
      */
-    abstract boolean checkLogs();
+    boolean checkLogs(){
+        return true;
+    }
 
 
     /* Revoke the card if backend database has revoke flag set for that card*/
-    abstract boolean revoke();
+    //abstract boolean revoke();
 
     /* If no error, update the card balance.
      * Store updated balance in database */
-    abstract boolean updateBalance();
+    //abstract boolean updateBalance();
+    
+    public static void main(String[] arg) {
+        ChargingTerminal obj = new ChargingTerminal();
+        obj.pinCheck();
+    }
 
 }
