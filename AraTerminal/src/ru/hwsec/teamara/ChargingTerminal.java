@@ -13,7 +13,7 @@ import javax.smartcardio.TerminalFactory;
 
 public class ChargingTerminal extends Terminal {
 
-    // Methods
+	// Methods
     public ChargingTerminal(){
         super();
     }
@@ -45,9 +45,10 @@ public class ChargingTerminal extends Terminal {
      * Store updated balance in database */
     //abstract boolean updateBalance();
     
-    public static void main(String[] arg) {
+    public static void main(String[] arg) throws CardException {
+    	System.out.println("Starting...");
         ChargingTerminal obj = new ChargingTerminal();
-        obj.pinCheck();
+        obj.execute();
     }
 
 }
