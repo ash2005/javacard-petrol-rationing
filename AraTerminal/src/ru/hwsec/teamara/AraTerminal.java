@@ -1,5 +1,10 @@
 package ru.hwsec.teamara;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
@@ -19,7 +24,7 @@ import com.licel.jcardsim.base.Simulator;
 
 public class AraTerminal {
 
-	static final byte[] ARA_APPLET_AID = new byte[]{ (byte) 0xde, (byte) 0xad, (byte) 0xba, (byte) 0xbe, (byte) 0x01 };
+    static final byte[] ARA_APPLET_AID = new byte[]{ (byte) 0xde, (byte) 0xad, (byte) 0xba, (byte) 0xbe, (byte) 0x01 };
     static final CommandAPDU SELECT_APDU = new CommandAPDU((byte) 0x00, (byte) 0xA4, (byte) 0x04, (byte) 0x00, ARA_APPLET_AID);
 
     private byte[] PUBLIC_KEY_BYTES = new byte[]{
@@ -62,8 +67,8 @@ public class AraTerminal {
 	    	    		this.applet = card.getBasicChannel();
 	    	    		if (this.applet.transmit(SELECT_APDU).getSW() != 0x9000)
 	    	    			throw new CardException("Could no select AraApplet.");
-                        this.performHandshake(this.applet);
-	       	    	}
+	    	    		this.performHandshake(this.applet);
+	    	    	}
 	    		}
 	    	}
 
@@ -116,11 +121,33 @@ public class AraTerminal {
         // P1 = 2 ==> pump terminal
         resp = a.transmit(new CommandAPDU(0, Instruction.TERMINAL_KEY, 1, 0, signedKey));
         byte[] data = resp.getData();
-        System.out.println(data.length);
-        resp = null;
+
+        // Verify the public key and signature received from the card
+        byte[] cardKeyBytes = new byte[51];
+        byte[] cardSignatureBytes = new byte[54];
+        System.arraycopy(data, 0, cardKeyBytes, 0, 51);
+        System.arraycopy(data, 51, cardSignatureBytes, 0, 54);
+        try {
+			System.out.println(ECC.verifyCardKey(cardKeyBytes, cardSignatureBytes));
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SignatureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidParameterSpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     public static void main(String[] arg) {
-    	(new AraTerminal()).executeSim();
+    	(new AraTerminal()).execute();
     }
 }
