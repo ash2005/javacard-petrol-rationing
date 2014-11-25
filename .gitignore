@@ -24,3 +24,6 @@ hs_err_pid*
 
 # vim swp files... damnit
 *.swp
+
+AraApplet/bin
+AraTerminal/bin
