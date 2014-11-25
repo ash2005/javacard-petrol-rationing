@@ -9,7 +9,7 @@ if len(sys.argv) < 2:
 if len(sys.argv) == 3:
 	count = int(sys.argv[2])
 else:
-	count = 49 * 8
+	count = 51 * 8
 
 b = bytearray()
 done = False
