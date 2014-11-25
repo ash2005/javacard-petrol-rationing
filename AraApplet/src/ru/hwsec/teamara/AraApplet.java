@@ -5,6 +5,7 @@ import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
+import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
 import javacard.security.CryptoException;
 import javacard.security.ECKey;
@@ -37,8 +38,19 @@ public class AraApplet extends Applet {
     private byte currentState;
     private byte[] transmem;
 
-	public AraApplet() {
-        this.register();
+    // Maximum number of incorrect tries before the PIN is blocked.
+    final static byte PIN_TRY_LIMIT = (byte) 0x03;
+    // Maximum size PIN.
+    final static byte MAX_PIN_SIZE = (byte) 0x04;
+    OwnerPIN pin;
+    
+	public AraApplet(byte[] bArray, short bOffset, byte bLength) {
+        // It is good programming practice to allocate
+        // all the memory that an applet needs during
+        // its lifetime inside the constructor
+        pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
+        
+        //this.register();
         this.currentState = CurrentState.ZERO;
 
         /*
@@ -49,10 +61,16 @@ public class AraApplet extends Applet {
          * Total: 57 bytes
          */
         this.transmem = JCSystem.makeTransientByteArray((short)57, JCSystem.CLEAR_ON_DESELECT);
+        
+        // The installation parameters contain the PIN
+        // initialization value
+        pin.update(bArray, (short) (bOffset + 1), (byte) 0x04);
+        register();
+        
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
-		new AraApplet();
+		new AraApplet(bArray, bOffset, bLength);
 	}
 
 	public void process(APDU apdu) {

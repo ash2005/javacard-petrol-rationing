@@ -13,9 +13,7 @@ import javax.smartcardio.TerminalFactory;
 
 public class ChargingTerminal extends Terminal {
 
-
     // Methods
-
     public ChargingTerminal(){
         super();
     }

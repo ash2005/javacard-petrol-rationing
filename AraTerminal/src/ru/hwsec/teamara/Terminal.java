@@ -11,6 +11,7 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 import java.io.*;
+import java.util.Scanner;
 
 // Question: Should we do APDU communication inside the individual functions or inside execute() ?
 
@@ -104,15 +105,22 @@ public class Terminal {
     public boolean pinCheck(){
         System.out.println("");
         System.out.print("Enter PIN: ");
-        BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-        String userName = null;
+        Scanner in = new Scanner( System.in );
+        
+        String input = null;
+        int pin = 0;
         try{
-            userName = buffer.readLine();
-        } catch (IOException ioe) {
+        	input = in.next();
+        	pin = Integer.parseInt(input);
+        	
+        } catch(NumberFormatException e) { 
+        	System.out.println("Input is not a number");
+        	System.exit(1);
+        } catch (Exception e) {
             System.out.println("IO error trying to read your name!");
             System.exit(1);
         }
-        System.out.println("");
+        System.out.println(pin);
         return true;
     }
 
