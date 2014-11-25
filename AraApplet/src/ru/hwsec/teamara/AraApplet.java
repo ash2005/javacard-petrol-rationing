@@ -7,11 +7,6 @@ import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
-import javacard.security.CryptoException;
-import javacard.security.ECKey;
-import javacard.security.ECPublicKey;
-import javacard.security.KeyBuilder;
-import javacard.security.RSAPublicKey;
 import javacard.security.RandomData;
 
 public class AraApplet extends Applet {
@@ -40,16 +35,14 @@ public class AraApplet extends Applet {
     private byte permanentState;
     private byte[] buffer_PIN;
     private byte temp;
-    
+
     // Maximum number of incorrect tries before the PIN is blocked.
     final static byte PIN_TRY_LIMIT = (byte) 0x03;
     // Maximum size PIN.
     final static byte MAX_PIN_SIZE = (byte) 0x04;
     OwnerPIN pin;
-	
-	public AraApplet(byte[] bArray, short bOffset, byte bLength) {
 
-        //this.register();
+	public AraApplet() {
         this.currentState = CurrentState.ZERO;
 
         /*
@@ -60,18 +53,18 @@ public class AraApplet extends Applet {
          * Total: 59 bytes
          */
         this.transmem = JCSystem.makeTransientByteArray((short)59, JCSystem.CLEAR_ON_DESELECT);
-        
-        pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
-        permanentState = PermanentState.INIT_STATE;
-        temp = 0x00;
-        this.buffer_PIN = JCSystem.makeTransientByteArray((short)4, JCSystem.CLEAR_ON_DESELECT); // initialize a 4bytes buffer for the PIN. 
-        this.register();
 
-        register();
+        pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
+        permanentState = PermanentState.ISSUED_STATE;
+        temp = 0x00;
+        this.buffer_PIN = JCSystem.makeTransientByteArray((short)4, JCSystem.CLEAR_ON_DESELECT); // initialize a 4bytes buffer for the PIN.
+
+        this.register();
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
-		new AraApplet(bArray, bOffset, bLength);
+		//new AraApplet(bArray, bOffset, bLength);
+		new AraApplet();
 	}
     /* Initialise the PIN, as sent from the Terminal */
     boolean setPIN(APDU apdu){
@@ -80,12 +73,12 @@ public class AraApplet extends Applet {
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }*/
     	//byte buffer_PIN[] = {0x03, 0x03, 0x03, 0x03}; // initialized in constructor.
-        
+
         // Copy 4 bytes int nonce sent by terminal
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, buffer_PIN, (short)0, (short)4);
-        
+
         this.pin.update(buffer_PIN, (short) 0, MAX_PIN_SIZE);
-        
+
         // Sent the 4 bytes to the terminal // Just for testing....
         byte bytes[] = { 0x03, 0x03, 0x03, 0x03};
         apdu.setOutgoing();
@@ -94,14 +87,14 @@ public class AraApplet extends Applet {
         apdu.sendBytes((short)0, (short)4); // (offset, length)
     	return true;
     }
-    
+
     boolean checkPIN(APDU apdu){
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.buffer_PIN, (short)0, (short)4);
         if (pin.check(buffer_PIN, (short) 0, MAX_PIN_SIZE) == true)
         	temp = 0x01;
         else
         	temp = 0x00;
-        	
+
         byte bytes[] = { temp, 0x03, 0x03, 0x03};
 
         // Sent the 4 bytes to the terminal
@@ -110,8 +103,8 @@ public class AraApplet extends Applet {
         Util.arrayCopy(bytes, (short)0, apdu.getBuffer(), (short)0, (short)4);
         apdu.sendBytes((short)0, (short)4); // (offset, length)
     	return pin.check(buffer_PIN, (short) 0, MAX_PIN_SIZE);
-    }	
-	
+    }
+
 	public void process(APDU apdu) {
 		// Good practice: Return 9000 on SELECT
 		if (selectingApplet()) {
@@ -139,7 +132,7 @@ public class AraApplet extends Applet {
 
                     case Instruction.SET_BALANCE:
                     	break;
-                    	
+
                     case Instruction.CHECK_PIN: // TODO: DELETE AFTER THIS LINE and MOVE under ISSUED_STATE state.
                     	this.checkPIN(apdu);
                     	break;
@@ -226,9 +219,9 @@ public class AraApplet extends Applet {
         // Verify signature on the received public key
         boolean valid = false;
         if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)1)
-            valid = ECC.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+            valid = ECCCard.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         else if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)2)
-            valid = ECC.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+            valid = ECCCard.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         if(!valid) {
             // If verification fails then we abort
             this.currentState = CurrentState.ZERO;

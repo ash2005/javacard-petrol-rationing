@@ -1,7 +1,8 @@
 package ru.hwsec.teamara;
 
-import java.util.Arrays;
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.smartcardio.Card;
 import javax.smartcardio.CardChannel;
@@ -11,9 +12,6 @@ import javax.smartcardio.CardTerminals;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.util.Scanner;
 
 // Question: Should we do APDU communication inside the individual functions or inside execute() ?
 

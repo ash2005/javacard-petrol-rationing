@@ -47,57 +47,39 @@ public class AraTerminal {
     };
 
     private CardChannel applet;
+    private boolean useSimulator;
+    private Simulator simulator;
 
-    private AraTerminal() { }
+    private AraTerminal() {
+    	this.useSimulator = false;
+    }
 
     private void execute() {
     	TerminalFactory tf = TerminalFactory.getDefault();
     	CardTerminals ct = tf.terminals();
     	List<CardTerminal> cs;
 		try {
-			cs = ct.list(CardTerminals.State.CARD_PRESENT);
-			if (cs.isEmpty()) {
-	    		System.out.println("No terminals with a card found.");
-	    		return;
-	    	}
-			while (true) {
+			if(!this.useSimulator) {
+				cs = ct.list(CardTerminals.State.CARD_PRESENT);
+				if (cs.isEmpty()) {
+		    		System.out.println("No terminals with a card found.");
+		    		return;
+		    	}
 	    		for(CardTerminal c : cs) {
 	    			if (c.isCardPresent()) {
 	    				Card card = c.connect("*");
 	    	    		this.applet = card.getBasicChannel();
 	    	    		if (this.applet.transmit(SELECT_APDU).getSW() != 0x9000)
 	    	    			throw new CardException("Could no select AraApplet.");
-	    	    		this.performHandshake(this.applet);
+	    	    		break;
 	    	    	}
 	    		}
-	    	}
-
-
+			}
+			this.performHandshake();
 		} catch (CardException e) { }
     }
 
-    private void executeSim() {
-    	Simulator simulator = new Simulator();
-    	AID aidInstance = new AID(ARA_APPLET_AID, (short)0, (byte)ARA_APPLET_AID.length);
-    	AID someaid = simulator.installApplet(aidInstance, AraApplet.class);
-    	if (simulator.selectApplet(someaid)) {
-    		Random rnd = new Random(Calendar.getInstance().getTimeInMillis());
-            byte[] termRndBytes = new byte[4];
-            rnd.nextBytes(termRndBytes);
-    		byte[] respBytes = simulator.transmitCommand(new CommandAPDU(0, Instruction.TERMINAL_HELLO, 0, 0, termRndBytes).getBytes());
-    		byte[] cardRndBytes = new ResponseAPDU(respBytes).getData();
-
-    		byte[] signedKey = new byte[104];
-            System.arraycopy(PUBLIC_KEY_BYTES, 0, signedKey, 0, PUBLIC_KEY_BYTES.length);
-            System.arraycopy(SIGNATURE_BYTES, 0, signedKey, PUBLIC_KEY_BYTES.length, SIGNATURE_BYTES.length);
-            respBytes = simulator.transmitCommand(new CommandAPDU(0, Instruction.TERMINAL_KEY, 1, 0, signedKey).getBytes());
-            byte[] data = new ResponseAPDU(respBytes).getData();
-            System.out.println(data.length);
-    	} else
-    		System.out.println("Could not select applet.");
-    }
-
-    private void performHandshake(CardChannel a) throws CardException {
+    private void performHandshake() throws CardException {
         ResponseAPDU resp;
         // We first generate 4 random bytes to send the card
         Random rnd = new Random(Calendar.getInstance().getTimeInMillis());
@@ -105,7 +87,7 @@ public class AraTerminal {
         rnd.nextBytes(termRndBytes);
 
         // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
-        resp = a.transmit(new CommandAPDU(0, Instruction.TERMINAL_HELLO, 0, 0, termRndBytes));
+        resp = this.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_HELLO, 0, 0, termRndBytes));
         byte[] cardRndBytes = resp.getData();
         System.out.println(cardRndBytes.length);
 
@@ -119,7 +101,7 @@ public class AraTerminal {
         // P1 specifies what type of terminal this is:
         // P1 = 1 ==> charging terminal
         // P1 = 2 ==> pump terminal
-        resp = a.transmit(new CommandAPDU(0, Instruction.TERMINAL_KEY, 1, 0, signedKey));
+        resp = this.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_KEY, 1, 0, signedKey));
         byte[] data = resp.getData();
 
         // Verify the public key and signature received from the card
@@ -128,7 +110,7 @@ public class AraTerminal {
         System.arraycopy(data, 0, cardKeyBytes, 0, 51);
         System.arraycopy(data, 51, cardSignatureBytes, 0, 54);
         try {
-			System.out.println(ECC.verifyCardKey(cardKeyBytes, cardSignatureBytes));
+			System.out.println(ECCTerminal.verifyCardKey(cardKeyBytes, cardSignatureBytes));
 		} catch (InvalidKeyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,7 +129,26 @@ public class AraTerminal {
 		}
     }
 
+    private ResponseAPDU sendToCard(CommandAPDU apdu) throws CardException {
+        if(this.useSimulator) {
+            byte[] respBytes = simulator.transmitCommand(apdu.getBytes());
+    		return new ResponseAPDU(respBytes);
+        } else
+            return this.applet.transmit(apdu);
+    }
+
     public static void main(String[] arg) {
-    	(new AraTerminal()).execute();
+    	AraTerminal araTerminal = new AraTerminal();
+    	/*
+    	//-----------------------------
+    	// Comment the following lines to disable the simulator
+    	araTerminal.useSimulator = true;
+    	araTerminal.simulator = new Simulator();
+    	AID appletAID = new AID(ARA_APPLET_AID, (short)0, (byte)ARA_APPLET_AID.length);
+    	AID instanceAID = araTerminal.simulator.installApplet(appletAID, AraApplet.class);
+    	araTerminal.simulator.selectApplet(instanceAID);
+    	//-----------------------------
+    	*/
+    	araTerminal.execute();
     }
 }

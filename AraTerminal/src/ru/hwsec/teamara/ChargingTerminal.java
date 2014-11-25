@@ -1,15 +1,6 @@
 package ru.hwsec.teamara;
 
-import java.util.List;
-
-import javax.smartcardio.Card;
-import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
-import javax.smartcardio.CardTerminal;
-import javax.smartcardio.CardTerminals;
-import javax.smartcardio.CommandAPDU;
-import javax.smartcardio.ResponseAPDU;
-import javax.smartcardio.TerminalFactory;
 
 public class ChargingTerminal extends Terminal {
 
