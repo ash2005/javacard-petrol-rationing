@@ -121,6 +121,6 @@ public class AraTerminal {
     }
 
     public static void main(String[] arg) {
-    	(new AraTerminal()).execute();
+    	(new AraTerminal()).executeSim();
     }
 }
