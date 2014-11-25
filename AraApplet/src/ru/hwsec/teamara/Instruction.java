@@ -15,11 +15,8 @@ public class Instruction {
     public static final byte TERMINAL_HELLO = (byte)0x10;
     public static final byte TERMINAL_TYPE  = (byte)0x11;
     public static final byte TERMINAL_KEY   = (byte)0x12;
-    public static final byte TERMINAL_KEY_SIGNATURE  = (byte)0x13;
-    public static final byte TERMINAL_GET_CARD_KEY   = (byte)0x14;
-    public static final byte TERMINAL_GET_CARD_EXPIRY       = (byte)0x15;
-    public static final byte TERMINAL_GET_CARD_SIGNATURE    = (byte)0x16;
-    public static final byte TERMINAL_CHANGE_CIPHER_SPEC    = (byte)0x17;
+    public static final byte GEN_SHARED_SECRET  = (byte)0x13;
+    public static final byte TERMINAL_CHANGE_CIPHER_SPEC    = (byte)0x14;
 
 
     // Checks

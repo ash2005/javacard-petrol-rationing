@@ -125,14 +125,6 @@ public abstract class AbstractApplet extends Applet {
                         this.processTerminalKey(apdu);
                     break;
 
-                    case Instruction.TERMINAL_KEY_SIGNATURE:
-                    break;
-
-                    case Instruction.TERMINAL_GET_CARD_KEY:
-                    break;
-
-                    case Instruction.TERMINAL_GET_CARD_SIGNATURE:
-                    break;
 
                     case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
                     break;
