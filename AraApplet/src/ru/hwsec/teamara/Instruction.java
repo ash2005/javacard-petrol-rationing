@@ -8,6 +8,7 @@ public class Instruction {
     public static final byte SET_SIGNATURE  = (byte)0x02;
     public static final byte SET_PIN        = (byte)0x03;
     public static final byte SET_BALANCE    = (byte)0x04;
+    public static final byte CHECK_PIN      = (byte)0x05; // move under issued state.
 
     //ISSUED_STATE
     // Mutual Authentication
