@@ -1,6 +1,8 @@
 package ru.hwsec.teamara;
 
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.smartcardio.Card;
 import javax.smartcardio.CardChannel;
@@ -10,8 +12,6 @@ import javax.smartcardio.CardTerminals;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
-import java.io.*;
-import java.util.Scanner;
 
 // Question: Should we do APDU communication inside the individual functions or inside execute() ?
 
@@ -40,9 +40,8 @@ public class Terminal {
 
 
     // APDU Communication
-    static final byte[] ARA_APPLET_AID = { (byte) 0xde, (byte) 0xad, (byte) 0xba, (byte) 0xbe, (byte) 0x01 };
+    static final byte[] ARA_APPLET_AID = new byte[]{ (byte) 0xde, (byte) 0xad, (byte) 0xba, (byte) 0xbe, (byte) 0x01 };
     static final CommandAPDU SELECT_APDU = new CommandAPDU((byte) 0x00, (byte) 0xA4, (byte) 0x04, (byte) 0x00, ARA_APPLET_AID);
-
     CardChannel applet;
 
 
@@ -102,28 +101,75 @@ public class Terminal {
     /* Ask user for a pin.
      * Send pin to card
      * return true if card returns success, else return false */
-    public boolean pinCheck(){
+    /**
+     * @return
+     */
+    /**
+     * @return
+     */
+    
+    // Asks for PIN and returns the byte array.
+    private byte [] ask_for_PIN(){
+    	String input = null;
+    	byte[] bytes = ByteBuffer.allocate(4).putInt(1111).array(); // initialize
+    	
         System.out.println("");
         System.out.print("Enter PIN: ");
         Scanner in = new Scanner( System.in );
         
-        String input = null;
-        int pin = 0;
         try{
         	input = in.next();
-        	pin = Integer.parseInt(input);
+        	int pin = Integer.parseInt(input); // Just to check if it is an integer, var is not used.
         	
+        	
+        	int i = 0;
+        	for(char charUserOutput : String.valueOf(input).toCharArray())
+        	{
+            	 bytes[i] = (byte) charUserOutput;
+            	 i++;
+        	}
+            for (byte b : bytes)
+            {
+            	System.out.format("0x%x ", b);
+            }
+            System.out.println();
+            
+            
         } catch(NumberFormatException e) { 
         	System.out.println("Input is not a number");
         	System.exit(1);
         } catch (Exception e) {
-            System.out.println("IO error trying to read your name!");
+            System.out.println("IO error.");
             System.exit(1);
-        }
-        System.out.println(pin);
+        }	
+        return bytes;
+    }
+    
+    public void setPIN(CardChannel a) throws CardException {
+    	byte pincode[] = ask_for_PIN();
+    	
+        ResponseAPDU resp;
+        // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
+        resp = a.transmit(new CommandAPDU(0, Instruction.SET_PIN, 0, 0, pincode));
+        byte[] cardRndBytes = resp.getData();
+        System.out.println(cardRndBytes.length);
+        for (byte b :  cardRndBytes)
+        	System.out.format("0x%x ", b);
+        System.out.println();
+    }
+    
+    public boolean pinCheck(CardChannel a) throws CardException{
+    	byte pincode[] = ask_for_PIN();
+        ResponseAPDU resp;
+        // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
+        resp = a.transmit(new CommandAPDU(0, Instruction.CHECK_PIN, 0, 0, pincode));
+        byte[] cardRndBytes = resp.getData();
+        System.out.println(cardRndBytes.length);
+        for (byte b :  cardRndBytes)
+        	System.out.format("0x%x ", b);
+        System.out.println();        
         return true;
     }
-
 
     /* Check the revocation status of the card.
      * Return false if revoked.
@@ -132,38 +178,44 @@ public class Terminal {
         return true;
     }
 
+    
+    public byte[] intToBytes( final int i ) {
+        ByteBuffer bb = ByteBuffer.allocate(4); 
+        bb.putInt(i); 
+        return bb.array();
+    }
 
     /* Main state machine that calls the various methods defined above? */
-    private void execute() {
+    public void execute() throws CardException {
+    	System.out.println("Entering execution...");
     	TerminalFactory tf = TerminalFactory.getDefault();
     	CardTerminals ct = tf.terminals();
     	List<CardTerminal> cs;
+    	boolean loop = true;
 		try {
 			cs = ct.list(CardTerminals.State.CARD_PRESENT);
 			if (cs.isEmpty()) {
 	    		System.out.println("No terminals with a card found.");
 	    		return;
 	    	}
-			while (true) {
+			while (loop) {
 	    		for(CardTerminal c : cs) {
 	    			if (c.isCardPresent()) {
 	    				Card card = c.connect("*");
 	    	    		this.applet = card.getBasicChannel();
-	    	    		ResponseAPDU resp = this.applet.transmit(SELECT_APDU);
-	    	    		if (resp.getSW() != 0x9000) {
+	    	    		if (this.applet.transmit(SELECT_APDU).getSW() != 0x9000)
 	    	    			throw new CardException("Could no select AraApplet.");
-	    	    		}
-	    	    		resp = this.applet.transmit(new CommandAPDU(0, 0x0a, 0, 0));
-	    	    		byte[] data = resp.getData();
-	    	    		int x;
-	    	    		x = 2;
-
-
-	    	    	}
+	    	    		this.setPIN(this.applet);
+                        this.pinCheck(this.applet);
+                        this.pinCheck(this.applet);
+                        loop = false;
+	       	    	}
 	    		}
 	    	}
 
 
-		} catch (CardException e) { }
+		} catch (CardException e) { 
+			System.out.println(e.getMessage());
+		}
     }
 }

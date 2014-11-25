@@ -32,6 +32,9 @@ public class AraApplet extends Applet {
 
     private byte currentState;
     private byte[] transmem;
+    private byte permanentState;
+    private byte[] buffer_PIN;
+    private byte temp;
 
     // Maximum number of incorrect tries before the PIN is blocked.
     final static byte PIN_TRY_LIMIT = (byte) 0x03;
@@ -40,12 +43,6 @@ public class AraApplet extends Applet {
     OwnerPIN pin;
 
 	public AraApplet() {
-        // It is good programming practice to allocate
-        // all the memory that an applet needs during
-        // its lifetime inside the constructor
-        pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
-
-        //this.register();
         this.currentState = CurrentState.ZERO;
 
         /*
@@ -56,16 +53,57 @@ public class AraApplet extends Applet {
          * Total: 59 bytes
          */
         this.transmem = JCSystem.makeTransientByteArray((short)59, JCSystem.CLEAR_ON_DESELECT);
-        // The installation parameters contain the PIN
-        // initialization value
-        //pin.update(bArray, (short) (bOffset + 1), (byte) 0x04);
-        register();
+
+        pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
+        permanentState = PermanentState.ISSUED_STATE;
+        temp = 0x00;
+        this.buffer_PIN = JCSystem.makeTransientByteArray((short)4, JCSystem.CLEAR_ON_DESELECT); // initialize a 4bytes buffer for the PIN.
+
+        this.register();
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
 		//new AraApplet(bArray, bOffset, bLength);
 		new AraApplet();
 	}
+    /* Initialise the PIN, as sent from the Terminal */
+    boolean setPIN(APDU apdu){
+        /*if(this.currentState != CurrentState.HELLO) { ????
+            this.currentState = CurrentState.ZERO;
+            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+        }*/
+    	//byte buffer_PIN[] = {0x03, 0x03, 0x03, 0x03}; // initialized in constructor.
+
+        // Copy 4 bytes int nonce sent by terminal
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, buffer_PIN, (short)0, (short)4);
+
+        this.pin.update(buffer_PIN, (short) 0, MAX_PIN_SIZE);
+
+        // Sent the 4 bytes to the terminal // Just for testing....
+        byte bytes[] = { 0x03, 0x03, 0x03, 0x03};
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short)4);
+        Util.arrayCopy(bytes, (short)0, apdu.getBuffer(), (short)0, (short)4);
+        apdu.sendBytes((short)0, (short)4); // (offset, length)
+    	return true;
+    }
+
+    boolean checkPIN(APDU apdu){
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.buffer_PIN, (short)0, (short)4);
+        if (pin.check(buffer_PIN, (short) 0, MAX_PIN_SIZE) == true)
+        	temp = 0x01;
+        else
+        	temp = 0x00;
+
+        byte bytes[] = { temp, 0x03, 0x03, 0x03};
+
+        // Sent the 4 bytes to the terminal
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short)4);
+        Util.arrayCopy(bytes, (short)0, apdu.getBuffer(), (short)0, (short)4);
+        apdu.sendBytes((short)0, (short)4); // (offset, length)
+    	return pin.check(buffer_PIN, (short) 0, MAX_PIN_SIZE);
+    }
 
 	public void process(APDU apdu) {
 		// Good practice: Return 9000 on SELECT
@@ -73,19 +111,77 @@ public class AraApplet extends Applet {
 			return;
 		}
 
-        // Get instruction received from the card and validate it
-        byte ins = apdu.getBuffer()[ISO7816.OFFSET_INS];
-		switch (ins) {
-            case Instruction.TERMINAL_HELLO:
-            this.processTerminalHello(apdu);
-            break;
+		byte[] buffer = apdu.getBuffer();
+        byte ins = buffer[ISO7816.OFFSET_INS];
 
-            case Instruction.TERMINAL_KEY:
-            this.processTerminalKey(apdu);
-            break;
+        switch(permanentState){
+            case PermanentState.INIT_STATE:
+                switch (ins) {
+        	    	case Instruction.SET_PRIV_KEY:
+        	    		break;
 
-            default:
-            ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+                    case Instruction.SET_KEY_EXPIRY:
+                    	break;
+
+                    case Instruction.SET_SIGNATURE:
+                    	break;
+
+                    case Instruction.SET_PIN:
+                        this.setPIN(apdu);
+                        break;
+
+                    case Instruction.SET_BALANCE:
+                    	break;
+
+                    case Instruction.CHECK_PIN: // TODO: DELETE AFTER THIS LINE and MOVE under ISSUED_STATE state.
+                    	this.checkPIN(apdu);
+                    	break;
+
+    	    	default:
+    		    	// good practice: If you don't know the INStruction, say so:
+    			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+		        }
+                break;
+
+            case PermanentState.ISSUED_STATE:
+                switch (ins) {
+        	    	case Instruction.TERMINAL_HELLO:
+                        this.processTerminalHello(apdu);
+        			break;
+
+                    case Instruction.TERMINAL_TYPE:
+                        //this.processTerminalType(apdu);
+                    break;
+
+                    case Instruction.TERMINAL_KEY:
+                        this.processTerminalKey(apdu);
+                    break;
+
+                    case Instruction.TERMINAL_KEY_SIGNATURE:
+                    break;
+
+                    case Instruction.TERMINAL_GET_CARD_KEY:
+                    break;
+
+                    case Instruction.TERMINAL_GET_CARD_SIGNATURE:
+                    break;
+
+                    case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
+                    break;
+
+
+    	    	default:
+    		    	// good practice: If you don't know the INStruction, say so:
+    			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+		        }
+
+                break;
+
+
+
+        default:
+		   	// good practice: If you don't know the INStruction, say so:
+		    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
         }
 	}
 
@@ -108,7 +204,7 @@ public class AraApplet extends Applet {
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)4);
         Util.arrayCopy(this.transmem, (short)4, apdu.getBuffer(), (short)0, (short)4);
-        apdu.sendBytes((short)0, (short)4);
+        apdu.sendBytes((short)0, (short)4); // (offset, length)
 
         // Update the current state
         this.currentState = CurrentState.HELLO;
