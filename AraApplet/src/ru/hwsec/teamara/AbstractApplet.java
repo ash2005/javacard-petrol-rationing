@@ -17,7 +17,9 @@ public abstract class AbstractApplet extends Applet {
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
 		//new AbstractApplet(); //Commented to avoid compiler complaints
 	}
-
+    abstract void processTerminalHello(APDU apdu);
+    abstract void processTerminalKey(APDU apdu);
+    abstract void processTerminalType(APDU apdu);
 
     /* Perform mutual authentication with the Terminal.
      * Establish shared Diffie-Hellman Secret from Public Keys
@@ -81,7 +83,7 @@ public abstract class AbstractApplet extends Applet {
 		}
 
 		byte[] buffer = apdu.getBuffer();
-        ins = buffer[ISO7816.OFFSET_INS];
+        byte ins = buffer[ISO7816.OFFSET_INS];
 
         switch(permanentState){
             case PermanentState.INIT_STATE:
