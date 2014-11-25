@@ -43,13 +43,13 @@ public class AraApplet extends Applet {
     // Maximum size PIN.
     final static byte MAX_PIN_SIZE = (byte) 0x04;
     OwnerPIN pin;
-    
+
 	public AraApplet(byte[] bArray, short bOffset, byte bLength) {
         // It is good programming practice to allocate
         // all the memory that an applet needs during
         // its lifetime inside the constructor
         pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
-        
+
         //this.register();
         this.currentState = CurrentState.ZERO;
 
@@ -57,16 +57,14 @@ public class AraApplet extends Applet {
          * Here we will store values which are session specific:
          * 4 bytes (0..3) int nonce sent by terminal in TERMINAL_HELLO message
          * 4 bytes (4..7) int nonce sent by card in CARD_HELLO message
-         * 49 bytes (8..56) public key sent by the terminal
-         * Total: 57 bytes
+         * 51 bytes (8..58) public key sent by the terminal
+         * Total: 59 bytes
          */
-        this.transmem = JCSystem.makeTransientByteArray((short)57, JCSystem.CLEAR_ON_DESELECT);
-        
+        this.transmem = JCSystem.makeTransientByteArray((short)59, JCSystem.CLEAR_ON_DESELECT);
         // The installation parameters contain the PIN
         // initialization value
         pin.update(bArray, (short) (bOffset + 1), (byte) 0x04);
         register();
-        
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
@@ -125,16 +123,10 @@ public class AraApplet extends Applet {
             this.currentState = CurrentState.ZERO;
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
-        
-        ECPublicKey publicKey = (ECPublicKey)KeyBuilder.buildKey(
-				KeyBuilder.TYPE_EC_F2M_PUBLIC,
-				KeyBuilder.LENGTH_EC_F2M_193,
-				false
-		);
 
         // Verify signature on the received public key
         boolean valid = false;
-        /*if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)1)
+        if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)1)
             valid = ECC.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         else if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)2)
             valid = ECC.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
@@ -142,17 +134,17 @@ public class AraApplet extends Applet {
             // If verification fails then we abort
             this.currentState = CurrentState.ZERO;
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        }*/
+        }
 
         // Verification went well if we got this far so we save the key
-        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)8, (short)49);
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)8, (short)51);
 
         // Send our key with its own signature in return
         apdu.setOutgoing();
-        apdu.setOutgoingLength((short)(49 + 55));
+        apdu.setOutgoingLength((short)(51 + 54));
         Util.arrayCopy(PUBLIC_KEY_BYTES, (short)0, apdu.getBuffer(), (short)0, (short)PUBLIC_KEY_BYTES.length);
         Util.arrayCopy(SIGNATURE_BYTES, (short)0, apdu.getBuffer(), (short)PUBLIC_KEY_BYTES.length, (short)SIGNATURE_BYTES.length);
-        apdu.sendBytes((short)0, (short)(49 + 55));
+        apdu.sendBytes((short)0, (short)(51 + 54));
 
         // Update the current state
         this.currentState = CurrentState.KEY_EXCHANGE;

@@ -1,5 +1,5 @@
 #! /bin/bash
 
-CURVE=secp192k1
+CURVE=sect193r1
 echo "Using curve $CURVE"
 export CURVE
