@@ -7,6 +7,9 @@ import javacard.framework.ISOException;
 
 public abstract class AbstractApplet extends Applet {
 
+    private byte currentState;
+    private byte permanentState;
+
 	public AbstractApplet() {
         this.register();
 	}
@@ -67,7 +70,8 @@ public abstract class AbstractApplet extends Applet {
     /* Revoke the card by updating some status flag. */
     abstract boolean revoke();
 
-
+    /* Initialise the PIN, as sent from the Terminal */
+    abstract boolean setPIN(APDU apdu);
 
 
 	public void process(APDU apdu) {
@@ -77,22 +81,78 @@ public abstract class AbstractApplet extends Applet {
 		}
 
 		byte[] buffer = apdu.getBuffer();
-		switch (buffer[ISO7816.OFFSET_INS]) {
+        ins = buffer[ISO7816.OFFSET_INS];
 
-		case (byte) 0x0a:
-			apdu.setOutgoing();
-			apdu.setOutgoingLength((short) 5);
-			buffer[0] = (byte)0x03;
-			buffer[1] = (byte)0x04;
-			buffer[2] = (byte)0x05;
-			buffer[3] = (byte)0x06;
-			buffer[4] = (byte)0x07;
-        	apdu.sendBytes((short) 0, (short) 5);
-			break;
+        switch(permanentState){
+            case PermanentState.INIT_STATE:
+                switch (ins) {
+        	    	case Instruction.SET_PRIV_KEY:
+        			break;
 
-		default:
-			// good practice: If you don't know the INStruction, say so:
-			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-		}
+                    case Instruction.SET_KEY_EXPIRY:
+                    break;
+
+                    case Instruction.SET_SIGNATURE:
+                    break;
+
+                    case Instruction.SET_PIN:
+                        this.setPIN(apdu);
+                    break;
+
+                    case Instruction.SET_BALANCE:
+                    break;
+
+    	    	default:
+    		    	// good practice: If you don't know the INStruction, say so:
+    			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+		        }
+
+                break;
+
+            case PermanentState.ISSUED_STATE:
+                switch (ins) {
+        	    	case Instruction.TERMINAL_HELLO:
+                        this.processTerminalHello(apdu);
+        			break;
+
+                    case Instruction.TERMINAL_TYPE:
+                        this.processTerminalType(apdu);
+                    break;
+
+                    case Instruction.TERMINAL_KEY:
+                        this.processTerminalKey(apdu);
+                    break;
+
+                    case Instruction.TERMINAL_KEY_SIGNATURE:
+                    break;
+
+                    case Instruction.TERMINAL_GET_CARD_KEY:
+                    break;
+
+                    case Instruction.TERMINAL_GET_CARD_SIGNATURE:
+                    break;
+
+                    case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
+                    break;
+
+
+
+
+
+
+    	    	default:
+    		    	// good practice: If you don't know the INStruction, say so:
+    			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+		        }
+
+                break;
+
+
+
+        default:
+		   	// good practice: If you don't know the INStruction, say so:
+		    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+        }
 	}
+
 }
