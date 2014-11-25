@@ -9,7 +9,7 @@ if len(sys.argv) < 2:
 if len(sys.argv) == 3:
 	count = int(sys.argv[2])
 else:
-	count = 192 * 2 + 1
+	count = 49 * 8
 
 b = bytearray()
 done = False
@@ -21,7 +21,7 @@ while not done:
 		if val != '':
 			b.append(int(val, 16))
 			count -= 8
-			if count < 0:
+			if count == 0:
 				done = True
 				break
 	print 'Need ' + str(count / 8) + ' more bytes...'
