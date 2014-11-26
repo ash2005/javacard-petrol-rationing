@@ -27,8 +27,8 @@ public class AraApplet extends Applet {
 	public AraApplet() {
         this.currentState = CurrentState.ZERO;
         this.pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
-        this.permanentState = PermanentState.INIT_STATE;
-        //this.permanentState = PermanentState.ISSUED_STATE;
+        //this.permanentState = PermanentState.INIT_STATE;
+        this.permanentState = PermanentState.ISSUED_STATE;
 
         /*
          * Here we will store values which are session specific:
@@ -39,7 +39,7 @@ public class AraApplet extends Applet {
          * Total: 63 bytes
          */
         this.transmem = JCSystem.makeTransientByteArray((short)63, JCSystem.CLEAR_ON_DESELECT);
-        
+
         this.register();
 	}
 
@@ -123,12 +123,12 @@ public class AraApplet extends Applet {
      *  All the functions bellow are used for processing command APDUs sent by the terminal.
      */
 
-	
+
     /* Initialise the PIN, as sent from the Terminal */
     void setPIN(APDU apdu){
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
         this.pin.update(this.transmem, (short)59, MAX_PIN_SIZE);
-        
+
         /*// Sent the 4 bytes to the terminal // Just for testing....
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)4);
@@ -136,7 +136,7 @@ public class AraApplet extends Applet {
         apdu.sendBytes((short)0, (short)4); // (offset, length)
     	//*/
     }
-    
+
     /* Check the user entered PIN */
     boolean checkPIN(APDU apdu){
     	this.temp = 0x00;
@@ -153,12 +153,12 @@ public class AraApplet extends Applet {
         //this.buffer_PIN[1]= pin.getTriesRemaining();
         Util.arrayCopy(transmem, (short)59, apdu.getBuffer(), (short)0, (short)2);
         apdu.sendBytes((short)0, (short)2); // (offset, length)
-        
+
     	return (temp == (byte) 0x01);
     }
-	
-	
-	
+
+
+
     /* This method processes the TERMINAL_HELLO command and sends back a CARD_HELLO
 	 * The 64-bit of random nonces are exchanged and stored in transmem[0...7]
 	 */
@@ -212,52 +212,48 @@ public class AraApplet extends Applet {
         Util.arrayCopy(ECCCard.PUBLIC_KEY_BYTES, (short)0, apdu.getBuffer(), (short)0, (short)ECCCard.PUBLIC_KEY_BYTES.length);
         Util.arrayCopy(ECCCard.SIGNATURE_BYTES, (short)0, apdu.getBuffer(), (short)ECCCard.PUBLIC_KEY_BYTES.length, (short)ECCCard.SIGNATURE_BYTES.length);
         apdu.sendBytes((short)0, (short)(51 + 54));
-        
+
         // Update the current state
         this.currentState = CurrentState.KEY_EXCHANGE;
      }
 
 	 //Generate DH Secret
      private void genSharedSecret(APDU apdu) {
-         if(this.currentState != CurrentState.KEY_EXCHANGE) {
-             this.currentState = CurrentState.ZERO;
-             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
-         }
+        if(this.currentState != CurrentState.KEY_EXCHANGE) {
+            this.currentState = CurrentState.ZERO;
+            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+        }
 
-         try{
-         
-         	KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DHC, false);
-         	DH.init(ECCCard.getPrivateKey(ECCCard.PRIVATE_KEY_BYTES));
-         
-        	 byte [] secret;
-        	 secret = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
-        	 short secretLength = DH.generateSecret(transmem, (short) 8, (short) 51, secret, (short) 0);	
-        
-        	 
-        	 if (secretLength <1){
-        		 byte[] buffer = apdu.getBuffer();
-        		 apdu.setOutgoing();
-    		     apdu.setOutgoingLength((short)1);
-    		     buffer[0] = (byte) 0xff;
-    		     apdu.sendBytes((short)0, (short)1); // (offset, length)
-        	 }else{
-    	         apdu.setOutgoing();
-    	         apdu.setOutgoingLength(secretLength);
-    	         Util.arrayCopy(secret, (short)0, apdu.getBuffer(), (short)0, secretLength);
-    	         apdu.sendBytes((short)0, (short)secretLength); // (offset, length)
-        	 }
-        	 	
-	         // Update the current state
-	         this.currentState = CurrentState.CHANGE_CIPHER;
-	         }
-         
-         catch (CryptoException e){
-        	 byte[] buffer = apdu.getBuffer();
-		     apdu.setOutgoing();
-		     apdu.setOutgoingLength((short)1);
-		     //buffer[0] = (byte) e.getReason();
-		     buffer[0] = (byte) 0xfe;
-		     apdu.sendBytes((short)0, (short)1); // (offset, length)
-		     }
-     }
+        try {
+            KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DHC, false);
+            DH.init(ECCCard.getCardPrivateKey());
+
+            byte [] secret;
+            secret = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
+            short secretLength = DH.generateSecret(transmem, (short) 8, (short) 51, secret, (short) 0);
+
+            if(secretLength < 1) {
+                byte[] buffer = apdu.getBuffer();
+                apdu.setOutgoing();
+                apdu.setOutgoingLength((short)1);
+                buffer[0] = (byte) 0xff;
+                apdu.sendBytes((short)0, (short)1);
+            } else {
+                apdu.setOutgoing();
+                apdu.setOutgoingLength(secretLength);
+                Util.arrayCopy(secret, (short)0, apdu.getBuffer(), (short)0, secretLength);
+                apdu.sendBytes((short)0, (short)secretLength); // (offset, length)
+            }
+
+            // Update the current state
+            this.currentState = CurrentState.CHANGE_CIPHER;
+        } catch (CryptoException e) {
+            byte[] buffer = apdu.getBuffer();
+            apdu.setOutgoing();
+            apdu.setOutgoingLength((short)1);
+            //buffer[0] = (byte) e.getReason();
+            buffer[0] = (byte) 0xfe;
+            apdu.sendBytes((short)0, (short)1); // (offset, length)
+        }
+    }
 }

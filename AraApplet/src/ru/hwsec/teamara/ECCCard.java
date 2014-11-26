@@ -6,7 +6,7 @@ import javacard.security.KeyBuilder;
 import javacard.security.Signature;
 
 public final class ECCCard {
-	
+
 	public static byte[] PRIVATE_KEY_BYTES = {
         (byte)0x00, (byte)0xa2, (byte)0x7c, (byte)0x91, (byte)0xa2, (byte)0x97, (byte)0x8d, (byte)0x91, (byte)0xd6, (byte)0x06, (byte)0x5a, (byte)0x01, (byte)0x8c, (byte)0xde, (byte)0x2f,
         (byte)0x61, (byte)0x6f, (byte)0x54, (byte)0x1f, (byte)0xb5, (byte)0x33, (byte)0xe9, (byte)0xba, (byte)0xac, (byte)0xf1
@@ -84,10 +84,10 @@ public final class ECCCard {
 		return publicKey;
 	}
 
-	
+
 	private static ECPrivateKey getBlankPrivateKey() {
 		ECPrivateKey privateKey = (ECPrivateKey)KeyBuilder.buildKey(
-				KeyBuilder.TYPE_EC_F2M_PUBLIC,
+				KeyBuilder.TYPE_EC_F2M_PRIVATE,
 				KeyBuilder.LENGTH_EC_F2M_193,
 				false
 		);
@@ -102,12 +102,12 @@ public final class ECCCard {
 		return privateKey;
 	}
 
-	public static ECPrivateKey getPrivateKey(byte[] secretScalar){
+	public static ECPrivateKey getCardPrivateKey() {
 		ECPrivateKey privateKey = getBlankPrivateKey();
-		privateKey.setS(secretScalar, (short) 0, (short) 25);
+        privateKey.setS(PRIVATE_KEY_BYTES, (short)0, (short)PRIVATE_KEY_BYTES.length);
 		return privateKey;
 	}
-	
+
 	public static ECPublicKey getChargingIntermediateKey() {
 		ECPublicKey publicKey = getBlankPublicKey();
 		publicKey.setW(CHARGING_TERMINAL_INTERMEDIATE, (short)0, (short)CHARGING_TERMINAL_INTERMEDIATE.length);
