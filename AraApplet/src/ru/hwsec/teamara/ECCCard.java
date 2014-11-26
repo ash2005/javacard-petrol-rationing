@@ -10,7 +10,7 @@ public final class ECCCard {
 	public static final short FIELD_E = (short)15;
 
 	public static final byte[] A = new byte[]{
-		(byte)0x00, // Uncomment this if you are using the card.
+		//(byte)0x00, // Uncomment this if you are using the card.
         (byte)0x17, (byte)0x85, (byte)0x8f, (byte)0xeb, (byte)0x7a, (byte)0x98, (byte)0x97, (byte)0x51, (byte)0x69, (byte)0xe1, (byte)0x71, (byte)0xf7, (byte)0x7b, (byte)0x40,
         (byte)0x87, (byte)0xde, (byte)0x09, (byte)0x8a, (byte)0xc8, (byte)0xa9, (byte)0x11, (byte)0xdf, (byte)0x7b, (byte)0x01
     };
