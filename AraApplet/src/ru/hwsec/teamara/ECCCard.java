@@ -1,6 +1,7 @@
 package ru.hwsec.teamara;
 
 import javacard.security.ECPublicKey;
+import javacard.security.ECPrivateKey;
 import javacard.security.KeyBuilder;
 import javacard.security.Signature;
 
@@ -64,6 +65,30 @@ public final class ECCCard {
 		return publicKey;
 	}
 
+	
+	private static ECPrivateKey getBlankPrivateKey() {
+		ECPrivateKey privateKey = (ECPrivateKey)KeyBuilder.buildKey(
+				KeyBuilder.TYPE_EC_F2M_PUBLIC,
+				KeyBuilder.LENGTH_EC_F2M_193,
+				false
+		);
+
+		privateKey.setFieldF2M(FIELD_E);
+		privateKey.setB(B, (short)0, (short)B.length);
+		privateKey.setA(A, (short)0, (short)A.length);
+		privateKey.setG(G, (short)0, (short)G.length);
+		privateKey.setR(N, (short)0, (short)N.length);
+		privateKey.setK(COFACTOR);
+
+		return privateKey;
+	}
+
+	public static ECPrivateKey getPrivateKey(byte[] secretScalar){
+		ECPrivateKey privateKey = getBlankPrivateKey();
+		privateKey.setS(secretScalar, (short) 0, (short) 25);
+		return privateKey;
+	}
+	
 	public static ECPublicKey getChargingIntermediateKey() {
 		ECPublicKey publicKey = getBlankPublicKey();
 		publicKey.setW(CHARGING_TERMINAL_INTERMEDIATE, (short)0, (short)CHARGING_TERMINAL_INTERMEDIATE.length);
