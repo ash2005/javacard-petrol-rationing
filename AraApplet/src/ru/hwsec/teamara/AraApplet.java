@@ -13,25 +13,6 @@ import javacard.security.KeyAgreement;
 
 public class AraApplet extends Applet {
 
-    private static byte[] PRIVATE_KEY_BYTES = {
-        (byte)0x00, (byte)0xa2, (byte)0x7c, (byte)0x91, (byte)0xa2, (byte)0x97, (byte)0x8d, (byte)0x91, (byte)0xd6, (byte)0x06, (byte)0x5a, (byte)0x01, (byte)0x8c, (byte)0xde, (byte)0x2f,
-        (byte)0x61, (byte)0x6f, (byte)0x54, (byte)0x1f, (byte)0xb5, (byte)0x33, (byte)0xe9, (byte)0xba, (byte)0xac, (byte)0xf1
-    };
-
-    private static byte[] PUBLIC_KEY_BYTES = {
-        (byte)0x04, (byte)0x01, (byte)0x5b, (byte)0x41, (byte)0x1c, (byte)0x20, (byte)0x6d, (byte)0xff, (byte)0x82, (byte)0x17, (byte)0xc6, (byte)0x39, (byte)0x5e, (byte)0x49, (byte)0xe6,
-        (byte)0x14, (byte)0x2e, (byte)0x86, (byte)0x11, (byte)0x01, (byte)0xb3, (byte)0x4f, (byte)0xe2, (byte)0x87, (byte)0x47, (byte)0xcd, (byte)0x00, (byte)0xa5, (byte)0x46, (byte)0x1f,
-        (byte)0xae, (byte)0x4f, (byte)0x96, (byte)0xd8, (byte)0x43, (byte)0x11, (byte)0xef, (byte)0x7c, (byte)0x41, (byte)0x82, (byte)0x10, (byte)0x13, (byte)0x6f, (byte)0xc5, (byte)0x88,
-        (byte)0x28, (byte)0x7d, (byte)0xb8, (byte)0x73, (byte)0x69, (byte)0x08
-    };
-
-    private static byte[] SIGNATURE_BYTES = {
-        (byte)0x30, (byte)0x34, (byte)0x02, (byte)0x18, (byte)0x0f, (byte)0xa3, (byte)0xda, (byte)0xd3, (byte)0x65, (byte)0x44, (byte)0x30, (byte)0xf4, (byte)0x06, (byte)0x7a, (byte)0x7e,
-        (byte)0xc7, (byte)0xac, (byte)0x79, (byte)0x9c, (byte)0x76, (byte)0x51, (byte)0x88, (byte)0x97, (byte)0x1c, (byte)0x5a, (byte)0xa7, (byte)0x4b, (byte)0x60, (byte)0x02, (byte)0x18,
-        (byte)0x6d, (byte)0x15, (byte)0x24, (byte)0xb8, (byte)0xd9, (byte)0xde, (byte)0xe0, (byte)0xc1, (byte)0xb7, (byte)0xe5, (byte)0x88, (byte)0x11, (byte)0xe2, (byte)0xdc, (byte)0x12,
-        (byte)0x32, (byte)0x4d, (byte)0xc0, (byte)0x6a, (byte)0xa2, (byte)0xbc, (byte)0xd1, (byte)0x48, (byte)0x5f
-    };
-
     private byte currentState;
     private byte[] transmem;
     private byte permanentState;
@@ -244,8 +225,8 @@ public class AraApplet extends Applet {
         // Send our key with its own signature in return
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)(51 + 54));
-        Util.arrayCopy(PUBLIC_KEY_BYTES, (short)0, apdu.getBuffer(), (short)0, (short)PUBLIC_KEY_BYTES.length);
-        Util.arrayCopy(SIGNATURE_BYTES, (short)0, apdu.getBuffer(), (short)PUBLIC_KEY_BYTES.length, (short)SIGNATURE_BYTES.length);
+        Util.arrayCopy(ECCCard.PUBLIC_KEY_BYTES, (short)0, apdu.getBuffer(), (short)0, (short)ECCCard.PUBLIC_KEY_BYTES.length);
+        Util.arrayCopy(ECCCard.SIGNATURE_BYTES, (short)0, apdu.getBuffer(), (short)ECCCard.PUBLIC_KEY_BYTES.length, (short)ECCCard.SIGNATURE_BYTES.length);
         apdu.sendBytes((short)0, (short)(51 + 54));
         
         // Update the current state
@@ -262,7 +243,7 @@ public class AraApplet extends Applet {
          try{
          
          	KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DHC, false);
-         	DH.init(ECCCard.getPrivateKey(PRIVATE_KEY_BYTES));
+         	DH.init(ECCCard.getPrivateKey(ECCCard.PRIVATE_KEY_BYTES));
          
         	 byte [] secret;
         	 secret = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
