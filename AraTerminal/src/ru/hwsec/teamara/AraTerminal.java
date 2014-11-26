@@ -2,11 +2,6 @@ package ru.hwsec.teamara;
 
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
 import java.util.Calendar;
 import java.util.Random;
 import java.util.Scanner;
@@ -34,7 +29,6 @@ public class AraTerminal {
 			System.out.println("Could not perform the handshake with the card.");
 		}
     }
-
 
     /* Mutual Authentication Functions */
 
