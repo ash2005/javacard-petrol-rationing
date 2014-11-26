@@ -2,20 +2,20 @@ package ru.hwsec.teamara;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
-import java.security.InvalidKeyException;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.Signature;
-import java.security.SignatureException;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
+import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.ECPublicKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
+
+import javax.crypto.KeyAgreement;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -27,7 +27,7 @@ public class ECCTerminal {
     }
 
 	private static Provider cryptoProvider;
-	
+
 	public static byte[] PUBLIC_KEY_BYTES = new byte[]{
         (byte)0x04, (byte)0x01, (byte)0x96, (byte)0x96, (byte)0x64, (byte)0x3a, (byte)0x14, (byte)0xda, (byte)0xe5, (byte)0x7c, (byte)0x15, (byte)0x83, (byte)0x6b, (byte)0x48, (byte)0x6f,
         (byte)0x83, (byte)0xac, (byte)0x4f, (byte)0x36, (byte)0x0a, (byte)0x47, (byte)0x9d, (byte)0x4b, (byte)0x9d, (byte)0x3e, (byte)0x85, (byte)0x01, (byte)0xd1, (byte)0x2d, (byte)0xf9,
@@ -56,21 +56,46 @@ public class ECCTerminal {
         (byte)0x00, (byte)0x7d, (byte)0x84, (byte)0x2e, (byte)0x25, (byte)0x6a, (byte)0xcd, (byte)0x7d, (byte)0x56, (byte)0x96, (byte)0x67, (byte)0x2e, (byte)0x0b, (byte)0x89, (byte)0x7f, (byte)0x9b,
         (byte)0x75, (byte)0x11, (byte)0xae, (byte)0xfb, (byte)0x93, (byte)0x0f, (byte)0x71, (byte)0x41, (byte)0x65
 	};
-
-	public static boolean verifyCardKey(byte[] cardKey, byte[] cardSignature) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, InvalidKeySpecException, InvalidParameterSpecException {
-		ECPoint cardIntermediatePoint = new ECPoint(
-				new BigInteger(CARD_INTERMEDIATE_X),
-				new BigInteger(CARD_INTERMEDIATE_Y)
-		);
+	
+	public static PublicKey getPublicKey(byte[] x, byte[] y) throws GeneralSecurityException {
+		ECPoint cardIntermediatePoint = new ECPoint(new BigInteger(x), new BigInteger(y));
 		AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
         parameters.init(new ECGenParameterSpec("sect193r1"));
         ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
 		ECPublicKeySpec keyspec = new ECPublicKeySpec(cardIntermediatePoint, ecParameters);
 		KeyFactory keyfactory = KeyFactory.getInstance("EC", cryptoProvider);
-		PublicKey cardIntermediateKey = keyfactory.generatePublic(keyspec);
+		return keyfactory.generatePublic(keyspec);
+	}
+	
+	public static PublicKey getPublicKey(byte[] key) throws GeneralSecurityException {
+		byte[] x = new byte[25];
+		byte[] y = new byte[25];
+		System.arraycopy(key, 1, x, 0, 25);
+		System.arraycopy(key, 26, y, 0, 25);
+		return getPublicKey(x, y);
+	}
+	
+	public static PrivateKey getPrivateKey(byte[] s) throws GeneralSecurityException {
+		AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
+        parameters.init(new ECGenParameterSpec("sect193r1"));
+    	ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
+		ECPrivateKeySpec keyspec = new ECPrivateKeySpec(new BigInteger(s), ecParameters);
+		KeyFactory keyfactory = KeyFactory.getInstance("EC", cryptoProvider);
+		return keyfactory.generatePrivate(keyspec);
+	}
+
+	public static boolean verifyCardKey(byte[] cardKey, byte[] cardSignature) throws GeneralSecurityException {
+		PublicKey cardIntermediateKey = getPublicKey(CARD_INTERMEDIATE_X, CARD_INTERMEDIATE_Y);
 		Signature signer = Signature.getInstance("SHA1withECDSA", cryptoProvider);
         signer.initVerify(cardIntermediateKey);
         signer.update(cardKey);
         return signer.verify(cardSignature);
 	}
+
+    public static byte[] performDH(byte[] publicKey) throws GeneralSecurityException {
+    	KeyAgreement DH = KeyAgreement.getInstance("ECDH", cryptoProvider);
+    	DH.init(getPrivateKey(PRIVATE_KEY_BYTES));
+    	DH.doPhase(getPublicKey(publicKey), true);
+    	return DH.generateSecret();
+    }
 }
