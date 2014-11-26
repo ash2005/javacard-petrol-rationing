@@ -16,7 +16,6 @@ public class AraApplet extends Applet {
     private byte currentState;
     private byte[] transmem;
     private byte permanentState;
-    private byte[] buffer_PIN;
     private byte temp;
 
     // Maximum number of incorrect tries before the PIN is blocked.
@@ -27,28 +26,24 @@ public class AraApplet extends Applet {
 
 	public AraApplet() {
         this.currentState = CurrentState.ZERO;
+        this.pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
+        this.permanentState = PermanentState.INIT_STATE;
+        //this.permanentState = PermanentState.ISSUED_STATE;
 
         /*
          * Here we will store values which are session specific:
          * 4 bytes (0..3) int nonce sent by terminal in TERMINAL_HELLO message
          * 4 bytes (4..7) int nonce sent by card in CARD_HELLO message
          * 51 bytes (8..58) public key sent by the terminal
-         * Total: 59 bytes
+         * 4 bytes (59..62) for the PIN
+         * Total: 63 bytes
          */
-        this.transmem = JCSystem.makeTransientByteArray((short)59, JCSystem.CLEAR_ON_DESELECT);
-
-        this.pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
-        this.permanentState = PermanentState.INIT_STATE;
-        //this.permanentState = PermanentState.ISSUED_STATE;
+        this.transmem = JCSystem.makeTransientByteArray((short)63, JCSystem.CLEAR_ON_DESELECT);
         
-       
-        this.buffer_PIN = JCSystem.makeTransientByteArray((short)4, JCSystem.CLEAR_ON_DESELECT); // initialize a 4bytes buffer for the PIN.
-
         this.register();
 	}
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
-		//new AraApplet(bArray, bOffset, bLength);
 		new AraApplet();
 	}
 
@@ -131,16 +126,8 @@ public class AraApplet extends Applet {
 	
     /* Initialise the PIN, as sent from the Terminal */
     void setPIN(APDU apdu){
-        /*if(this.currentState != CurrentState.HELLO) { ????
-            this.currentState = CurrentState.ZERO;
-            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
-        }*/
-    	//byte buffer_PIN[] = {0x03, 0x03, 0x03, 0x03}; // initialized in constructor.
-
-        // Copy 4 bytes int nonce sent by terminal
-        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.buffer_PIN, (short)0, (short)4);
-
-        this.pin.update(this.buffer_PIN, (short) 0, MAX_PIN_SIZE);
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
+        this.pin.update(this.transmem, (short)59, MAX_PIN_SIZE);
         
         /*// Sent the 4 bytes to the terminal // Just for testing....
         apdu.setOutgoing();
@@ -152,22 +139,19 @@ public class AraApplet extends Applet {
     
     /* Check the user entered PIN */
     boolean checkPIN(APDU apdu){
-
     	this.temp = 0x00;
-    	Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.buffer_PIN, (short)0, (short)4);
-        if (this.pin.check(this.buffer_PIN, (short) 0, MAX_PIN_SIZE) == true){
+    	Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
+        if (this.pin.check(this.transmem, (short) 59, MAX_PIN_SIZE) == true)
         	this.temp = 0x01;
-        }
-        else{
+        else
         	this.temp = 0x00;
-        }
 
         // Send 0x00 if PIN wrong, else 0x01
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)2);
-        this.buffer_PIN[0] = this.temp;
+        this.transmem[59] = this.temp;
         //this.buffer_PIN[1]= pin.getTriesRemaining();
-        Util.arrayCopy(buffer_PIN, (short)0, apdu.getBuffer(), (short)0, (short)2);
+        Util.arrayCopy(transmem, (short)59, apdu.getBuffer(), (short)0, (short)2);
         apdu.sendBytes((short)0, (short)2); // (offset, length)
         
     	return (temp == (byte) 0x01);
@@ -201,7 +185,7 @@ public class AraApplet extends Applet {
     /* This method receives the Terminal certificate and verifies it
 	 * If it is valid, the 51-byte terminal cert is stored in transmem[8...58]
 	 */
-     private void processTerminalKey(APDU apdu) {
+    private void processTerminalKey(APDU apdu) {
         if(this.currentState != CurrentState.HELLO) {
             this.currentState = CurrentState.ZERO;
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
@@ -276,6 +260,4 @@ public class AraApplet extends Applet {
 		     apdu.sendBytes((short)0, (short)1); // (offset, length)
 		     }
      }
-     
-     
 }
