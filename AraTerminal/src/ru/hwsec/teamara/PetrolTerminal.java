@@ -12,19 +12,19 @@ import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 
 
-public abstract class PetrolTerminal extends Terminal {
+public class PetrolTerminal extends Terminal {
 
 
     // Methods
 
-    private PetrolTerminal(){
+    public PetrolTerminal(){
         super();
     }
 
     /* Check the revocation status of the card.
      * Return false if revoked.
      * Do not proceed further and end all communications with the card.*/
-    abstract boolean checkRevoke();
+    //boolean checkRevoke(); 
 
 
     /* Reference sec 7.4 of Design Document
@@ -32,12 +32,16 @@ public abstract class PetrolTerminal extends Terminal {
      * Get requested fuel withdrawal amount from car owner (A)
      * Verify A < B else return false
      */
-    abstract boolean verifyBalance();
+    boolean verifyBalance(){
+    	return true;
+    }
 
     /* Reference sec 7.4 of Design Document
      * Call this function if verifyBalance returns true
      * Create message and signature to update card balance.
      */
-    abstract boolean updateBalance();
+    boolean updateBalance(){
+    	return true;
+    }
 
 }

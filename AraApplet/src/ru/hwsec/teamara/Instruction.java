@@ -22,7 +22,7 @@ public class Instruction {
     // Checks
 
     // Petrol Terminal
-    public static final byte GET_BALANCE    = (byte)0x20;
+    public static final byte START_PUMPING  = (byte)0x20;
     public static final byte UPDATE_BALANCE = (byte)0x21;
     
     // Charging Terminal

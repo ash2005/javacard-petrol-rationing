@@ -2,11 +2,16 @@ package ru.hwsec.teamara;
 
 import javax.smartcardio.CardException;
 
+
+
 public class ChargingTerminal extends Terminal {
 
-	// Methods
-    public ChargingTerminal(){
+	/* Charging terminal is online and has access to the database. */
+	private MySql db;
+	
+	public ChargingTerminal(MySql tdb){
         super();
+        this.db = tdb;
     }
 
     /* Reference sec 7.6 of Design Document
@@ -34,12 +39,26 @@ public class ChargingTerminal extends Terminal {
 
     /* If no error, update the card balance.
      * Store updated balance in database */
-    //abstract boolean updateBalance();
+    boolean updateBalance(){
+    	return true;
+    }
     
-    public static void main(String[] arg) throws CardException {
-    	System.out.println("Starting...");
-        ChargingTerminal obj = new ChargingTerminal();
-        obj.execute();
+    void use (){
+    	boolean status = true;
+    	// Connect to the card.
+    	
+    	status = getLogs();
+    	if (!status){
+    		System.out.println("Getting logs failed.");
+    		System.exit(1);
+    	}
+    		
+    	status = updateBalance();
+    	if (!status){
+    		System.out.println("Updating balance failed.");
+    		System.exit(1);
+    	}    	
+
     }
 
 }
