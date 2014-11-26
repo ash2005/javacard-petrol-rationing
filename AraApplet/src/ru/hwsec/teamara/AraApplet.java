@@ -225,7 +225,7 @@ public class AraApplet extends Applet {
         }
 
         try {
-            KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DHC, false);
+            KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DH, false);
             DH.init(ECCCard.getCardPrivateKey());
 
             byte [] secret;
