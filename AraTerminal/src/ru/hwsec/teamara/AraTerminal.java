@@ -1,6 +1,7 @@
 package ru.hwsec.teamara;
 
 import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
@@ -68,22 +69,9 @@ public class AraTerminal {
         System.arraycopy(data, 0, cardKeyBytes, 0, 51);
         System.arraycopy(data, 51, cardSignatureBytes, 0, 54);
         try {
-			System.out.println(ECCTerminal.verifyCardKey(cardKeyBytes, cardSignatureBytes));
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SignatureException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidParameterSpecException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ECCTerminal.verifyCardKey(cardKeyBytes, cardSignatureBytes);
+		} catch (GeneralSecurityException e) {
+			System.out.println("An error occured while verifying the card key.");
 		}
 
 		// Generate DH Secret
