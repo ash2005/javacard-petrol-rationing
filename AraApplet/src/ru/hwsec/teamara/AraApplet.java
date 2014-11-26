@@ -56,9 +56,9 @@ public class AraApplet extends Applet {
          */
         this.transmem = JCSystem.makeTransientByteArray((short)59, JCSystem.CLEAR_ON_DESELECT);
 
-        pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
-        permanentState = PermanentState.ISSUED_STATE;
-        //permanentState = PermanentState.INIT_STATE;
+        this.pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
+        this.permanentState = PermanentState.INIT_STATE;
+        //this.permanentState = PermanentState.ISSUED_STATE;
         
        
         this.buffer_PIN = JCSystem.makeTransientByteArray((short)4, JCSystem.CLEAR_ON_DESELECT); // initialize a 4bytes buffer for the PIN.
@@ -157,42 +157,39 @@ public class AraApplet extends Applet {
     	//byte buffer_PIN[] = {0x03, 0x03, 0x03, 0x03}; // initialized in constructor.
 
         // Copy 4 bytes int nonce sent by terminal
-        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, buffer_PIN, (short)0, (short)4);
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.buffer_PIN, (short)0, (short)4);
 
-        this.pin.update(buffer_PIN, (short) 0, MAX_PIN_SIZE);
-        /*
-        // Sent the 4 bytes to the terminal // Just for testing....
-        byte bytes[] = { 0x03, 0x03, 0x03, 0x03};
+        this.pin.update(this.buffer_PIN, (short) 0, MAX_PIN_SIZE);
+        
+        /*// Sent the 4 bytes to the terminal // Just for testing....
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)4);
-        Util.arrayCopy(bytes, (short)0, apdu.getBuffer(), (short)0, (short)4);
+        Util.arrayCopy(this.buffer_PIN, (short)0, apdu.getBuffer(), (short)0, (short)4);
         apdu.sendBytes((short)0, (short)4); // (offset, length)
-    	return true;*/
+    	//*/
     }
     
     /* Check the user entered PIN */
     boolean checkPIN(APDU apdu){
-    	byte[] buffer = apdu.getBuffer();
-    	byte temp = 0x00;
+
+    	this.temp = 0x00;
     	Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.buffer_PIN, (short)0, (short)4);
-        if (pin.check(buffer_PIN, (short) 0, MAX_PIN_SIZE) == true){
-        	temp = 0x01;
+        if (this.pin.check(this.buffer_PIN, (short) 0, MAX_PIN_SIZE) == true){
+        	this.temp = 0x01;
         }
         else{
-        	temp = 0x00;
+        	this.temp = 0x00;
         }
-        	
-        //byte bytes[] = { temp, 0x03, 0x03, 0x03};
 
         // Send 0x00 if PIN wrong, else 0x01
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)2);
-        //Util.arrayCopy(bytes, (short)0, apdu.getBuffer(), (short)0, (short)4);
-        buffer[0]= temp;
-        buffer[1]= pin.getTriesRemaining();
+        this.buffer_PIN[0] = this.temp;
+        //this.buffer_PIN[1]= pin.getTriesRemaining();
+        Util.arrayCopy(buffer_PIN, (short)0, apdu.getBuffer(), (short)0, (short)2);
         apdu.sendBytes((short)0, (short)2); // (offset, length)
         
-    	return (temp ==0x01);
+    	return (temp == (byte) 0x01);
     }
 	
 	
