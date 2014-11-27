@@ -27,7 +27,7 @@ public class Instruction {
     
     // Charging Terminal
     public static final byte GET_LOGS    = (byte)0x30;
-    public static final byte CHARGE = (byte)0x31;
+    public static final byte CHARGE      = (byte)0x31;
 
     private Instruction() { }
 }

@@ -32,7 +32,7 @@ public class AraTerminal {
     final static short MONTHLY_ALLOWANCE = 200;
     	
 	
-    private CardComm cardComm;
+    protected CardComm cardComm;
 
     /*
      * Constructor, gets the termID as an argument.
@@ -40,6 +40,12 @@ public class AraTerminal {
      */
     public AraTerminal(byte b){
     	this.termID = b;
+        
+    	try {
+			cardComm = new CardComm(true);
+		} catch (CardException e) {
+			System.out.println("Could not connect to the card or simulator.");
+		}
     }
     
     private void execute() {

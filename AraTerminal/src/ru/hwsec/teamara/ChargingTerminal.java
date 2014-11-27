@@ -1,6 +1,8 @@
 package ru.hwsec.teamara;
 
 import javax.smartcardio.CardException;
+import javax.smartcardio.CommandAPDU;
+import javax.smartcardio.ResponseAPDU;
 
 
 
@@ -40,11 +42,28 @@ public class ChargingTerminal extends AraTerminal {
      *  - Only 5 withdrawals
      */
 	//private Card getLogs(){
-	public Card getLogs(){ // for testing.
+	public Card getLogs() { // for testing.
+        ResponseAPDU resp;
     	boolean status = false;
     	Card card = new Card();
     	// For any entry
     	
+    	
+        byte[] signedKey = new byte[105];
+        System.arraycopy(ECCTerminal.PUBLIC_KEY_BYTES, 0, signedKey, 0, ECCTerminal.PUBLIC_KEY_BYTES.length);
+        // P1 specifies what type of terminal this is:
+        // P1 = 1 ==> charging terminal
+        // P1 = 2 ==> pump terminal
+        try {
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0, signedKey));
+        byte[] data = resp.getData();
+        }
+        catch (CardException ex){
+        	System.out.println("..");
+        }
+            	
+    	
+        
     	// cardID, balance, transaction, termID, DATE, sig_card, sig_term
     	//Entry new_entry = 
     	status = db.addlog(1001, (short) 10, (short) -50, 2001, "2014-11-27 15:01:35", "sig_card", "sig_term" );
