@@ -106,6 +106,24 @@ public class ECCTerminal {
     	return sign.sign();
     }
     
+    /*
+     * Convert the message to bytes and call performSignature to sign it.
+     * sig is used only for avoiding compiling errors. If performSignature
+     * throw an exeption the program will close. 
+     */
+    public static byte[] performSignatureTerminal(String msg){
+    	byte[] data = msg.getBytes(); // Convert msg to bytes.
+    	byte[] sig = {(byte) 0x01, (byte) 0x01};
+    	try {
+    		return performSignature(data);
+    	} catch (Exception ex) {
+    		System.out.println(ex.getMessage());
+    		System.out.println("Signing failed.");
+    		System.exit(1);
+    	}
+    	return sig;
+    }
+    
     public static boolean performSignatureVerification(byte[] data, byte[] signature) throws GeneralSecurityException {
 
 		PublicKey terminalKey = getPublicKey(PUBLIC_KEY_BYTES);
