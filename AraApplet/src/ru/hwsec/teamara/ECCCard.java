@@ -137,6 +137,13 @@ public final class ECCCard {
     	// Returns the number of bytes of signature output in signatureOut (which is 54)
     }
     
+    public static short performSignature(byte[] dataIn, short inOffset, short inputLength, byte[] signatureOut, short sigOffset) {
+    	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
+    	sign.init(getCardPrivateKey(), Signature.MODE_SIGN); 
+    	
+    	return sign.sign(dataIn, (short) inOffset, inputLength, signatureOut, (short) 0);
+    	// Returns the number of bytes of signature output in signatureOut (which is 54)
+    }
 	
 	public static boolean verifyChargingTerminal(byte[] signedKey, short offset) {
 		return verifySignature(signedKey, offset, getChargingIntermediateKey());
