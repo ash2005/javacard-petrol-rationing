@@ -21,10 +21,20 @@ public class AraTerminal {
     private byte[] terminalEncKey;
     private byte[] terminalMacKey;
     private byte[] terminalIV;
+    
+    private byte termID;
     	
 	
     private CardComm cardComm;
 
+    /*
+     * Constructor, gets the termID as an argument.
+     * TODO, set the public/private key also.
+     */
+    public AraTerminal(byte b){
+    	this.termID = b;
+    }
+    
     private void execute() {
         /* INITIALISATION STATE */
         /*
@@ -239,7 +249,7 @@ public class AraTerminal {
     }
 
     public static void main(String[] arg) {
-    	AraTerminal araTerminal = new AraTerminal();
+    	AraTerminal araTerminal = new AraTerminal((byte) 0x01);
         try {
 			araTerminal.cardComm = new CardComm(true);
 		} catch (CardException e) {
