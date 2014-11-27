@@ -124,6 +124,9 @@ public class ECCTerminal {
     	return sig;
     }
     
+    /* Perform signature verification of messages signed by itself (Terminal). 
+     * Generally not useful. For testing purpose.
+    */
     public static boolean performSignatureVerification(byte[] data, byte[] signature) throws GeneralSecurityException {
 
 		PublicKey terminalKey = getPublicKey(PUBLIC_KEY_BYTES);
@@ -134,15 +137,14 @@ public class ECCTerminal {
         
     }
     
+    
+    // Performs signature verification of messages signed by other entities, e.g card
     public static boolean performSignatureVerification(byte[] data, byte[] signature, byte[] OTHER_PUBLIC_KEY_BYTES) throws GeneralSecurityException {
 
 		PublicKey otherKey = getPublicKey(OTHER_PUBLIC_KEY_BYTES);
-		System.out.println("debug1");
 		Signature signer = Signature.getInstance("SHA1withECDSA", cryptoProvider);
         signer.initVerify(otherKey);
-        System.out.println("debug2");
         signer.update(data);
-        System.out.println("debug3");
         return signer.verify(signature);
         
     }
