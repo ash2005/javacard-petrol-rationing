@@ -12,13 +12,13 @@ import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 
 
-public class PetrolTerminal extends Terminal {
+public class PetrolTerminal extends AraTerminal {
 
 
     // Methods
 
-    public PetrolTerminal(){
-        super();
+    public PetrolTerminal(byte ttermID){
+        super(ttermID); // set the terminal ID.
     }
 
     /* Check the revocation status of the card.
