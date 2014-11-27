@@ -2,9 +2,10 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/home/javacard/jc/AraTerminal/lib/bcpkix-jdk15on-151.jar"/>
-	<classpathentry kind="lib" path="/home/javacard/jc/AraTerminal/lib/bcprov-jdk15on-151.jar"/>
-	<classpathentry kind="lib" path="/home/javacard/jc/AraTerminal/lib/jcardsim-2.2.1-all.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/AraApplet"/>
+	<classpathentry kind="lib" path="lib/bcpkix-jdk15on-151.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk15on-151.jar"/>
+	<classpathentry kind="lib" path="lib/jcardsim-2.2.1-all.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/mysql-connector-java.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
