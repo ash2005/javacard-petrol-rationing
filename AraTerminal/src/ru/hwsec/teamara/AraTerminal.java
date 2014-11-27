@@ -9,9 +9,20 @@ import java.util.Scanner;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 
 public class AraTerminal {
 
+    private byte[] cardEncKey;
+    private byte[] cardMacKey;
+    private byte[] cardIV;
+    private byte[] terminalEncKey;
+    private byte[] terminalMacKey;
+    private byte[] terminalIV;
+    	
+	
     private CardComm cardComm;
 
     private void execute() {
@@ -73,14 +84,83 @@ public class AraTerminal {
         byte[] terminalSecret = ECCTerminal.performDH(cardKeyBytes);
 		resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GEN_SHARED_SECRET, 1, 0));
         byte[] cardSecret = resp.getData();
-        
+        /*
         boolean eq = true;
         for(int i = 0; i < terminalSecret.length; i++)
         	if(terminalSecret[i] != cardSecret[i])
         		eq = false;
         System.out.println(eq);
+         */  
+        setKeys(termRndBytes, cardRndBytes, terminalSecret);
+        
+        boolean eq = true;
+        for(int i = 0; i < this.terminalIV.length; i++)
+        	if(this.terminalIV[i] != cardSecret[i])
+        		eq = false;
+        System.out.println(eq);
+		
     }
 
+    public void setKeys(byte[] termRndBytes, byte[] cardRndBytes, byte[] terminalSecret) throws CardException, GeneralSecurityException {
+    	this.cardEncKey = new byte[16];
+    	this.cardMacKey = new byte[16];
+    	this.cardIV = new byte[16];
+    	this.terminalEncKey = new byte[16];
+    	this.terminalMacKey = new byte[16];
+    	this.terminalIV = new byte[16];
+    	
+    	// Temp arrays
+    	byte[] hashInput = new byte[34];	
+    	byte[] hashOut = new byte[20];
+    	
+    	System.arraycopy(termRndBytes, 0, hashInput, 0, 4);
+    	System.arraycopy(cardRndBytes, 0, hashInput, 4, 4);
+    	System.arraycopy(terminalSecret, 0, hashInput, 8, 25);
+
+    	// cardEncKey
+    	hashInput[33] = (byte) 0x00;
+    	MessageDigest md = MessageDigest.getInstance("SHA");
+    	md.update(hashInput);
+    	hashOut = md.digest();    	
+    	System.arraycopy(hashOut, 0, this.cardEncKey, 0, 16);
+    	
+    	// cardMacKey
+    	hashInput[33] = (byte) 0x01;
+    	md.reset();
+    	md.update(hashInput);
+    	hashOut = md.digest();    	
+    	System.arraycopy(hashOut, 0, this.cardMacKey, 0, 16);
+    	
+    	// cardIV
+    	hashInput[33] = (byte) 0x02;
+    	md.reset();
+    	md.update(hashInput);
+    	hashOut = md.digest();    	
+    	System.arraycopy(hashOut, 0, this.cardIV, 0, 16);
+    	
+    	// terminalEncKey
+    	hashInput[33] = (byte) 0xA0;
+    	md.reset();
+    	md.update(hashInput);
+    	hashOut = md.digest();    	
+    	System.arraycopy(hashOut, 0, this.terminalEncKey, 0, 16);
+    	
+    	// terminalMACKey
+    	hashInput[33] = (byte) 0xA1;
+    	md.reset();
+    	md.update(hashInput);
+    	hashOut = md.digest();    	
+    	System.arraycopy(hashOut, 0, this.terminalMacKey, 0, 16);
+    	
+    	// terminalIV
+    	hashInput[33] = (byte) 0xA2;
+    	md.reset();
+    	md.update(hashInput);
+    	hashOut = md.digest();    	
+    	System.arraycopy(hashOut, 0, this.terminalIV, 0, 16);
+    	
+    }
+    
     /* PIN Functions */
 
     public void setPIN() throws CardException {

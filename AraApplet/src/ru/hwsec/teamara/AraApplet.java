@@ -10,6 +10,8 @@ import javacard.framework.Util;
 import javacard.security.CryptoException;
 import javacard.security.RandomData;
 import javacard.security.KeyAgreement;
+import javacard.security.MessageDigest;
+import javacardx.crypto.Cipher;
 
 public class AraApplet extends Applet {
 
@@ -17,6 +19,14 @@ public class AraApplet extends Applet {
     private byte[] transmem;
     private byte permanentState;
     private byte temp;
+    private byte[] cardEncKey;
+    private byte[] cardMacKey;
+    private byte[] cardIV;
+    private byte[] terminalEncKey;
+    private byte[] terminalMacKey;
+    private byte[] terminalIV;
+    
+    
 
     // Maximum number of incorrect tries before the PIN is blocked.
     final static byte PIN_TRY_LIMIT = (byte) 0x03;
@@ -228,9 +238,9 @@ public class AraApplet extends Applet {
             KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DH, false);
             DH.init(ECCCard.getCardPrivateKey());
 
-            byte [] secret;
-            secret = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
-            short secretLength = DH.generateSecret(transmem, (short) 8, (short) 51, secret, (short) 0);
+            //byte [] secret;
+            //secret = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
+            short secretLength = DH.generateSecret(transmem, (short) 8, (short) 51, transmem, (short) 8);
 
             if(secretLength < 1) {
                 byte[] buffer = apdu.getBuffer();
@@ -239,10 +249,11 @@ public class AraApplet extends Applet {
                 buffer[0] = (byte) 0xff;
                 apdu.sendBytes((short)0, (short)1);
             } else {
+            	genSecretKeys(apdu);/*
                 apdu.setOutgoing();
                 apdu.setOutgoingLength(secretLength);
-                Util.arrayCopy(secret, (short)0, apdu.getBuffer(), (short)0, secretLength);
-                apdu.sendBytes((short)0, (short)secretLength); // (offset, length)
+                Util.arrayCopy(transmem, (short)8, apdu.getBuffer(), (short)0, secretLength);
+                apdu.sendBytes((short)0, (short)secretLength); // (offset, length)*/
             }
 
             // Update the current state
@@ -256,4 +267,60 @@ public class AraApplet extends Applet {
             apdu.sendBytes((short)0, (short)1); // (offset, length)
         }
     }
+
+     private void genSecretKeys(APDU apdu) {
+    	 
+    	 byte[] hashOut = JCSystem.makeTransientByteArray((short)20, JCSystem.CLEAR_ON_DESELECT);
+    	 
+    	 this.cardEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+    	 this.cardMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+    	 this.cardIV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+    	 this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+    	 this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+    	 this.terminalIV  = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+    	 
+    	     	 
+    	 MessageDigest hash = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+    	 transmem[33] = (byte) 0x00;	//cardEncKey
+         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+         Util.arrayCopy(hashOut, (short) 0, this.cardEncKey, (short)0, (short) 16);
+         /*
+         apdu.setOutgoing();
+         apdu.setOutgoingLength((short) 34);
+         Util.arrayCopy(this.transmem, (short) 0, apdu.getBuffer(), (short)0, (short) 34);
+         apdu.sendBytes((short)0, (short) 34); // (offset, length)
+         */
+         
+         transmem[33] = (byte) 0x01;	//cardMacKey
+         hash.reset();
+         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+         Util.arrayCopy(hashOut, (short) 0, this.cardMacKey, (short)0, (short) 16);
+         
+         transmem[33] = (byte) 0x02;	//cardIV
+         hash.reset();
+         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+         Util.arrayCopy(hashOut, (short) 0, this.cardIV, (short)0, (short) 16);
+         
+         transmem[33] = (byte) 0xA0;	//TerminalEncKey
+         hash.reset();
+         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+         Util.arrayCopy(hashOut, (short) 0, this.terminalEncKey, (short)0, (short) 16);
+         
+         transmem[33] = (byte) 0xA1;	//TerminalMacKey
+         hash.reset();
+         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+         Util.arrayCopy(hashOut, (short) 0, this.terminalMacKey, (short)0, (short) 16);
+         
+         transmem[33] = (byte) 0xA2;	//Terminal IV
+         hash.reset();
+         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+         Util.arrayCopy(hashOut, (short) 0, this.terminalIV, (short)0, (short) 16);
+         
+         
+         apdu.setOutgoing();
+         apdu.setOutgoingLength((short) (16));
+         Util.arrayCopy(this.terminalIV, (short) 0, apdu.getBuffer(), (short)0, (short) 16);
+         apdu.sendBytes((short)0, (short) (16)); // (offset, length)
+         
+     }
 }
