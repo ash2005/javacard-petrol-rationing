@@ -129,6 +129,8 @@ public final class ECCCard {
 		);
 	}
 
+	/* Perform signature on data and put in signature out
+	 * Generally not useful */
     public static short performSignature(byte[] dataIn, byte[] signatureOut) {
     	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
     	sign.init(getCardPrivateKey(), Signature.MODE_SIGN); 
@@ -137,6 +139,9 @@ public final class ECCCard {
     	// Returns the number of bytes of signature output in signatureOut (which is 54)
     }
     
+    /* Perform signature on data and put in signature out
+     * Same as above, but has a lot more customisation possibilities e.g. offset and length
+     * */
     public static short performSignature(byte[] dataIn, short inOffset, short inputLength, byte[] signatureOut, short sigOffset) {
     	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
     	sign.init(getCardPrivateKey(), Signature.MODE_SIGN); 
