@@ -111,6 +111,7 @@ public class AraApplet extends Applet {
                     break;
 
                     case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
+                    	this.testSignature(apdu);
                     break;
 
 
@@ -323,4 +324,20 @@ public class AraApplet extends Applet {
          apdu.sendBytes((short)0, (short) (16)); // (offset, length)
          
      }
+
+     private void testSignature(APDU apdu) {
+    	 byte[] signature =  JCSystem.makeTransientByteArray((short) 54, JCSystem.CLEAR_ON_DESELECT);
+    	 byte[] msg = JCSystem.makeTransientByteArray((short) 16, JCSystem.CLEAR_ON_DESELECT);
+    	 short len;
+    	 
+    	 Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, msg, (short)0, (short)16);
+    	 len= ECCCard.performSignature(msg, signature);
+    	 
+         apdu.setOutgoing();
+         apdu.setOutgoingLength((short) (54));
+         Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, (short) 54);
+         apdu.sendBytes((short)0, (short) (54)); // (offset, length)
+    	
+     }
+     
 }
