@@ -15,16 +15,16 @@ public class Main {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		MySql db = new MySql();
-		//db.initializedb();
+		db.initializedb();
 		
-		PersonalisationTerminal issue = new PersonalisationTerminal(db);
+		//PersonalisationTerminal issue = new PersonalisationTerminal(db);
 		// updates the database with the new user.
 		//issue.createuser(db);
 		
-		PetrolTerminal pumping = new PetrolTerminal();
+		//PetrolTerminal pumping = new PetrolTerminal();
 		//pumping.use();
 		
-		ChargingTerminal charging = new ChargingTerminal(db);
+		ChargingTerminal charging = new ChargingTerminal(db, (byte) 0x01);
 		//charging.use();
 		
 		

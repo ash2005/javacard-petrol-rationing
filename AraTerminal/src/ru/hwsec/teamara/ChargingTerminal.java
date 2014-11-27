@@ -4,7 +4,7 @@ import javax.smartcardio.CardException;
 
 
 
-public class ChargingTerminal extends Terminal {
+public class ChargingTerminal extends AraTerminal {
 
 	/*
 	 * Class used to represent the card that it is used at the moment.
@@ -26,8 +26,8 @@ public class ChargingTerminal extends Terminal {
 	private MySql db;
 	
 	
-	public ChargingTerminal(MySql tdb){
-        super();
+	public ChargingTerminal(MySql tdb, byte ttermID){
+        super(ttermID); // set the terminal ID.
         this.db = tdb;
     }
 
@@ -101,7 +101,7 @@ public class ChargingTerminal extends Terminal {
     	}    	
     	
     	
-    		
+
     	status = updateBalance();
     	if (!status){
     		System.out.println("Updating balance failed.");
