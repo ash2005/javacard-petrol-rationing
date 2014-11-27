@@ -98,4 +98,23 @@ public class ECCTerminal {
     	DH.doPhase(getPublicKey(publicKey), true);
     	return DH.generateSecret();
     }
+    
+    public static byte[] performSignature(byte[] data) throws GeneralSecurityException {
+    	Signature sign = Signature.getInstance("SHA1withECDSA", cryptoProvider);
+    	sign.initSign(getPrivateKey(PRIVATE_KEY_BYTES));
+    	sign.update(data);
+    	return sign.sign();
+    }
+    
+    public static boolean performSignatureVerification(byte[] data, byte[] signature) throws GeneralSecurityException {
+
+		PublicKey terminalKey = getPublicKey(PUBLIC_KEY_BYTES);
+		Signature signer = Signature.getInstance("SHA1withECDSA", cryptoProvider);
+        signer.initVerify(terminalKey);
+        signer.update(data);
+        return signer.verify(signature);
+        
+    }
+    
+    
 }
