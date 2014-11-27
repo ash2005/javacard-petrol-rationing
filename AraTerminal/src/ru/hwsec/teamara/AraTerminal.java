@@ -11,6 +11,9 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 
 public class AraTerminal {
@@ -22,7 +25,11 @@ public class AraTerminal {
     private byte[] terminalMacKey;
     private byte[] terminalIV;
     
-    private byte termID;
+    // This variable save the ID of the terminal.
+    protected byte termID;
+    
+    // This is the monthly allowance defined in the design document.
+    final static short MONTHLY_ALLOWANCE = 200;
     	
 	
     private CardComm cardComm;
@@ -246,6 +253,16 @@ public class AraTerminal {
             System.exit(1);
         }
         return bytes;
+    }
+    
+    /*
+     * Return the date in a mysql format.
+     */
+    protected String get_date(){
+    	DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    	Date date = new Date();
+    	//System.out.println(dateFormat.format(date)); //2014/08/06 15:59:48
+    	return dateFormat.format(date);
     }
 
     public static void main(String[] arg) {
