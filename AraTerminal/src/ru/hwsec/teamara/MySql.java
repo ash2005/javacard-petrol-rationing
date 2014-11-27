@@ -107,7 +107,8 @@ public class MySql {
 			String query = "CREATE TABLE IF NOT EXISTS sara_card ( "
 					+ "cardID MEDIUMINT UNSIGNED NOT NULL PRIMARY KEY, "
 					+ "INDEX USING BTREE(cardID), "
-					+ "userID MEDIUMINT UNSIGNED NOT NULL, "
+					+ "balance SMALLINT UNSIGNED NOT NULL, "
+					+ "charged TINYINT(1) NOT NULL, "
 					+ "publicKey VARCHAR(100) NOT NULL, "
 					+ "expDATE DATETIME NOT NULL " + ")";
 			st.executeUpdate(query);
@@ -166,10 +167,54 @@ public class MySql {
 	/*
 	 *  Add entries to the logs (sara_log).
 	 *  - an entry cannot be changed or deleted.
+	 *  (e.g (1001, 10, -50, 2001, "2014-11-27 15:01:35", "sig_card", "sig_term" );)
+	 *  Also, update the new balance in the table sara_card.
 	 */
-	public void addlog() {
+	public boolean addlog(int tcardID, short tbalance, short ttransaction, int termID, String tdate, String tsig_card, String tsig_term) {
 
+		try {
+			con = DriverManager.getConnection(url, user, password);
+			st = con.createStatement();
+
+			//String query = "INSERT";
+			//st.executeUpdate(query);
+			
+			// Update balance in sara_card for tcardID.
+
+		} catch (SQLException ex) {
+			Logger lgr = Logger.getLogger(MySql.class.getName());
+			lgr.log(Level.SEVERE, ex.getMessage(), ex);
+			return false;
+		} finally {
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+				if (st != null) {
+					st.close();
+				}
+				if (con != null) {
+					con.close();
+				}
+
+			} catch (SQLException ex) {
+				Logger lgr = Logger.getLogger(MySql.class.getName());
+				lgr.log(Level.WARNING, ex.getMessage(), ex);
+				System.out.println("Entry was inserted but db was not closed.");
+				System.exit(1);
+			}
+		}
+		return true;
 	}		
+	
+	/*
+	 * Return the balance of cardID in the table sara_card.
+	 */
+	public int get_balance(int cardID){
+		int tbalance = -1;
+		
+		return tbalance; // 
+	}
 	
 	/*
 	 * Mark card as invalid. If a cardID exists:
@@ -201,7 +246,15 @@ public class MySql {
 
 	}
 	
-	
+	/*
+	 * On the 1st of each month, this function must update all the
+	 * "boolean" of table sara_card and attribute charged to 1.
+	 * (We do not keep track of what was the value.
+	 */
+	public void new_month(){
+		// THE SYSADMIN MUST CALL THIS FUNCTION.
+		
+	}
 	
 	
 }
