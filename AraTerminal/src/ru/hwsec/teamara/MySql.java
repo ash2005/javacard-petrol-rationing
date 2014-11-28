@@ -29,8 +29,7 @@ public class MySql {
 
 
 	/*
-	 * Call this function the first time after the database has been created.
-	 * It will create the 4 databases that are used.
+	 * Create the 4 tables that are used.
 	 */
 	public void initializedb() {
 		String query = "CREATE TABLE IF NOT EXISTS sara_card ( "
@@ -76,10 +75,11 @@ public class MySql {
 	}
 
 	/*
-	 *  Add entries to the logs (sara_log).
-	 *  - an entry cannot be changed or deleted.
+	 *  Add entries to the table sara_log.
+	 *  - an entry should not be edited or deleted.
 	 *  (e.g (1001, 10, -50, 2001, "2014-11-27 15:01:35", "sig_card", "sig_term" );)
-	 *  Also, update the new balance in the table sara_card.
+	 *  After an entry the balance must be updated using the 
+	 *  updateBalance function.
 	 */
 	public boolean addlog(int tcardID, short tbalance, short ttransaction, int termID, String tdate, String tsig_card, String tsig_term) {
 		String query = "INSERT INTO sara_log ( "
