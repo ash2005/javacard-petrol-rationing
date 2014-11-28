@@ -57,7 +57,6 @@ public class AraApplet extends Applet {
 		new AraApplet();
 	}
 
-
 	public void process(APDU apdu) {
 		// Good practice: Return 9000 on SELECT
 		if (selectingApplet()) {
@@ -65,69 +64,72 @@ public class AraApplet extends Applet {
 		}
 
 		byte[] buffer = apdu.getBuffer();
-        byte ins = buffer[ISO7816.OFFSET_INS];
+		byte ins = buffer[ISO7816.OFFSET_INS];
 
-        switch(permanentState){
-            case PermanentState.INIT_STATE:
-                switch (ins) {
-        	    	case Instruction.SET_PRIV_KEY:
-        	    		break;
+		switch (permanentState) {
+		case PermanentState.INIT_STATE:
+			switch (ins) {
+			case Instruction.SET_PRIV_KEY:
+				break;
 
-                    case Instruction.SET_KEY_EXPIRY:
-                    	break;
+			case Instruction.SET_KEY_EXPIRY:
+				break;
 
-                    case Instruction.SET_SIGNATURE:
-                    	break;
+			case Instruction.SET_SIGNATURE:
+				break;
 
-                    case Instruction.SET_PIN:
-                        this.setPIN(apdu);
-                        break;
+			case Instruction.SET_PIN:
+				this.setPIN(apdu);
+				break;
 
-                    case Instruction.SET_BALANCE:
-                    	break;
+			case Instruction.SET_BALANCE:
+				break;
 
-                    case Instruction.CHECK_PIN: // TODO: DELETE AFTER THIS LINE and MOVE under ISSUED_STATE state.
-                    	this.checkPIN(apdu);
-                    	break;
+			case Instruction.CHECK_PIN: // TODO: DELETE AFTER THIS LINE and MOVE
+										// under ISSUED_STATE state.
+				this.checkPIN(apdu);
+				break;
 
-    	    	default:
-    		    	// good practice: If you don't know the INStruction, say so:
-    			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-		        }
-                break;
+			default:
+				// good practice: If you don't know the INStruction, say so:
+				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+			}
+			break;
 
-            case PermanentState.ISSUED_STATE:
-                switch (ins) {
-        	    	case Instruction.TERMINAL_HELLO:
-                        this.processTerminalHello(apdu);
-        			break;
+		case PermanentState.ISSUED_STATE:
+			switch (ins) {
+			case Instruction.TERMINAL_HELLO:
+				this.processTerminalHello(apdu);
+				break;
 
-                    case Instruction.TERMINAL_KEY:
-                        this.processTerminalKey(apdu);
-                    break;
+			case Instruction.TERMINAL_KEY:
+				this.processTerminalKey(apdu);
+				break;
 
-                    case Instruction.GEN_SHARED_SECRET:
-                    	this.genSharedSecret(apdu);
-                    break;
+			case Instruction.GEN_SHARED_SECRET:
+				this.genSharedSecret(apdu);
+				break;
 
-                    case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
-                    	this.testSignature(apdu);
-                    break;
+			case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
+				this.testSignature(apdu);
+				break;
 
+			// Charging stage.
+			case Instruction.GET_LOGS:
+				// this.sendLogs(apdu);
+				break;
 
-    	    	default:
-    		    	// good practice: If you don't know the INStruction, say so:
-    			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-		        }
+			default:
+				// good practice: If you don't know the INStruction, say so:
+				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+			}
 
-                break;
+			break;
 
-
-
-        default:
-		   	// good practice: If you don't know the INStruction, say so:
-		    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-        }
+		default:
+			// good practice: If you don't know the INStruction, say so:
+			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+		}
 	}
 
     /*
@@ -339,5 +341,8 @@ public class AraApplet extends Applet {
          apdu.sendBytes((short)0, (short) (54)); // (offset, length)
     	
      }
+     
+     /**** Starting Charging Stage ****/  
+     
      
 }
