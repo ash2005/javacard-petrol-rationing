@@ -44,7 +44,7 @@ public class ChargingTerminal extends AraTerminal {
 	//private Card getLogs(){
 	public Card getLogs() { // for testing.
         ResponseAPDU resp;
-    	boolean status = false;
+    	boolean status = true;
     	Card card = new Card();
     	// For any entry
     	
@@ -55,11 +55,13 @@ public class ChargingTerminal extends AraTerminal {
         // P1 = 1 ==> charging terminal
         // P1 = 2 ==> pump terminal
         try {
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0, signedKey));
-        byte[] data = resp.getData();
+        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0, signedKey));
+        	byte[] data = resp.getData();
         }
         catch (CardException ex){
-        	System.out.println("..");
+        	System.out.println(ex.getMessage());
+    		System.out.println("Getting logs failed.");
+    		System.exit(1);
         }
             	
     	
@@ -68,11 +70,12 @@ public class ChargingTerminal extends AraTerminal {
     	//Entry new_entry = 
     	status = db.addlog(1001, (short) 10, (short) -50, 2001, "2014-11-27 15:01:35", "sig_card", "sig_term" );
     	if (!status){
-    		System.out.println("Getting logs failed.");
+    		System.out.println("Storing logs failed.");
     		System.exit(1);
     	}
     	card.cardID = 1001;
     	card.balance = (short) 250; // According to the last log.
+    	
     	
     	// extract balance from last log entry.
     	
@@ -80,6 +83,19 @@ public class ChargingTerminal extends AraTerminal {
     	System.out.println(verify_balance(card));
         return card;
     }
+	
+	/*
+	 * Just send command CLEAR LOGS to the smartcard.
+	 */
+	private boolean clear_logs(){
+		try {
+			this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CLEAR_LOGS, 1, 0));
+			return true;
+		} catch (CardException ex) {
+			System.out.println(ex.getMessage());
+			return false;
+		}
+	}
 
 	/*
 	 * Compare the cardID's balance at the smart card and at the database.
@@ -119,7 +135,7 @@ public class ChargingTerminal extends AraTerminal {
     	// Verify signature of smart card.
     	//TODO
     	
-    	// Save log entry in the database.
+    	// Save log entry to the database.
     	db.addlog(card.cardID, card.balance, this.MONTHLY_ALLOWANCE, (int) this.termID, this.get_date(), sig_card, sig_term);
     	
     	// Update balance in table sara_card
@@ -129,16 +145,21 @@ public class ChargingTerminal extends AraTerminal {
     }
     
     void use (){
+    	// Exit if it turns false. 
     	boolean status = true;
-    	short tbalance = 0;
+    	// Object that describes the connected card. 
+    	Card card;  
     	
-    	// Connect to the card.
+    	// Retrieve and store logs as well as get the basic info of the card.
+    	card = getLogs();
 
-    	Card card = getLogs();
-
+    	// If getting logs was successful, inform smart card to clear the entries. 
+    	status = clear_logs();
+    	
+    	// Verify that the balance in the smart card
+    	// matches the balance in the database.
     	status = verify_balance(card);
     	if (!status){
-    		//System.out.println("Balance is not valid."); // if debug
     		System.out.println("Card is corrupted.");
     		// REVOKE CARD.
     		revoke();
@@ -151,12 +172,15 @@ public class ChargingTerminal extends AraTerminal {
     	// Construct the message that has to be signed by both the terminal and the smart card.
     	String msg = Integer.toString(this.termID) +  Integer.toString(new_balance) + this.get_date();
     	
+    	// Perform an atomic operation of updating the 
+    	// balance and storing the signatures.
     	status = updateBalance(card, new_balance, msg);
     	if (!status){
     		System.out.println("Updating balance failed.");
     		System.exit(1);
-    	}    	
-
+    	}
+    	else
+    		System.out.println("Card is charged.");
     }
 
 }
