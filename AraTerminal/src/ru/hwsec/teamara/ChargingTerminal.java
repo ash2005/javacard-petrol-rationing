@@ -80,14 +80,14 @@ public class ChargingTerminal extends AraTerminal {
     	// extract balance from last log entry.
     	
     	
-    	System.out.println(verify_balance(card));
+    	System.out.println(verifyBalance(card));
         return card;
     }
 	
 	/*
 	 * Just send command CLEAR LOGS to the smartcard.
 	 */
-	private boolean clear_logs(){
+	private boolean clearLogs(){
 		try {
 			this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CLEAR_LOGS, 1, 0));
 			return true;
@@ -100,7 +100,7 @@ public class ChargingTerminal extends AraTerminal {
 	/*
 	 * Compare the cardID's balance at the smart card and at the database.
 	 */
-	private boolean verify_balance(Card card){
+	private boolean verifyBalance(Card card){
 		int tbalance = db.get_balance(card.cardID);
 		if ( tbalance == card.balance)
 			return true;
@@ -145,20 +145,22 @@ public class ChargingTerminal extends AraTerminal {
     }
     
     void use (){
-    	// Exit if it turns false. 
+    	System.out.println("Welcome to charging terminal.");
+    	
+    	// exit if it turns false. 
     	boolean status = true;
-    	// Object that describes the connected card. 
+    	// object that describes the connected card. 
     	Card card;  
     	
-    	// Retrieve and store logs as well as get the basic info of the card.
+    	// retrieve and store logs as well as get the basic info of the card.
     	card = getLogs();
 
-    	// If getting logs was successful, inform smart card to clear the entries. 
-    	status = clear_logs();
+    	// if getting logs was successful, inform smart card to clear the entries. 
+    	status = clearLogs();
     	
-    	// Verify that the balance in the smart card
+    	// verify that the balance in the smart card
     	// matches the balance in the database.
-    	status = verify_balance(card);
+    	status = verifyBalance(card);
     	if (!status){
     		System.out.println("Card is corrupted.");
     		// REVOKE CARD.
@@ -166,14 +168,14 @@ public class ChargingTerminal extends AraTerminal {
     		System.exit(1);
     	}    	
     	
-    	// Calculate new balance. 
+    	// calculate new balance. 
     	short new_balance = (short) (card.balance + this.MONTHLY_ALLOWANCE); 
     	
-    	// Construct the message that has to be signed by both the terminal and the smart card.
+    	// construct the message that has to be signed by both the terminal and the smart card.
     	String msg = Integer.toString(this.termID) +  Integer.toString(new_balance) + this.get_date();
     	
-    	// Perform an atomic operation of updating the 
-    	// balance and storing the signatures.
+    	// perform an atomic operation of updating the 
+    	// balance and storing the signatures to the database.
     	status = updateBalance(card, new_balance, msg);
     	if (!status){
     		System.out.println("Updating balance failed.");
