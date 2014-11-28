@@ -212,7 +212,7 @@ public class AraTerminal {
         for (byte b :  cardRndBytes)
         	System.out.format("0x%x ", b);
         System.out.println();*/
-        if(cardRndBytes[0] == 0x01)
+        if(cardRndBytes[0] == (byte) 0x01)
         		System.out.println("Correct PIN");
         else{
         		System.out.println("Wrong PIN");
@@ -262,7 +262,7 @@ public class AraTerminal {
     }
     
     /*
-     * Return the date in a mysql format.
+     * Return the date in mysql DATETIME format.
      */
     protected String get_date(){
     	DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");

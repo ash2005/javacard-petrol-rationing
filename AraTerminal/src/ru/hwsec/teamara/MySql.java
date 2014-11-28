@@ -59,9 +59,9 @@ public class MySql {
 		query = "CREATE TABLE IF NOT EXISTS sara_log ( "
 				+ "id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY,"
 				+ "cardID MEDIUMINT UNSIGNED NOT NULL, "
-				// Max value is 65535.
+				// Max value of balance is 65535.
 				+ "balance SMALLINT UNSIGNED NOT NULL, "
-				// last transaction can be {-250,..,200}
+				// Last transaction can be {-250,..,200}.
 				+ "transaction SMALLINT NOT NULL, "
 				+ "termID MEDIUMINT UNSIGNED NOT NULL, "					
 				+ "date DATETIME NOT NULL , "
