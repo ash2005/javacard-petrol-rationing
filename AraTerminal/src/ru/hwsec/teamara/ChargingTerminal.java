@@ -25,10 +25,36 @@ public class ChargingTerminal extends AraTerminal {
 		}
 	}
 	
+	private final boolean debug = true;
+	
 	/* Charging terminal is online and has access to the database. */
 	private MySql db;
 	
+	/*
+	 * Log raw structure in the smart card:
+	 *             [ termID |  Balance | Date | Term Sig | Card Sig ]
+	 * Bytes:          1         2        18       54        54
+	 * Starting Pos:   0         1         3       21        75
+	 */
+	// The constant byte size of each log entry.
+	final int LOG_SIZE  = 129;
 	
+	// Maximum number of log.
+	final int MAX_LOGS  = 5;
+	
+	// The length of the date field.
+	final int DATE_SIZE = 18;
+	// The length of each signature.
+	final int SIG_SIZE  = 54;
+	
+	// Starting position of the date field.
+	final int DATE_POS  = 3;
+	// Starting position of the terminal signature field.
+	final int TERM_SIG_POS = 21;
+	// Starting position of the card signature field.
+	final int CARD_SIG_POS = 74;
+	
+
 	public ChargingTerminal(MySql tdb, byte ttermID){
         super(ttermID); // set the terminal ID.
         this.db = tdb;
@@ -48,18 +74,6 @@ public class ChargingTerminal extends AraTerminal {
         ResponseAPDU resp;
     	boolean status = true;
     	
-    	// The constant byte size of each log entry.
-    	final int LOG_SIZE  = 129;
-    	
-    	// Maximum number of log.
-    	final int MAX_LOGS  = 5;
-    	
-    	// The length of each the date string.
-    	final int DATE_SIZE = 18;
-    	
-    	// The length of each signature in bytes.
-    	final int SIG_SIZE  = 54;
-    	
     	// The buffer that temporary stores the logs. 
     	byte[] buffer = new byte[MAX_LOGS*LOG_SIZE];
     	Arrays.fill( buffer, (byte) 0x00 );
@@ -71,16 +85,21 @@ public class ChargingTerminal extends AraTerminal {
         	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
 			byte[] temp = resp.getData();
 			buffer_size = temp.length;
-
+            if ( debug == true){
+            	System.out.println("In function getLogs..");
+            	for (byte b :  temp)
+            		System.out.format("0x%x ", b);
+            	System.out.println();
+            }
+			if (temp[0] == (byte) 0xFF) // Signal that defines that card logs are empty.
+				return true;
 			// copy bytes to the buffer.
-			System.arraycopy(temp, 0, buffer, 0, buffer_size);
-			
+			System.arraycopy(temp, 0, buffer, 0, buffer_size);			
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
 			System.out.println("Getting logs failed.");
 			System.exit(1);
 		}
-
 
 		int number_of_logs = 0;
 		try {
@@ -95,48 +114,29 @@ public class ChargingTerminal extends AraTerminal {
 		
 		
 		for ( int i = 0; i < number_of_logs; i++){
-			/*
-			 * Log raw structure:
-			 *             [ termID |  Balance | Date | Term Sig | Card Sig ]
-			 * Bytes:          1         2        18       54        54
-			 * Starting Pos:   0         1         3       21        75
-			 */
 			int index = 0 + i * LOG_SIZE; // Starting index of each log.
 			
-			int termID = (int) buffer[index];
+			int ttermID = (int) buffer[index];
 			short balance = (short) (buffer[1] | (buffer[2] << 8 ));
 			short transaction = (short) 1; // transaction must be calculated in a later version.
 			byte date_bytes[] = new byte[DATE_SIZE]; 
 			byte sig_term_bytes[] = new byte[SIG_SIZE];
 			byte sig_card_bytes[] = new byte[SIG_SIZE];
 			// copy bytes to the buffer.
-			System.arraycopy(buffer, index +  3, date_bytes,     0, DATE_SIZE);			
-			System.arraycopy(buffer, index + 21, sig_term_bytes, 0, SIG_SIZE);
-			System.arraycopy(buffer, index + 75, sig_card_bytes, 0, SIG_SIZE);
+			System.arraycopy(buffer, index + DATE_POS,     date_bytes,     0, DATE_SIZE);			
+			System.arraycopy(buffer, index + TERM_SIG_POS, sig_term_bytes, 0, SIG_SIZE);
+			System.arraycopy(buffer, index + CARD_SIG_POS, sig_card_bytes, 0, SIG_SIZE);
 			
-			// reverse this:
-			//  String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
-			//  String sig_term = new sun.misc.BASE64Decoder().decodeBuffer(sig_term_bytes);
 			String date     = new sun.misc.BASE64Encoder().encode(date_bytes);
 			String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
 			String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
 			
-			status = db.addlog(card.cardID, balance, transaction, termID, date, sig_card, sig_term);
+			status = db.addlog(card.cardID, balance, transaction, ttermID, date, sig_card, sig_term);
 	    	if (!status){
 	    		System.out.println("Storing logs failed.");
 	    		System.exit(1);
 	    	}
 		}
-		
-
-        // TODO: Parse and store data in DB   
-    	// cardID, balance, transaction, termID, DATE, sig_card, sig_term
-    	//Entry new_entry = 
-    	
-    	// extract balance from last log entry.
-    	
-    	
-    	System.out.println(verifyBalance(card));
         return true;
     }
 	
@@ -230,7 +230,7 @@ public class ChargingTerminal extends AraTerminal {
     	short new_balance = (short) (card.balance + this.MONTHLY_ALLOWANCE); 
     	
     	// construct the message that has to be signed by both the terminal and the smart card.
-    	String msg = Integer.toString(this.termID) +  Integer.toString(new_balance) + this.get_date();
+    	String msg = Integer.toString(this.termID) + Integer.toString(new_balance) + this.get_date();
     	
     	// perform an atomic operation of updating the 
     	// balance and storing the signatures to the database.
