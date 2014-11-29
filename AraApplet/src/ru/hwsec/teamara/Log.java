@@ -10,8 +10,8 @@ public class Log {
 	/* Transactions are byte arrays comprised of
 	 * Terminal ID+Date			: Byte 0...15			< 16 bytes >
 	 * Balance							: Byte 16...17		<  2 bytes >
-	 * Terminal Signature			: Byte 18...71		< 54 bytes >
-	 * Card Signature				: Byte 72...125		< 54 bytes >
+	 * Terminal Signature			: Byte 18...73		< 56 bytes >
+	 * Card Signature				: Byte 74...129		< 56 bytes >
 	 */
 	private static byte[] transaction1;
 	private static byte[] transaction2;
@@ -23,19 +23,19 @@ public class Log {
 	
 	private static final short BALANCE_OFFSET = 16;
 	private static final short MSG_TOSIGN_LENGTH = 18;
-	private static final short CARD_SIGNATURE_OFFSET = 72;
-	private static final short PETROL_UPDATE_LENGTH = 72;
-	private static final short TRANSACTION_LENGTH= 126;
+	private static final short CARD_SIGNATURE_OFFSET = 74;
+	private static final short PETROL_UPDATE_LENGTH = 74;
+	private static final short TRANSACTION_LENGTH= 130;
+	private static final short SIGNATURE_LENGTH= 56;
 	
-	public Log(){
 	
+	static{
 		Log.transaction1 = new byte[TRANSACTION_LENGTH];
 		Log.transaction2 = new byte[TRANSACTION_LENGTH];
 		Log.transaction3 = new byte[TRANSACTION_LENGTH];
 		Log.transaction4 = new byte[TRANSACTION_LENGTH];
 		Log.transaction5 = new byte[TRANSACTION_LENGTH];
 		Log.balance = new byte[2];		// balance[0] corresponds to transaction[1], balance[1] corresponds to transaction[2],  
-		
 		Log.index = 0;
 	}
 		
@@ -113,32 +113,32 @@ public class Log {
 				break;
 			case (short) 2:
 				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 2));			// 129 * 2
-				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
-				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
+				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction2, (short) 0, buffer, (short)TRANSACTION_LENGTH, (short) TRANSACTION_LENGTH);
 				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 2)); // (offset, length)
 				break;
 			case (short) 3:
 				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 3));			// 129 * 3
-				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
-				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
-				Util.arrayCopy(transaction3, (short) 0, buffer, (short)258, (short) 129);
+				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction2, (short) 0, buffer, (short)TRANSACTION_LENGTH, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction3, (short) 0, buffer, (short) (TRANSACTION_LENGTH *2), (short) TRANSACTION_LENGTH);
 				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 3)); 			// (offset, length)
 				break;
 			case (short) 4:
 				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 4));			// 129 * 4
-				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
-				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
-				Util.arrayCopy(transaction3, (short) 0, buffer, (short)258, (short) 129);
-				Util.arrayCopy(transaction4, (short) 0, buffer, (short)387, (short) 129);
+				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction2, (short) 0, buffer, (short)TRANSACTION_LENGTH, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction3, (short) 0, buffer, (short)(TRANSACTION_LENGTH*2), (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction4, (short) 0, buffer, (short)(TRANSACTION_LENGTH*3), (short) TRANSACTION_LENGTH);
 				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 4)); 			// (offset, length)
 				break;
 			case (short) 5:
 				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 5));			// 129 * 5
-				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
-				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
-				Util.arrayCopy(transaction3, (short) 0, buffer, (short)258, (short) 129);
-				Util.arrayCopy(transaction4, (short) 0, buffer, (short)387, (short) 129);
-				Util.arrayCopy(transaction5, (short) 0, buffer, (short)516, (short) 129);
+				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction2, (short) 0, buffer, (short)TRANSACTION_LENGTH, (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction3, (short) 0, buffer, (short)(TRANSACTION_LENGTH*2), (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction4, (short) 0, buffer, (short)(TRANSACTION_LENGTH*3), (short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction5, (short) 0, buffer, (short)(TRANSACTION_LENGTH*4), (short) TRANSACTION_LENGTH);
 				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 5)); 			// (offset, length)
 				break;
 			default:
@@ -163,19 +163,18 @@ public class Log {
 	 **/
 	public void updateTransactionCharge(APDU apdu){
 		//updateTransactionPetrol(apdu, Log.transaction1);
-		byte[] signature =  JCSystem.makeTransientByteArray((short) 54, JCSystem.CLEAR_ON_DESELECT);
+		byte[] signature =  JCSystem.makeTransientByteArray(SIGNATURE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
 		byte[] message =  JCSystem.makeTransientByteArray((short) MSG_TOSIGN_LENGTH, JCSystem.CLEAR_ON_DESELECT);
 		
 		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, message, (short) 0, MSG_TOSIGN_LENGTH );
-		ECCCard.performSignature(message, signature);
-		Log.balance[0] =message[BALANCE_OFFSET];
-		Log.balance[1] =message[BALANCE_OFFSET + 1];
-		
+		ECCCard.performSignature(message, (short) 0, MSG_TOSIGN_LENGTH , signature, (short) 0);
+		Log.balance[0] = message[BALANCE_OFFSET];
+		Log.balance[1] = message[BALANCE_OFFSET + 1];
 		
         Log.index = 0;
         apdu.setOutgoing();
-        apdu.setOutgoingLength((short) 54);
-        Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, (short) 54);
-        apdu.sendBytes((short)0, (short) 54); // (offset, length)
+        apdu.setOutgoingLength(SIGNATURE_LENGTH);
+        Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, SIGNATURE_LENGTH);
+        apdu.sendBytes((short)0, SIGNATURE_LENGTH); // (offset, length)
 	}
 }

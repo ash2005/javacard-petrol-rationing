@@ -32,6 +32,33 @@ public class AraTerminal {
     // This is the monthly allowance defined in the design document.
     final static short MONTHLY_ALLOWANCE = 200;
     	
+	protected final boolean debug = true;
+	
+	/*
+	 * Log raw structure in the smart card:
+	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
+	 * Bytes:          1        15         2         56        56
+	 * Starting Pos:   0         1        16         18        74
+	 */
+	// The constant byte size of each log entry.
+	final protected int LOG_SIZE  = 130;
+	// Maximum number of log.
+	final protected int MAX_LOGS  = 5;
+	/* ---     Sizes      --- */
+	// The length of the date field.
+	final protected int DATE_SIZE = 15;
+	// The length of each signature.
+	final protected int SIG_SIZE  = 56;
+	/* ---   Positions    --- */
+	// Starting position of the date field.
+	final protected int DATE_POS  = 1;
+	// Starting position of the balance field.
+	final protected int BALANCE_POS  = 16;
+	// Starting position of the terminal signature field.
+	final protected int TERM_SIG_POS = 18;
+	// Starting position of the card signature field.
+	final protected int CARD_SIG_POS = 74;
+	
 	
     protected CardComm cardComm;
 
@@ -43,10 +70,13 @@ public class AraTerminal {
     	this.termID = b;
         
     	try {
-			cardComm = new CardComm(true);
+			//cardComm = new CardComm(false);
+			cardComm = new CardComm(true); // Simulator.
 		} catch (CardException e) {
 			System.out.println("Could not connect to the card or simulator.");
+			System.exit(1);
 		}
+		System.out.println("Connected to the smart card.");
     }
     
     protected void execute() {
