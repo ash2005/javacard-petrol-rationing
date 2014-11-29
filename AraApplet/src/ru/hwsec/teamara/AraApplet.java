@@ -19,6 +19,7 @@ public class AraApplet extends Applet {
     private byte[] transmem;
     private byte permanentState;
     private byte temp;
+    private byte cardID;
     private byte[] cardEncKey;
     private byte[] cardMacKey;
     private byte[] cardIV;
@@ -40,6 +41,7 @@ public class AraApplet extends Applet {
         //this.permanentState = PermanentState.INIT_STATE;
         this.permanentState = PermanentState.ISSUED_STATE;
         this.log = new Log();
+        this.cardID = (byte) 0xA1;
 
         /*
          * Here we will store values which are session specific:
@@ -137,7 +139,7 @@ public class AraApplet extends Applet {
 				break;
 
 			case Instruction.CLEAR_LOGS:
-				this.log.clearLogs(apdu);
+				this.log.clearLogs(apdu, this.cardID);
 				break;
 	
 			case Instruction.UPDATE_BALANCE_CHARGE:
