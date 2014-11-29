@@ -27,38 +27,9 @@ public class ChargingTerminal extends AraTerminal {
 		}
 	}
 	
-	private final boolean debug = true;
-	
 	/* Charging terminal is online and has access to the database. */
 	private MySql db;
 	
-	/*
-	 * Log raw structure in the smart card:
-	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
-	 * Bytes:          1        15         2         56        56
-	 * Starting Pos:   0         1        16         18        74
-	 */
-	// The constant byte size of each log entry.
-	final int LOG_SIZE  = 130;
-	
-	// Maximum number of log.
-	final int MAX_LOGS  = 5;
-	
-	// The length of the date field.
-	final int DATE_SIZE = 15;
-	// The length of each signature.
-	final int SIG_SIZE  = 56;
-	
-	// Starting position of the date field.
-	final int DATE_POS  = 1;
-	// Starting position of the balance field.
-	final int BALANCE_POS  = 16;
-	// Starting position of the terminal signature field.
-	final int TERM_SIG_POS = 18;
-	// Starting position of the card signature field.
-	final int CARD_SIG_POS = 74;
-	
-
 	public ChargingTerminal(MySql tdb, byte ttermID){
         super(ttermID); // set the terminal ID.
         this.db = tdb;
@@ -259,13 +230,13 @@ public class ChargingTerminal extends AraTerminal {
 		String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
 		if (debug) {
 			System.out.println("Signature form card as String:");
-			System.out.println(sig_card);
+			System.out.println(sig_card.length());
 			System.out.println();
 		}
     	// Verify signature of smart card.
     	// ECCTerminal.performSignatureVerification(msg, sig_card_bytes, this.cardKeyBytes)
     	if ( debug ){
-    		System.exit(1);
+    		//System.exit(1);
     	}
     	// Save log entry to the database.
     	db.addlog(card.cardID, card.balance, this.MONTHLY_ALLOWANCE, (int)this.termID, this.get_date(), sig_card, sig_term);
@@ -285,7 +256,7 @@ public class ChargingTerminal extends AraTerminal {
     	Card card = new Card( (int) 0xA1, (short) 100 );  
     	
     	// retrieve and store logs as well as get the basic info of the card.
-    	//status = getLogs(card);
+    	status = getLogs(card);
 
     	// if getting logs was successful, inform smart card to clear the entries. 
     	// Not needed. See note below above the function
@@ -309,7 +280,6 @@ public class ChargingTerminal extends AraTerminal {
     	status = updateBalance(card, new_balance);
     	if (!status){
     		System.out.println("Updating balance failed.");
-    		System.exit(1);
     	}
     	else
     		System.out.println("Card is charged.");

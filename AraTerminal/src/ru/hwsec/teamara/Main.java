@@ -20,13 +20,16 @@ public class Main {
 		//PersonalisationTerminal issue = new PersonalisationTerminal(db);
 		// updates the database with the new user.
 		//issue.createuser(db);
+
+		ChargingTerminal charging = new ChargingTerminal(db, (byte) 0x21);
+		charging.use();
 		
-		//PetrolTerminal pumping = new PetrolTerminal();
-		//pumping.use();
-		
-		ChargingTerminal charging = new ChargingTerminal(db, (byte) 0x01);
-		//charging.use();
-		
+		PetrolTerminal pumping = new PetrolTerminal( (byte) 0x11 );
+		//pumping.execute();
+		pumping.use();
+
+
+
 		
 	}
 

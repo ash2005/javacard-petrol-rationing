@@ -8,8 +8,6 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import java.util.Scanner;
-
 public class MySql {
 
 	// Smart card expires after SMART_CARD_LIFE_CYCLE years.
@@ -65,8 +63,8 @@ public class MySql {
 				+ "transaction SMALLINT NOT NULL, "
 				+ "termID MEDIUMINT UNSIGNED NOT NULL, "					
 				+ "date DATETIME NOT NULL , "
-				+ "sig_card VARCHAR(73) NOT NULL,"
-				+ "sig_term VARCHAR(73) NOT NULL" + ")";
+				+ "sig_card VARCHAR(85) NOT NULL,"         // Average signature in String is length 76.
+				+ "sig_term VARCHAR(85) NOT NULL" + ")";   // Average signature in String is length 76.
 		execute_query(query);
 		
 		// TESTING...
