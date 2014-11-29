@@ -109,7 +109,7 @@ public class AraTerminal {
 
 		// Generate DH Secret
         byte[] terminalSecret = ECCTerminal.performDH(cardKeyBytes);
-		resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GEN_SHARED_SECRET, 1, 0));
+		resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0));
         byte[] cardSecret = resp.getData();
         /*
         boolean eq = true;
@@ -119,6 +119,8 @@ public class AraTerminal {
         System.out.println(eq);
          */  
         setKeys(termRndBytes, cardRndBytes, terminalSecret);
+        
+        pinCheck();
         
         boolean eq = true;
         for(int i = 0; i < this.terminalIV.length; i++)
@@ -186,6 +188,7 @@ public class AraTerminal {
     	hashOut = md.digest();    	
     	System.arraycopy(hashOut, 0, this.terminalIV, 0, 16);
     	
+    	SymTerminal.init(terminalIV, cardIV, terminalEncKey, cardEncKey, terminalMacKey, cardMacKey);
     }
     
     /* PIN Functions */
@@ -206,8 +209,9 @@ public class AraTerminal {
         */
     }
 
-    public boolean pinCheck() throws CardException{
+    public boolean pinCheck() throws CardException, GeneralSecurityException {
     	byte pincode[] = ask_for_PIN();
+    	pincode = SymTerminal.encrypt(pincode);
         ResponseAPDU resp;
         // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
         resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHECK_PIN, 0, 0, pincode));
