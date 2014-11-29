@@ -195,16 +195,15 @@ public class ChargingTerminal extends AraTerminal {
 			byte[] temp = new sun.misc.BASE64Decoder().decodeBuffer(Date);
 			msg_bytes[0] = this.termID;
 			System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
-			msg_bytes[temp.length  ] = (byte) (new_balance    & 0xFF);
-			msg_bytes[temp.length+1] = (byte) (new_balance>>8 & 0xFF);
+			msg_bytes[16] = (byte) (new_balance    & 0xFF);
+			msg_bytes[17] = (byte) (new_balance>>8 & 0xFF);
 			
             if ( debug == true){
             	System.out.println("The message that has to be signed is:");
             	System.out.format("0x%x", this.termID);
             	System.out.println( Date + Short.toString(new_balance));
-            	for (int i = 0; i < temp.length+2; i++){
-            		System.out.format("0x%x ", msg_bytes[i]);
-            	}
+                for (byte b :  msg_bytes)
+                	System.out.format("0x%x ", b);
             	System.out.println();
             	System.out.println();
             }
@@ -240,28 +239,29 @@ public class ChargingTerminal extends AraTerminal {
     	/*
     	 *  Send new balance and msg in bytes to the smart card and get the signature.
     	 */
-    	byte[] sig_card_bytes = new byte[SIG_SIZE];
-        ResponseAPDU resp;
-        try {
-        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
-        	sig_card_bytes = resp.getData();
-            if ( debug == true){
-            	System.out.println("Reply for UPDATE_BALANCE_CHARGE, the signature of smartcard is:");
-            	for (byte b :  sig_card_bytes)
-            		System.out.format("0x%x ", b);
-            	System.out.println();
-            }
+		byte[] sig_card_bytes = new byte[SIG_SIZE];
+		ResponseAPDU resp;
+		try {
+			resp = this.cardComm.sendToCard(new CommandAPDU(0,
+					Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
+			sig_card_bytes = resp.getData();
+			if (debug == true) {
+				System.out.println("Reply for UPDATE_BALANCE_CHARGE, the signature of smartcard is:");
+				for (byte b : sig_card_bytes)
+					System.out.format("0x%x ", b);
+				System.out.println();
+			}
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
 			System.out.println("Getting logs failed.");
 		}
 		// Convert the signature to string to store it in the database.
 		String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
-		if (debug){		
-	    	System.out.println("Signature form card as String:");
-	    	System.out.println(sig_card);
-        	System.out.println();
-    	}
+		if (debug) {
+			System.out.println("Signature form card as String:");
+			System.out.println(sig_card);
+			System.out.println();
+		}
     	// Verify signature of smart card.
     	// ECCTerminal.performSignatureVerification(msg, sig_card_bytes, this.cardKeyBytes)
     	if ( debug ){
