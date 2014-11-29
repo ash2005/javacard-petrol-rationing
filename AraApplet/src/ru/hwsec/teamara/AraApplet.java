@@ -136,6 +136,10 @@ public class AraApplet extends Applet {
 				this.log.getLogs(apdu);
 				break;
 
+			case Instruction.CLEAR_LOGS:
+				this.log.clearLogs(apdu);
+				break;
+	
 			case Instruction.UPDATE_BALANCE_CHARGE:
 				this.log.updateTransactionCharge(apdu);
 				break;

@@ -30,7 +30,8 @@ public class Instruction {
     
     // Charging Terminal
     public static final byte GET_LOGS    = (byte)0x40;
-    public static final byte UPDATE_BALANCE_CHARGE = (byte)0x41;
+    public static final byte CLEAR_LOGS    = (byte)0x41;
+    public static final byte UPDATE_BALANCE_CHARGE = (byte)0x42;
 
     private Instruction() { }
 }

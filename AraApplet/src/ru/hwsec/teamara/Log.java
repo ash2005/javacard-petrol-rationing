@@ -123,7 +123,14 @@ public class Log {
         //Util.arrayCopy(transaction, (short) 1, apdu.getBuffer(), (short)0, (short) 2);
         apdu.sendBytes((short)0, (short) 2); // (offset, length)
 	}
-	
+
+	public void clearLogs(APDU apdu){
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short) 2);
+        //TODO: make the array
+        //Util.arrayCopy(transaction, (short) 1, apdu.getBuffer(), (short)0, (short) 2);
+        apdu.sendBytes((short)0, (short) 2); // (offset, length)
+	}	
 	public void updateTransactionCharge(APDU apdu){
         
 		apdu.setOutgoing();
