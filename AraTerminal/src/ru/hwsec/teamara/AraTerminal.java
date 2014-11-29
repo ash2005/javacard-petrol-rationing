@@ -305,6 +305,40 @@ public class AraTerminal {
     	//System.out.println(dateFormat.format(date)); //2014/08/06 15:59:48
     	return dateFormat.format(date);
     }
+    
+    /**
+     * Send instruction START_PUMPING to the card and
+     * retrieve the balance. 
+     * ATM. It is used for both Charging and terminal.
+     */
+    protected short getBalance(){
+        ResponseAPDU resp;
+        short balance = 0;
+        try {
+        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_BALANCE, 1, 0));
+			byte[] temp = resp.getData();
+			balance = (short) (temp[0] | (temp[1] << 8 ));
+			if (balance < 0)
+				throw new IllegalStateException("Balance cannot be negative");
+            if ( debug == true){
+            	System.out.println("Getting balance..");
+            	for (byte b :  temp)
+            		System.out.format("0x%x ", b);
+            	System.out.println();
+            	System.out.println("Balance is: " + balance);
+            	return balance;
+            }
+        } catch (IllegalStateException ex) {
+			System.out.println(ex.getMessage());
+    		System.out.println("Card is corrupted.");
+			System.exit(1);
+		} catch (CardException ex) {
+			System.out.println(ex.getMessage());
+			System.out.println("Getting logs failed.");
+			System.exit(1);
+		}
+    	return balance;
+    }
 
     public static void main(String[] arg) {
     	AraTerminal araTerminal = new AraTerminal((byte) 0x01);

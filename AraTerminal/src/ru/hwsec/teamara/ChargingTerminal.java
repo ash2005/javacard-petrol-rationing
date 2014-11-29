@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
+import javacard.security.CryptoException;
+
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
@@ -221,6 +223,14 @@ public class ChargingTerminal extends AraTerminal {
 				for (byte b : sig_card_bytes)
 					System.out.format("0x%x ", b);
 				System.out.println();
+				try{
+					System.out.println(ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
+					
+				}
+				catch (GeneralSecurityException e){
+					System.out.println("Signature Verification Error");
+				}
+				
 			}
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
@@ -252,8 +262,10 @@ public class ChargingTerminal extends AraTerminal {
     	
     	// exit if it turns false. 
     	boolean status = true;
+    	// get balance from smartcard. 
+    	short balance = getBalance();
     	// object that describes the connected card. 
-    	Card card = new Card( (int) 0xA1, (short) 100 );  
+    	Card card = new Card( (int) 0xA1, balance );  
     	
     	// retrieve and store logs as well as get the basic info of the card.
     	status = getLogs(card);
