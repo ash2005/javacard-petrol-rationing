@@ -65,8 +65,8 @@ public class MySql {
 				+ "transaction SMALLINT NOT NULL, "
 				+ "termID MEDIUMINT UNSIGNED NOT NULL, "					
 				+ "date DATETIME NOT NULL , "
-				+ "sig_card VARCHAR(60) NOT NULL,"
-				+ "sig_term VARCHAR(60) NOT NULL" + ")";
+				+ "sig_card VARCHAR(73) NOT NULL,"
+				+ "sig_term VARCHAR(73) NOT NULL" + ")";
 		execute_query(query);
 		
 		// TESTING...
