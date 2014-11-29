@@ -168,9 +168,8 @@ public class ChargingTerminal extends AraTerminal {
 			byte[] temp = new sun.misc.BASE64Decoder().decodeBuffer(Date);
 			msg_bytes[0] = this.termID;
 			System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
-			msg_bytes[16] = (byte) (new_balance    & 0xFF);
-			msg_bytes[17] = (byte) (new_balance>>8 & 0xFF);
-			
+			msg_bytes[16] = (byte)(new_balance);
+			msg_bytes[17] = (byte)((new_balance >> 8) & 0xFF);
             if ( debug == true){
             	System.out.println("The message that has to be signed is:");
             	System.out.format("0x%x", this.termID);
@@ -215,21 +214,20 @@ public class ChargingTerminal extends AraTerminal {
 		byte[] sig_card_bytes = new byte[SIG_SIZE];
 		ResponseAPDU resp;
 		try {
-			resp = this.cardComm.sendToCard(new CommandAPDU(0,
-					Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
+			resp = this.cardComm.sendToCard(new CommandAPDU(0,Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
 			sig_card_bytes = resp.getData();
 			if (debug == true) {
 				System.out.println("Reply for UPDATE_BALANCE_CHARGE, the signature of smartcard is:");
 				for (byte b : sig_card_bytes)
 					System.out.format("0x%x ", b);
 				System.out.println();
-				try{
-					System.out.println(ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
-					
+/*				try{
+					//System.out.println(ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
+					System.out.println("yo");
 				}
 				catch (GeneralSecurityException e){
 					System.out.println("Signature Verification Error");
-				}
+				}*/
 				
 			}
 		} catch (CardException ex) {

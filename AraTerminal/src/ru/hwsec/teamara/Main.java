@@ -22,12 +22,13 @@ public class Main {
 		//issue.createuser(db);
 
 		ChargingTerminal charging = new ChargingTerminal(db, (byte) 0x21);
+		//charging.execute();
 		charging.use();
 		
 		PetrolTerminal pumping = new PetrolTerminal( (byte) 0x11 );
 		//pumping.execute();
 		pumping.use();
-
+		pumping.use();
 
 
 		

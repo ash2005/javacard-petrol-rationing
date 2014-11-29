@@ -317,17 +317,17 @@ public class AraTerminal {
         try {
         	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_BALANCE, 1, 0));
 			byte[] temp = resp.getData();
-			balance = (short) (temp[0] | (temp[1] << 8 ));
-			if (balance < 0)
-				throw new IllegalStateException("Balance cannot be negative");
+			balance = (short) ((temp[1] << 8) + (temp[0]&0xFF));
             if ( debug == true){
             	System.out.println("Getting balance..");
             	for (byte b :  temp)
             		System.out.format("0x%x ", b);
             	System.out.println();
             	System.out.println("Balance is: " + balance);
-            	return balance;
             }
+			if (balance < 0)
+				throw new IllegalStateException("Balance cannot be negative");
+        	return balance;
         } catch (IllegalStateException ex) {
 			System.out.println(ex.getMessage());
     		System.out.println("Card is corrupted.");
