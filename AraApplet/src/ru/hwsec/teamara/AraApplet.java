@@ -26,7 +26,7 @@ public class AraApplet extends Applet {
     private byte[] terminalMacKey;
     private byte[] terminalIV;
     
-    
+    private Log log;
 
     // Maximum number of incorrect tries before the PIN is blocked.
     final static byte PIN_TRY_LIMIT = (byte) 0x03;
@@ -39,6 +39,7 @@ public class AraApplet extends Applet {
         this.pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
         //this.permanentState = PermanentState.INIT_STATE;
         this.permanentState = PermanentState.ISSUED_STATE;
+        this.log = new Log();
 
         /*
          * Here we will store values which are session specific:
@@ -114,11 +115,28 @@ public class AraApplet extends Applet {
 				this.testSignature(apdu);
 				break;
 
-			// Charging stage.
+				
+			// PUMPING stage
+				
+			case Instruction.GET_BALANCE:
+				this.log.getBalance(apdu);
+				break;
+				
+			case Instruction.UPDATE_BALANCE_PETROL:
+				this.log.updateTransactionPetrol(apdu);
+				break;
+				
+			// CHARGING stage.
+				
 			case Instruction.GET_LOGS:
-				// this.sendLogs(apdu);
+				this.log.getLogs(apdu);
 				break;
 
+			case Instruction.UPDATE_BALANCE_CHARGE:
+				this.log.updateTransactionCharge(apdu);
+				break;
+
+				
 			default:
 				// good practice: If you don't know the INStruction, say so:
 				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);

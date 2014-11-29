@@ -24,15 +24,17 @@ public class Log {
 	
 	public Log(){
 	
-		this.transaction1 = new byte[129];
-		this.transaction2 = new byte[129];
-		this.transaction3 = new byte[129];
-		this.transaction4 = new byte[129];
-		this.transaction5 = new byte[129];
+		Log.transaction1 = new byte[129];
+		Log.transaction2 = new byte[129];
+		Log.transaction3 = new byte[129];
+		Log.transaction4 = new byte[129];
+		Log.transaction5 = new byte[129];
 		
-		this.balance = 0;
-		this.index = 0;
+		Log.balance = 0;
+		Log.index = 0;
 	}
+	
+	//  PETROL PUMP FUNCTIONS
 	
 	public void getBalance(APDU apdu){
 		switch(index){
@@ -103,4 +105,34 @@ public class Log {
 	}
 	
 	
+	
+	
+	//  CHARGING TERMINAL FUNCTIONS
+	
+	
+	
+	/* Send all logs to the Charging Terminal.
+	 * Array formed by concatenate [transaction 1, transaction2, transactionN]
+	 * Where n is the number of logs available.
+	 *  Terminal can determine number of transactions = (Length of received APDU / 129 ) 
+	 *  */
+	public void getLogs(APDU apdu){
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short) 2);
+        //TODO: make the array
+        //Util.arrayCopy(transaction, (short) 1, apdu.getBuffer(), (short)0, (short) 2);
+        apdu.sendBytes((short)0, (short) 2); // (offset, length)
+	}
+	
+	public void updateTransactionCharge(APDU apdu){
+        
+		apdu.setOutgoing();
+        apdu.setOutgoingLength((short) 2);
+        
+        Util.arrayCopy(resp, (short) 0, apdu.getBuffer(), (short)0, (short) 2);
+        apdu.sendBytes((short)0, (short) 2); // (offset, length)
+        
+        Log.index = 0;
+        
+	}
 }

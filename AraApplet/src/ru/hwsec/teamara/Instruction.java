@@ -8,7 +8,7 @@ public class Instruction {
     public static final byte SET_SIGNATURE  = (byte)0x02;
     public static final byte SET_PIN        = (byte)0x03;
     public static final byte SET_BALANCE    = (byte)0x04;
-    public static final byte CHECK_PIN      = (byte)0x05; // move under issued state.
+
 
     //ISSUED_STATE
     // Mutual Authentication
@@ -20,15 +20,17 @@ public class Instruction {
 
 
     // Checks
-
+    public static final byte CHECK_PIN      = (byte)0x20; // move under issued state.
+    
+    
     // Petrol Terminal
-    public static final byte START_PUMPING  = (byte)0x20;
-    public static final byte UPDATE_BALANCE = (byte)0x21;
+    public static final byte GET_BALANCE  = (byte)0x30;
+    public static final byte UPDATE_BALANCE_PETROL = (byte)0x31;
+    
     
     // Charging Terminal
-    public static final byte GET_LOGS    = (byte)0x30;
-    public static final byte CLEAR_LOGS  = (byte)0x31;
-    public static final byte CHARGE      = (byte)0x32;
+    public static final byte GET_LOGS    = (byte)0x40;
+    public static final byte UPDATE_BALANCE_CHARGE = (byte)0x41;
 
     private Instruction() { }
 }
