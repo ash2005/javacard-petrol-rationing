@@ -43,10 +43,13 @@ public class AraTerminal {
     	this.termID = b;
         
     	try {
-			cardComm = new CardComm(true);
+			//cardComm = new CardComm(false);
+			cardComm = new CardComm(true); // Simulator.
 		} catch (CardException e) {
 			System.out.println("Could not connect to the card or simulator.");
+			System.exit(1);
 		}
+		System.out.println("Connected to the smart card.");
     }
     
     protected void execute() {
