@@ -2,17 +2,16 @@ package ru.hwsec.teamara;
 
 import javacard.framework.APDU;
 import javacard.framework.ISO7816;
+import javacard.framework.JCSystem;
 import javacard.framework.Util;
 
 public class Log {
 
 	/* Transactions are byte arrays comprised of
-	 * Terminal ID					: Byte 0...1
-	 * Balance							: Byte 1...3			<  2 bytes >
-	 * Date(e.g. 30)					: Byte 3...21			< 18 bytes >
-
-	 * Terminal Signature			: Byte 21...75		< 54 bytes >
-	 * Card Signature				: Byte 75...129		< 54 bytes >
+	 * Terminal ID+Date			: Byte 0...15			< 16 bytes >
+	 * Balance							: Byte 16...17		<  2 bytes >
+	 * Terminal Signature			: Byte 18...71		< 54 bytes >
+	 * Card Signature				: Byte 72...125		< 54 bytes >
 	 */
 	private static byte[] transaction1;
 	private static byte[] transaction2;
@@ -22,13 +21,19 @@ public class Log {
 	private static byte[] balance;
 	private static short index;	// To indicate number of transactions currently stored
 	
+	private static final short BALANCE_OFFSET = 16;
+	private static final short MSG_TOSIGN_LENGTH = 18;
+	private static final short CARD_SIGNATURE_OFFSET = 72;
+	private static final short PETROL_UPDATE_LENGTH = 72;
+	private static final short TRANSACTION_LENGTH= 126;
+	
 	public Log(){
 	
-		Log.transaction1 = new byte[129];
-		Log.transaction2 = new byte[129];
-		Log.transaction3 = new byte[129];
-		Log.transaction4 = new byte[129];
-		Log.transaction5 = new byte[129];
+		Log.transaction1 = new byte[TRANSACTION_LENGTH];
+		Log.transaction2 = new byte[TRANSACTION_LENGTH];
+		Log.transaction3 = new byte[TRANSACTION_LENGTH];
+		Log.transaction4 = new byte[TRANSACTION_LENGTH];
+		Log.transaction5 = new byte[TRANSACTION_LENGTH];
 		Log.balance = new byte[2];		// balance[0] corresponds to transaction[1], balance[1] corresponds to transaction[2],  
 		
 		Log.index = 0;
@@ -72,10 +77,10 @@ public class Log {
 	}
 	
 	private void updateTransactionPetrol(APDU apdu, byte[] transaction){
-		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, transaction, (short)0, (short)75);
-		ECCCard.performSignature(transaction, (short) 0, (short) 21, transaction, (short) 75);
-		Log.balance[0] =transaction[1];
-		Log.balance[1] =transaction[2];
+		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, transaction, (short) 0, PETROL_UPDATE_LENGTH );
+		ECCCard.performSignature(transaction, (short) 0, (short) MSG_TOSIGN_LENGTH, transaction, CARD_SIGNATURE_OFFSET );
+		Log.balance[0] =transaction[BALANCE_OFFSET];
+		Log.balance[1] =transaction[BALANCE_OFFSET + 1];
 		//Log.balance = (short) (transaction[1] | (transaction[2]<< 8 ));		
 		byte[] buffer = apdu.getBuffer();
 		apdu.setOutgoing();
@@ -88,7 +93,7 @@ public class Log {
 	/** Send all logs to the Charging Terminal.
 	 * Array formed by concatenate [transaction 1, transaction2, transactionN]
 	 * Where n is the number of logs available.
-	 *  Terminal can determine number of transactions = (Length of received APDU / 129 ) 
+	 *  Terminal can determine number of transactions = (Length of received APDU / TRANSACTION_LENGTH ) 
 	 * */
 	public void getLogs(APDU apdu){
 		
@@ -102,39 +107,39 @@ public class Log {
 				apdu.sendBytes((short)0, (short) 1); // (offset, length)
 				break;
 			case (short) 1:
-				apdu.setOutgoingLength((short) 129);
-				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
-				apdu.sendBytes((short)0, (short) 129); // (offset, length)
+				apdu.setOutgoingLength((short) TRANSACTION_LENGTH);
+				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) TRANSACTION_LENGTH);
+				apdu.sendBytes((short)0, (short) TRANSACTION_LENGTH); // (offset, length)
 				break;
 			case (short) 2:
-				apdu.setOutgoingLength((short) 258);			// 129 * 2
+				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 2));			// 129 * 2
 				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
 				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
-				apdu.sendBytes((short)0, (short) 258); // (offset, length)
+				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 2)); // (offset, length)
 				break;
 			case (short) 3:
-				apdu.setOutgoingLength((short) 387);			// 129 * 3
+				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 3));			// 129 * 3
 				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
 				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
 				Util.arrayCopy(transaction3, (short) 0, buffer, (short)258, (short) 129);
-				apdu.sendBytes((short)0, (short) 387); 			// (offset, length)
+				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 3)); 			// (offset, length)
 				break;
 			case (short) 4:
-				apdu.setOutgoingLength((short) 516);			// 129 * 4
+				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 4));			// 129 * 4
 				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
 				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
 				Util.arrayCopy(transaction3, (short) 0, buffer, (short)258, (short) 129);
 				Util.arrayCopy(transaction4, (short) 0, buffer, (short)387, (short) 129);
-				apdu.sendBytes((short)0, (short) 516); 			// (offset, length)
+				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 4)); 			// (offset, length)
 				break;
 			case (short) 5:
-				apdu.setOutgoingLength((short) 645);			// 129 * 5
+				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 5));			// 129 * 5
 				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) 129);
 				Util.arrayCopy(transaction2, (short) 0, buffer, (short)129, (short) 129);
 				Util.arrayCopy(transaction3, (short) 0, buffer, (short)258, (short) 129);
 				Util.arrayCopy(transaction4, (short) 0, buffer, (short)387, (short) 129);
 				Util.arrayCopy(transaction5, (short) 0, buffer, (short)516, (short) 129);
-				apdu.sendBytes((short)0, (short) 645); 			// (offset, length)
+				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 5)); 			// (offset, length)
 				break;
 			default:
 				apdu.setOutgoingLength((short) (1));
@@ -157,11 +162,20 @@ public class Log {
 	 * 	 Send Card Signature to Charging Terminal 
 	 **/
 	public void updateTransactionCharge(APDU apdu){
-		updateTransactionPetrol(apdu, Log.transaction1);
-        Log.index = 1;
+		//updateTransactionPetrol(apdu, Log.transaction1);
+		byte[] signature =  JCSystem.makeTransientByteArray((short) 54, JCSystem.CLEAR_ON_DESELECT);
+		byte[] message =  JCSystem.makeTransientByteArray((short) MSG_TOSIGN_LENGTH, JCSystem.CLEAR_ON_DESELECT);
+		
+		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, message, (short) 0, MSG_TOSIGN_LENGTH );
+		ECCCard.performSignature(message, signature);
+		Log.balance[0] =message[BALANCE_OFFSET];
+		Log.balance[1] =message[BALANCE_OFFSET + 1];
+		
+		
+        Log.index = 0;
         apdu.setOutgoing();
         apdu.setOutgoingLength((short) 54);
-        Util.arrayCopy(transaction1, (short) 75, apdu.getBuffer(), (short)0, (short) 54);
+        Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, (short) 54);
         apdu.sendBytes((short)0, (short) 54); // (offset, length)
 	}
 }
