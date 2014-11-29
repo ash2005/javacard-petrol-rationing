@@ -1,5 +1,7 @@
 package ru.hwsec.teamara;
 
+import java.util.Arrays;
+
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
@@ -31,77 +33,116 @@ public class ChargingTerminal extends AraTerminal {
         super(ttermID); // set the terminal ID.
         this.db = tdb;
     }
-	
-	
-	// For testing purpose only
-	public ChargingTerminal(byte ttermID){
-        super(ttermID); // set the terminal ID.
-    
-    }
 
-    /* 
-     * Reference sec 7.6 of Design Document
-     * Get card logs and ask card to clear logs
+	/**
+     * Get card logs adn store them in the database.
      * 
-     * Additionally,    TODO OR REMOVE.
+     * Additionally,    TODO
      * Check if the card logs fulfil specified criteria
      *  - less than 200 litres per month
      *  - Only 5 withdrawals
-     */
-	//private Card getLogs(){
-	public Card getLogs() { // for testing.
+	 * @param card obj Card with the details of the connected card.
+	 * @return true/false depending on success.
+	 */
+	private boolean getLogs(Card card) {
         ResponseAPDU resp;
     	boolean status = true;
-    	Card card = new Card();
-    	// For any entry
     	
+    	// The constant byte size of each log entry.
+    	final int LOG_SIZE  = 129;
     	
-    	//Alvin: Why send signed key???No need. Verification already done during mutual auth
-        //byte[] signedKey = new byte[105];
-        //System.arraycopy(ECCTerminal.PUBLIC_KEY_BYTES, 0, signedKey, 0, ECCTerminal.PUBLIC_KEY_BYTES.length);
-        // P1 specifies what type of terminal this is:
-        // P1 = 1 ==> charging terminal
-        // P1 = 2 ==> pump terminal
+    	// Maximum number of log.
+    	final int MAX_LOGS  = 5;
+    	
+    	// The length of each the date string.
+    	final int DATE_SIZE = 18;
+    	
+    	// The length of each signature in bytes.
+    	final int SIG_SIZE  = 54;
+    	
+    	// The buffer that temporary stores the logs. 
+    	byte[] buffer = new byte[MAX_LOGS*LOG_SIZE];
+    	Arrays.fill( buffer, (byte) 0x00 );
+
+    	// Size of the buffer that contains usefull information.
+    	int buffer_size = 0;
+    	
         try {
-        	//resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0, signedKey));	//WHY send signed key???
         	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
-        	byte[] data = resp.getData();
-        	
-        }
-        catch (CardException ex){
-        	System.out.println(ex.getMessage());
-    		System.out.println("Getting logs failed.");
-    		System.exit(1);
-        }
-            	
-    	
+			byte[] temp = resp.getData();
+			buffer_size = temp.length;
+
+			// copy bytes to the buffer.
+			System.arraycopy(temp, 0, buffer, 0, buffer_size);
+			
+		} catch (CardException ex) {
+			System.out.println(ex.getMessage());
+			System.out.println("Getting logs failed.");
+			System.exit(1);
+		}
+
+
+		int number_of_logs = 0;
+		try {
+			number_of_logs = (buffer_size + 1) / LOG_SIZE;
+			if (number_of_logs > 5) // Maximum log capacity is 5.
+				throw new IllegalStateException("Cannot handle " + number_of_logs + " logs.");
+        } catch(NumberFormatException ex) {
+        	System.out.print(ex.getMessage());
+		} catch (IllegalStateException ex) {
+			System.out.println(ex.getMessage());
+		}
+		
+		
+		for ( int i = 0; i < number_of_logs; i++){
+			/*
+			 * Log raw structure:
+			 *             [ termID |  Balance | Date | Term Sig | Card Sig ]
+			 * Bytes:          1         2        18       54        54
+			 * Starting Pos:   0         1         3       21        75
+			 */
+			int index = 0 + i * LOG_SIZE; // Starting index of each log.
+			
+			int termID = (int) buffer[index];
+			short balance = (short) (buffer[1] | (buffer[2] << 8 ));
+			short transaction = (short) 1; // transaction must be calculated in a later version.
+			byte date_bytes[] = new byte[DATE_SIZE]; 
+			byte sig_term_bytes[] = new byte[SIG_SIZE];
+			byte sig_card_bytes[] = new byte[SIG_SIZE];
+			// copy bytes to the buffer.
+			System.arraycopy(buffer, index +  3, date_bytes,     0, DATE_SIZE);			
+			System.arraycopy(buffer, index + 21, sig_term_bytes, 0, SIG_SIZE);
+			System.arraycopy(buffer, index + 75, sig_card_bytes, 0, SIG_SIZE);
+			
+			// reverse this:
+			//  String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
+			//  String sig_term = new sun.misc.BASE64Decoder().decodeBuffer(sig_term_bytes);
+			String date     = new sun.misc.BASE64Encoder().encode(date_bytes);
+			String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
+			String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
+			
+			status = db.addlog(card.cardID, balance, transaction, termID, date, sig_card, sig_term);
+	    	if (!status){
+	    		System.out.println("Storing logs failed.");
+	    		System.exit(1);
+	    	}
+		}
+		
+
         // TODO: Parse and store data in DB   
     	// cardID, balance, transaction, termID, DATE, sig_card, sig_term
     	//Entry new_entry = 
-    	status = db.addlog(1001, (short) 10, (short) -50, 2001, "2014-11-27 15:01:35", "sig_card", "sig_term" );
-    	if (!status){
-    		System.out.println("Storing logs failed.");
-    		System.exit(1);
-    	}
-    	card.cardID = 1001;
-    	card.balance = (short) 250; // According to the last log.
-    	
     	
     	// extract balance from last log entry.
     	
     	
     	System.out.println(verifyBalance(card));
-        return card;
+        return true;
     }
 	
-	/*
+	/**
 	 * Just send command CLEAR LOGS to the smartcard.
 	 */
-	/**Alvin: This function is not needed. 
-	 * When the charging terminal asks the smartcard to update the balance, 
-	 * the smartcard automatically clears the logs first.
-	 * A card tear during this stage will make the smartcard have 0 balance or 0 logs **/
-	/*
 	private boolean clearLogs(){
 		try {
 			this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CLEAR_LOGS, 1, 0));
@@ -111,9 +152,8 @@ public class ChargingTerminal extends AraTerminal {
 			return false;
 		}
 	}
-	*/
 
-	/*
+	/**
 	 * Compare the cardID's balance at the smart card and at the database.
 	 */
 	private boolean verifyBalance(Card card){
@@ -167,14 +207,14 @@ public class ChargingTerminal extends AraTerminal {
     	// exit if it turns false. 
     	boolean status = true;
     	// object that describes the connected card. 
-    	Card card;  
+    	Card card = new Card( (int) 0xA1, (short) 250 );  
     	
     	// retrieve and store logs as well as get the basic info of the card.
-    	card = getLogs();
+    	status = getLogs(card);
 
     	// if getting logs was successful, inform smart card to clear the entries. 
     	// Not needed. See note below above the function
-    	//status = clearLogs();
+    	status = clearLogs();
     	
     	// verify that the balance in the smart card
     	// matches the balance in the database.
@@ -202,18 +242,4 @@ public class ChargingTerminal extends AraTerminal {
     	else
     		System.out.println("Card is charged.");
     }
-
-
-
-
-	public static void main(String[] arg) {
-		ChargingTerminal chargingTerminal = new ChargingTerminal((byte) 0x0);
-	    try {
-	    	chargingTerminal.cardComm = new CardComm(true);
-		} catch (CardException e) {
-			System.out.println("Could not connect to the card or simulator.");
-		}
-		chargingTerminal.execute();
-		chargingTerminal.use();
-	}
 }

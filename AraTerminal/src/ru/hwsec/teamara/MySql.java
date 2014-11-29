@@ -224,8 +224,8 @@ public class MySql {
 		// THE SYSADMIN MUST CALL THIS FUNCTION.
 		return true;
 	}
-	
-	/*
+
+	/**
 	 * Execute an mysql query which does not return anything 
 	 * (e.g. not containing SELECT).
 	 * @param The query that will be executed to the mysql server.
