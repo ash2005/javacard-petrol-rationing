@@ -8,10 +8,9 @@ import javacard.framework.JCSystem;
 import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
 import javacard.security.CryptoException;
-import javacard.security.RandomData;
 import javacard.security.KeyAgreement;
 import javacard.security.MessageDigest;
-import javacardx.crypto.Cipher;
+import javacard.security.RandomData;
 
 public class AraApplet extends Applet {
 
@@ -72,19 +71,19 @@ public class AraApplet extends Applet {
 		case PermanentState.INIT_STATE:
 			switch (ins) {
 			case Instruction.SET_PRIV_KEY:
+				this.setPrivateKey(apdu);
 				break;
 
-			case Instruction.SET_KEY_EXPIRY:
-				break;
-
-			case Instruction.SET_SIGNATURE:
+			case Instruction.SET_PUB_KEY:
+				this.setPublicKey(apdu);
 				break;
 
 			case Instruction.SET_PIN:
 				this.setPIN(apdu);
 				break;
-
-			case Instruction.SET_BALANCE:
+				
+			case Instruction.ISSUE_CARD:
+				this.issueCard(apdu);
 				break;
 
 			default:
@@ -159,19 +158,35 @@ public class AraApplet extends Applet {
     /*
      *  All the functions bellow are used for processing command APDUs sent by the terminal.
      */
+	
+	private void setPrivateKey(APDU apdu) {
+		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, ECCCard.PRIVATE_KEY_BYTES, (short)0, (short)25);
+		this.sendSuccess(apdu);
+	}
+	
+	private void setPublicKey(APDU apdu) {
+		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, ECCCard.PRIVATE_KEY_BYTES, (short)0, (short)50);
+		this.sendSuccess(apdu);
+	}
 
 
     /* Initialise the PIN, as sent from the Terminal */
-    void setPIN(APDU apdu){
+    private void setPIN(APDU apdu){
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
         this.pin.update(this.transmem, (short)59, MAX_PIN_SIZE);
-
-        /*// Sent the 4 bytes to the terminal // Just for testing....
-        apdu.setOutgoing();
-        apdu.setOutgoingLength((short)4);
-        Util.arrayCopy(this.buffer_PIN, (short)0, apdu.getBuffer(), (short)0, (short)4);
-        apdu.sendBytes((short)0, (short)4); // (offset, length)
-    	//*/
+        this.sendSuccess(apdu);
+    }
+    
+    private void issueCard(APDU apdu) {
+    	this.permanentState = PermanentState.ISSUED_STATE;
+    	this.sendSuccess(apdu);
+    }
+    
+    private void sendSuccess(APDU apdu) {
+    	 apdu.setOutgoing();
+         apdu.setOutgoingLength((short)1);
+         apdu.getBuffer()[0] = 0x01;
+         apdu.sendBytes((short)0, (short)2); // (offset, length)
     }
 
     /* Check the user entered PIN */
@@ -352,22 +367,5 @@ public class AraApplet extends Applet {
          SymApplet.init(cardIV, (short)0, terminalIV, (short)0, cardEncKey, (short)0, terminalEncKey, (short)0, cardMacKey, (short)0, terminalMacKey, (short)0);
      }
 
-     private void testSignature(APDU apdu) {
-    	 byte[] signature =  JCSystem.makeTransientByteArray((short) 54, JCSystem.CLEAR_ON_DESELECT);
-    	 byte[] msg = JCSystem.makeTransientByteArray((short) 16, JCSystem.CLEAR_ON_DESELECT);
-    	 short len;
-
-    	 Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, msg, (short)0, (short)16);
-    	 len= ECCCard.performSignature(msg, signature);
-
-         apdu.setOutgoing();
-         apdu.setOutgoingLength((short) (54));
-         Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, (short) 54);
-         apdu.sendBytes((short)0, (short) (54)); // (offset, length)
-
-     }
-
      /**** Starting Charging Stage ****/
-
-
 }

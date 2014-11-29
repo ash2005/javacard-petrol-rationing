@@ -9,14 +9,11 @@ public class PersonalisationTerminal {
         this.db = tdb;
     }
 	
-	public boolean create_user(){
-		/*
-		 * - Two PKI certificates, one each for key exchange and digital signature, 
-		 * signed by the Intermediate Cards Certificate Authority (CA).
-		 * - The corresponding private keys
-		 * - LOAD Intermediate Pump CA and Intermediate Charging CA
-		 * - Generated secret PIN and update
-		 */
+	public boolean issueCard() {
+		byte[] cardPrivateKey = {};
+		byte[] cardPublicKey = {};
+		byte[] cardPin = {};
+		
 		
 		
 		return true;
