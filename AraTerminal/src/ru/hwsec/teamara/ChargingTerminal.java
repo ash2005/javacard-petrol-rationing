@@ -1,5 +1,6 @@
 package ru.hwsec.teamara;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import javax.smartcardio.CardException;
@@ -112,7 +113,7 @@ public class ChargingTerminal extends AraTerminal {
 			System.out.println(ex.getMessage());
 		}
 		
-		
+		// Decode each log and store it in the database.
 		for ( int i = 0; i < number_of_logs; i++){
 			int index = 0 + i * LOG_SIZE; // Starting index of each log.
 			
@@ -179,13 +180,49 @@ public class ChargingTerminal extends AraTerminal {
      * - Get the signature
      * - Store the message and the signatures to the database
      */
-    private boolean updateBalance(Card card, int new_balance, String msg){
+    private boolean updateBalance(Card card, short new_balance, String msg){
     	// Create signature.
     	byte[] sig_term_bytes = ECCTerminal.performSignatureTerminal(msg);
     	String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
     	
+    	// Send msg in bytes to the smart card. 
+    	byte[] msg_bytes = new byte[512];
+		try {
+			msg_bytes = new sun.misc.BASE64Decoder().decodeBuffer(msg);
+            if ( debug == true){
+            	System.out.println("In function updateBalance..");
+            	System.out.println(msg);
+            	for (byte b :  msg_bytes)
+            		System.out.format("0x%x ", b);
+            	System.out.println();
+    			System.exit(1);
+            }
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+ 
     	// Send new balance and msg to the smart card and get the signature.
-    	byte[] sig_card_bytes = {(byte) 0x01, (byte) 0x01}; // testing
+    	byte[] sig_card_bytes = new byte[SIG_SIZE];
+        ResponseAPDU resp;
+        try {
+        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
+        	sig_card_bytes = resp.getData();
+
+            if ( debug == true){
+            	System.out.println("Reply for UPDATE_BALANCE_CHARGE, the signature of smartcard is:");
+            	for (byte b :  sig_card_bytes)
+            		System.out.format("0x%x ", b);
+            	System.out.println();
+            }
+
+		} catch (CardException ex) {
+			System.out.println(ex.getMessage());
+			System.out.println("Getting logs failed.");
+			System.exit(1);
+		}
+		
+    	// 
     	String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
     	
     	// Verify signature of smart card.
@@ -207,18 +244,18 @@ public class ChargingTerminal extends AraTerminal {
     	// exit if it turns false. 
     	boolean status = true;
     	// object that describes the connected card. 
-    	Card card = new Card( (int) 0xA1, (short) 250 );  
+    	Card card = new Card( (int) 0xA1, (short) 100 );  
     	
     	// retrieve and store logs as well as get the basic info of the card.
-    	status = getLogs(card);
+    	//status = getLogs(card);
 
     	// if getting logs was successful, inform smart card to clear the entries. 
     	// Not needed. See note below above the function
-    	status = clearLogs();
+    	//status = clearLogs();
     	
     	// verify that the balance in the smart card
     	// matches the balance in the database.
-    	status = verifyBalance(card);
+    	//status = verifyBalance(card);
     	if (!status){
     		System.out.println("Card is corrupted.");
     		// REVOKE CARD.
@@ -230,7 +267,8 @@ public class ChargingTerminal extends AraTerminal {
     	short new_balance = (short) (card.balance + this.MONTHLY_ALLOWANCE); 
     	
     	// construct the message that has to be signed by both the terminal and the smart card.
-    	String msg = Integer.toString(this.termID) + Integer.toString(new_balance) + this.get_date();
+    	String stermID = new sun.misc.BASE64Encoder().encode(new byte[] { this.termID }); 
+    	String msg = stermID + Integer.toString(new_balance) + this.get_date();
     	
     	// perform an atomic operation of updating the 
     	// balance and storing the signatures to the database.
