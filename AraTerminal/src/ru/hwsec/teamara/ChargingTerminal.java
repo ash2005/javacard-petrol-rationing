@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
+import javacard.security.CryptoException;
+
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
@@ -250,6 +252,14 @@ public class ChargingTerminal extends AraTerminal {
 				for (byte b : sig_card_bytes)
 					System.out.format("0x%x ", b);
 				System.out.println();
+				try{
+					System.out.println(ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
+					
+				}
+				catch (GeneralSecurityException e){
+					System.out.println("Signature Verification Error");
+				}
+				
 			}
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
