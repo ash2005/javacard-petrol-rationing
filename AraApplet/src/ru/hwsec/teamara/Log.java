@@ -29,15 +29,13 @@ public class Log {
 	private static final short SIGNATURE_LENGTH= 56;
 	
 	
-	public Log(){
-	
+	static{
 		Log.transaction1 = new byte[TRANSACTION_LENGTH];
 		Log.transaction2 = new byte[TRANSACTION_LENGTH];
 		Log.transaction3 = new byte[TRANSACTION_LENGTH];
 		Log.transaction4 = new byte[TRANSACTION_LENGTH];
 		Log.transaction5 = new byte[TRANSACTION_LENGTH];
 		Log.balance = new byte[2];		// balance[0] corresponds to transaction[1], balance[1] corresponds to transaction[2],  
-		
 		Log.index = 0;
 	}
 		
@@ -170,8 +168,8 @@ public class Log {
 		
 		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, message, (short) 0, MSG_TOSIGN_LENGTH );
 		ECCCard.performSignature(message, (short) 0, MSG_TOSIGN_LENGTH , signature, (short) 0);
-		Log.balance[0] =message[BALANCE_OFFSET];
-		Log.balance[1] =message[BALANCE_OFFSET + 1];
+		Log.balance[0] = message[BALANCE_OFFSET];
+		Log.balance[1] = message[BALANCE_OFFSET + 1];
 		
         Log.index = 0;
         apdu.setOutgoing();

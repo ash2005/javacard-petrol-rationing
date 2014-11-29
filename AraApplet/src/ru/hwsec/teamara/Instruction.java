@@ -4,10 +4,9 @@ public class Instruction {
 
     // INIT_STATE
     public static final byte SET_PRIV_KEY   = (byte)0x00;
-    public static final byte SET_KEY_EXPIRY = (byte)0x01;
-    public static final byte SET_SIGNATURE  = (byte)0x02;
-    public static final byte SET_PIN        = (byte)0x03;
-    public static final byte SET_BALANCE    = (byte)0x04;
+    public static final byte SET_PUB_KEY	= (byte)0x01;
+    public static final byte SET_PIN        = (byte)0x02;
+    public static final byte ISSUE_CARD		= (byte)0x03;
 
 
     //ISSUED_STATE
