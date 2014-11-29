@@ -70,8 +70,8 @@ public class MySql {
 		execute_query(query);
 		
 		// TESTING...
-		addcard(1001, 250, "PK"); // TODO: REMOVE IT.
-		adduser(2001, 1001, "Romanos", "Mauritsstraat");
+		//addcard(1001, 250, "PK"); // TODO: REMOVE IT.
+		//adduser(2001, 1001, "Romanos", "Mauritsstraat");
 	}
 
 	/*
@@ -127,7 +127,7 @@ public class MySql {
 				return Integer.parseInt(rs.getString(1));
 			}
 			else
-				return -2;
+				return -1;
 			
 		} catch (SQLException ex) {
 			Logger lgr = Logger.getLogger(MySql.class.getName());
