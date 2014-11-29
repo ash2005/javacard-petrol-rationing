@@ -26,7 +26,7 @@ public class AraApplet extends Applet {
     private byte[] terminalEncKey;
     private byte[] terminalMacKey;
     private byte[] terminalIV;
-    
+
     private Log log;
 
     // Maximum number of incorrect tries before the PIN is blocked.
@@ -47,11 +47,10 @@ public class AraApplet extends Applet {
          * Here we will store values which are session specific:
          * 4 bytes (0..3) int nonce sent by terminal in TERMINAL_HELLO message
          * 4 bytes (4..7) int nonce sent by card in CARD_HELLO message
-         * 51 bytes (8..58) public key sent by the terminal
-         * 4 bytes (59..62) for the PIN
-         * Total: 63 bytes
+         * 656 bytes (7..663) scrap memory for encrypting/decrypting apdus
+         * Total: 664
          */
-        this.transmem = JCSystem.makeTransientByteArray((short)63, JCSystem.CLEAR_ON_DESELECT);
+        this.transmem = JCSystem.makeTransientByteArray((short)664, JCSystem.CLEAR_ON_DESELECT);
 
         this.register();
 	}
@@ -88,11 +87,6 @@ public class AraApplet extends Applet {
 			case Instruction.SET_BALANCE:
 				break;
 
-			case Instruction.CHECK_PIN: // TODO: DELETE AFTER THIS LINE and MOVE
-										// under ISSUED_STATE state.
-				this.checkPIN(apdu);
-				break;
-
 			default:
 				// good practice: If you don't know the INStruction, say so:
 				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
@@ -109,31 +103,33 @@ public class AraApplet extends Applet {
 				this.processTerminalKey(apdu);
 				break;
 
-			case Instruction.GEN_SHARED_SECRET:
+			case Instruction.CHANGE_CIPHER_SPEC:
 				this.genSharedSecret(apdu);
 				break;
 
-			case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
-				this.testSignature(apdu);
+			case Instruction.CHECK_PIN:
+				this.checkPIN(apdu);
 				break;
 
-		/*TODO: Make it not possible to enter pumping stage or charging stage 
-		 * if the terminal is a charging terminal or pumping terminal respectively 
+
+
+		/*TODO: Make it not possible to enter pumping stage or charging stage
+		 * if the terminal is a charging terminal or pumping terminal respectively
 		 * From the check in processTerminal Key stage
 		 */
-				
+
 			// PUMPING stage
-				
+
 			case Instruction.GET_BALANCE:
 				this.log.getBalance(apdu);
 				break;
-				
+
 			case Instruction.UPDATE_BALANCE_PETROL:
 				this.log.updateTransactionPetrol(apdu);
 				break;
-				
+
 			// CHARGING stage.
-				
+
 			case Instruction.GET_LOGS:
 				this.log.getLogs(apdu);
 				break;
@@ -141,12 +137,12 @@ public class AraApplet extends Applet {
 			case Instruction.CLEAR_LOGS:
 				this.log.clearLogs(apdu, this.cardID);
 				break;
-	
+
 			case Instruction.UPDATE_BALANCE_CHARGE:
 				this.log.updateTransactionCharge(apdu);
 				break;
 
-				
+
 			default:
 				// good practice: If you don't know the INStruction, say so:
 				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
@@ -181,7 +177,7 @@ public class AraApplet extends Applet {
     /* Check the user entered PIN */
     boolean checkPIN(APDU apdu){
     	this.temp = 0x00;
-    	Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
+    	SymApplet.decrypt(apdu.getBuffer(), ISO7816.OFFSET_CDATA, (byte)16, this.transmem, (short)59);
         if (this.pin.check(this.transmem, (short) 59, MAX_PIN_SIZE) == true)
         	this.temp = 0x01;
         else
@@ -300,17 +296,17 @@ public class AraApplet extends Applet {
     }
 
      private void genSecretKeys(APDU apdu) {
-    	 
+
     	 byte[] hashOut = JCSystem.makeTransientByteArray((short)20, JCSystem.CLEAR_ON_DESELECT);
-    	 
+
     	 this.cardEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
     	 this.cardMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
     	 this.cardIV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
     	 this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
     	 this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
     	 this.terminalIV  = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-    	 
-    	     	 
+
+
     	 MessageDigest hash = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
     	 transmem[33] = (byte) 0x00;	//cardEncKey
          hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
@@ -321,56 +317,57 @@ public class AraApplet extends Applet {
          Util.arrayCopy(this.transmem, (short) 0, apdu.getBuffer(), (short)0, (short) 34);
          apdu.sendBytes((short)0, (short) 34); // (offset, length)
          */
-         
+
          transmem[33] = (byte) 0x01;	//cardMacKey
          hash.reset();
          hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
          Util.arrayCopy(hashOut, (short) 0, this.cardMacKey, (short)0, (short) 16);
-         
+
          transmem[33] = (byte) 0x02;	//cardIV
          hash.reset();
          hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
          Util.arrayCopy(hashOut, (short) 0, this.cardIV, (short)0, (short) 16);
-         
+
          transmem[33] = (byte) 0xA0;	//TerminalEncKey
          hash.reset();
          hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
          Util.arrayCopy(hashOut, (short) 0, this.terminalEncKey, (short)0, (short) 16);
-         
+
          transmem[33] = (byte) 0xA1;	//TerminalMacKey
          hash.reset();
          hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
          Util.arrayCopy(hashOut, (short) 0, this.terminalMacKey, (short)0, (short) 16);
-         
+
          transmem[33] = (byte) 0xA2;	//Terminal IV
          hash.reset();
          hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
          Util.arrayCopy(hashOut, (short) 0, this.terminalIV, (short)0, (short) 16);
-         
-         
+
+
          apdu.setOutgoing();
          apdu.setOutgoingLength((short) (16));
          Util.arrayCopy(this.terminalIV, (short) 0, apdu.getBuffer(), (short)0, (short) 16);
          apdu.sendBytes((short)0, (short) (16)); // (offset, length)
          
+         SymApplet.init(cardIV, (short)0, terminalIV, (short)0, cardEncKey, (short)0, terminalEncKey, (short)0, cardMacKey, (short)0, terminalMacKey, (short)0);
      }
 
      private void testSignature(APDU apdu) {
     	 byte[] signature =  JCSystem.makeTransientByteArray((short) 54, JCSystem.CLEAR_ON_DESELECT);
     	 byte[] msg = JCSystem.makeTransientByteArray((short) 16, JCSystem.CLEAR_ON_DESELECT);
     	 short len;
-    	 
+
     	 Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, msg, (short)0, (short)16);
     	 len= ECCCard.performSignature(msg, signature);
-    	 
+
          apdu.setOutgoing();
          apdu.setOutgoingLength((short) (54));
          Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, (short) 54);
          apdu.sendBytes((short)0, (short) (54)); // (offset, length)
-    	
+
      }
-     
-     /**** Starting Charging Stage ****/  
-     
-     
+
+     /**** Starting Charging Stage ****/
+
+
 }

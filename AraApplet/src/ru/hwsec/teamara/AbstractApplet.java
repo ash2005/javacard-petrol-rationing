@@ -125,15 +125,6 @@ public abstract class AbstractApplet extends Applet {
                         this.processTerminalKey(apdu);
                     break;
 
-
-                    case Instruction.TERMINAL_CHANGE_CIPHER_SPEC:
-                    break;
-
-
-
-
-
-
     	    	default:
     		    	// good practice: If you don't know the INStruction, say so:
     			    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
