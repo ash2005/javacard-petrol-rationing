@@ -35,11 +35,11 @@ public class ChargingTerminal extends AraTerminal {
 	/*
 	 * Log raw structure in the smart card:
 	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
-	 * Bytes:          1        15         2         54        54
-	 * Starting Pos:   0         1        16         18        72
+	 * Bytes:          1        15         2         56        56
+	 * Starting Pos:   0         1        16         18        74
 	 */
 	// The constant byte size of each log entry.
-	final int LOG_SIZE  = 125;
+	final int LOG_SIZE  = 130;
 	
 	// Maximum number of log.
 	final int MAX_LOGS  = 5;
@@ -47,7 +47,7 @@ public class ChargingTerminal extends AraTerminal {
 	// The length of the date field.
 	final int DATE_SIZE = 15;
 	// The length of each signature.
-	final int SIG_SIZE  = 54;
+	final int SIG_SIZE  = 56;
 	
 	// Starting position of the date field.
 	final int DATE_POS  = 1;
@@ -56,7 +56,7 @@ public class ChargingTerminal extends AraTerminal {
 	// Starting position of the terminal signature field.
 	final int TERM_SIG_POS = 18;
 	// Starting position of the card signature field.
-	final int CARD_SIG_POS = 72;
+	final int CARD_SIG_POS = 74;
 	
 
 	public ChargingTerminal(MySql tdb, byte ttermID){
