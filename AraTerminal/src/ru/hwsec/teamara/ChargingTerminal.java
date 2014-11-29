@@ -31,6 +31,13 @@ public class ChargingTerminal extends AraTerminal {
         super(ttermID); // set the terminal ID.
         this.db = tdb;
     }
+	
+	
+	// For testing purpose only
+	public ChargingTerminal(byte ttermID){
+        super(ttermID); // set the terminal ID.
+    
+    }
 
     /* 
      * Reference sec 7.6 of Design Document
@@ -49,14 +56,17 @@ public class ChargingTerminal extends AraTerminal {
     	// For any entry
     	
     	
-        byte[] signedKey = new byte[105];
-        System.arraycopy(ECCTerminal.PUBLIC_KEY_BYTES, 0, signedKey, 0, ECCTerminal.PUBLIC_KEY_BYTES.length);
+    	//Alvin: Why send signed key???No need. Verification already done during mutual auth
+        //byte[] signedKey = new byte[105];
+        //System.arraycopy(ECCTerminal.PUBLIC_KEY_BYTES, 0, signedKey, 0, ECCTerminal.PUBLIC_KEY_BYTES.length);
         // P1 specifies what type of terminal this is:
         // P1 = 1 ==> charging terminal
         // P1 = 2 ==> pump terminal
         try {
-        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0, signedKey));
+        	//resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0, signedKey));	//WHY send signed key???
+        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
         	byte[] data = resp.getData();
+        	
         }
         catch (CardException ex){
         	System.out.println(ex.getMessage());
@@ -65,7 +75,7 @@ public class ChargingTerminal extends AraTerminal {
         }
             	
     	
-        
+        // TODO: Parse and store data in DB   
     	// cardID, balance, transaction, termID, DATE, sig_card, sig_term
     	//Entry new_entry = 
     	status = db.addlog(1001, (short) 10, (short) -50, 2001, "2014-11-27 15:01:35", "sig_card", "sig_term" );
@@ -87,6 +97,11 @@ public class ChargingTerminal extends AraTerminal {
 	/*
 	 * Just send command CLEAR LOGS to the smartcard.
 	 */
+	/**Alvin: This function is not needed. 
+	 * When the charging terminal asks the smartcard to update the balance, 
+	 * the smartcard automatically clears the logs first.
+	 * A card tear during this stage will make the smartcard have 0 balance or 0 logs **/
+	/*
 	private boolean clearLogs(){
 		try {
 			this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CLEAR_LOGS, 1, 0));
@@ -96,6 +111,7 @@ public class ChargingTerminal extends AraTerminal {
 			return false;
 		}
 	}
+	*/
 
 	/*
 	 * Compare the cardID's balance at the smart card and at the database.
@@ -133,7 +149,8 @@ public class ChargingTerminal extends AraTerminal {
     	String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
     	
     	// Verify signature of smart card.
-    	//TODO
+    	// TODO convert msg to bytes
+    	// ECCTerminal.performSignatureVerification(msg, sig_card_bytes, this.cardKeyBytes)
     	
     	// Save log entry to the database.
     	db.addlog(card.cardID, card.balance, this.MONTHLY_ALLOWANCE, (int) this.termID, this.get_date(), sig_card, sig_term);
@@ -156,7 +173,8 @@ public class ChargingTerminal extends AraTerminal {
     	card = getLogs();
 
     	// if getting logs was successful, inform smart card to clear the entries. 
-    	status = clearLogs();
+    	// Not needed. See note below above the function
+    	//status = clearLogs();
     	
     	// verify that the balance in the smart card
     	// matches the balance in the database.
@@ -185,4 +203,17 @@ public class ChargingTerminal extends AraTerminal {
     		System.out.println("Card is charged.");
     }
 
+
+
+
+	public static void main(String[] arg) {
+		ChargingTerminal chargingTerminal = new ChargingTerminal((byte) 0x0);
+	    try {
+	    	chargingTerminal.cardComm = new CardComm(true);
+		} catch (CardException e) {
+			System.out.println("Could not connect to the card or simulator.");
+		}
+		chargingTerminal.execute();
+		chargingTerminal.use();
+	}
 }

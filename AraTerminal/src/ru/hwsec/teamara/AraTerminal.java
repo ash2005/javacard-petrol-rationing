@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 
 public class AraTerminal {
 
+	protected byte[] cardKeyBytes;
     private byte[] cardEncKey;
     private byte[] cardMacKey;
     private byte[] cardIV;
@@ -48,7 +49,7 @@ public class AraTerminal {
 		}
     }
     
-    private void execute() {
+    protected void execute() {
         /* INITIALISATION STATE */
         /*
         this.setPIN();
@@ -93,7 +94,7 @@ public class AraTerminal {
         byte[] data = resp.getData();
 
         // Verify the public key and signature received from the card
-        byte[] cardKeyBytes = new byte[51];
+        cardKeyBytes = new byte[51];
         byte[] cardSignatureBytes = new byte[54];
         System.arraycopy(data, 0, cardKeyBytes, 0, 51);
         System.arraycopy(data, 51, cardSignatureBytes, 0, 54);

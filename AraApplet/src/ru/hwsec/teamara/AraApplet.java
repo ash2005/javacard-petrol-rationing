@@ -115,6 +115,10 @@ public class AraApplet extends Applet {
 				this.testSignature(apdu);
 				break;
 
+		/*TODO: Make it not possible to enter pumping stage or charging stage 
+		 * if the terminal is a charging terminal or pumping terminal respectively 
+		 * From the check in processTerminal Key stage
+		 */
 				
 			// PUMPING stage
 				

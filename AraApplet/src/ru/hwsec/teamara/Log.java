@@ -129,7 +129,7 @@ public class Log {
 		apdu.setOutgoing();
         apdu.setOutgoingLength((short) 2);
         
-        Util.arrayCopy(resp, (short) 0, apdu.getBuffer(), (short)0, (short) 2);
+        //Util.arrayCopy(resp, (short) 0, apdu.getBuffer(), (short)0, (short) 2);
         apdu.sendBytes((short)0, (short) 2); // (offset, length)
         
         Log.index = 0;
