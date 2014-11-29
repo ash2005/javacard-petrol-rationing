@@ -34,27 +34,29 @@ public class ChargingTerminal extends AraTerminal {
 	
 	/*
 	 * Log raw structure in the smart card:
-	 *             [ termID |  Balance | Date | Term Sig | Card Sig ]
-	 * Bytes:          1         2        18       54        54
-	 * Starting Pos:   0         1         3       21        75
+	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
+	 * Bytes:          1        15         2         54        54
+	 * Starting Pos:   0         1        16         18        72
 	 */
 	// The constant byte size of each log entry.
-	final int LOG_SIZE  = 129;
+	final int LOG_SIZE  = 125;
 	
 	// Maximum number of log.
 	final int MAX_LOGS  = 5;
 	
 	// The length of the date field.
-	final int DATE_SIZE = 18;
+	final int DATE_SIZE = 15;
 	// The length of each signature.
 	final int SIG_SIZE  = 54;
 	
 	// Starting position of the date field.
-	final int DATE_POS  = 3;
+	final int DATE_POS  = 1;
+	// Starting position of the balance field.
+	final int BALANCE_POS  = 16;
 	// Starting position of the terminal signature field.
-	final int TERM_SIG_POS = 21;
+	final int TERM_SIG_POS = 18;
 	// Starting position of the card signature field.
-	final int CARD_SIG_POS = 74;
+	final int CARD_SIG_POS = 72;
 	
 
 	public ChargingTerminal(MySql tdb, byte ttermID){
@@ -119,7 +121,7 @@ public class ChargingTerminal extends AraTerminal {
 			int index = 0 + i * LOG_SIZE; // Starting index of each log.
 			
 			int ttermID = (int) buffer[index];
-			short balance = (short) (buffer[1] | (buffer[2] << 8 ));
+			short balance = (short) (buffer[BALANCE_POS] | (buffer[BALANCE_POS+1] << 8 ));
 			short transaction = (short) 1; // transaction must be calculated in a later version.
 			byte date_bytes[] = new byte[DATE_SIZE]; 
 			byte sig_term_bytes[] = new byte[SIG_SIZE];
@@ -174,30 +176,36 @@ public class ChargingTerminal extends AraTerminal {
     	return true;
     }
 
-    /*
+    /**
      * Perform an atomic operation. TODO!!!
      * - Sign the message
      * - Send message and new balance to the smart card
      * - Get the signature
      * - Store the message and the signatures to the database
      */
-    private boolean updateBalance(Card card, short new_balance, String msg){
-    	// Send msg in bytes to the smart card. 
+    private boolean updateBalance(Card card, short new_balance){
+    	/* 
+    	 * Construct msg that has to be signed.
+    	 * [ termID |  Date   | Balance ]
+    	 */
     	byte[] msg_bytes = new byte[18]; // Static.
+    	String Date = this.get_date();
     	
 		try {
-			// Create full msg in bytes
-			byte[] temp = new sun.misc.BASE64Decoder().decodeBuffer(msg);
-			System.arraycopy(temp, 0, msg_bytes, 0, temp.length);
+			byte[] temp = new sun.misc.BASE64Decoder().decodeBuffer(Date);
+			msg_bytes[0] = this.termID;
+			System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
 			msg_bytes[temp.length  ] = (byte) (new_balance    & 0xFF);
 			msg_bytes[temp.length+1] = (byte) (new_balance>>8 & 0xFF);
 			
             if ( debug == true){
-            	System.out.println("In function updateBalance..");
-            	System.out.println(msg + Short.toString(new_balance));
+            	System.out.println("The message that has to be signed is:");
+            	System.out.format("0x%x", this.termID);
+            	System.out.println( Date + Short.toString(new_balance));
             	for (int i = 0; i < temp.length+2; i++){
             		System.out.format("0x%x ", msg_bytes[i]);
             	}
+            	System.out.println();
             	System.out.println();
             }
 		} catch (IOException e) {
@@ -205,13 +213,14 @@ public class ChargingTerminal extends AraTerminal {
 			System.exit(1);
 		}
 		
-		// Create signature.
+		/*
+		 *  Create local signature in bytes from msg in bytes.
+		 */
     	byte[] sig_term_bytes = new byte[SIG_SIZE];
 		try {
 			sig_term_bytes = ECCTerminal.performSignature(msg_bytes);
             if ( debug == true){
-            	System.out.println("In function updateBalance..");
-            	System.out.println("Signature from card, length: " + sig_term_bytes.length);
+            	System.out.println("Signature from terminal, length: " + sig_term_bytes.length);
                 for (byte b :  sig_term_bytes)
                 	System.out.format("0x%x ", b);
                 System.out.println();
@@ -220,37 +229,46 @@ public class ChargingTerminal extends AraTerminal {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		// Convert the signature to string to store it in the database.
     	String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
-    	
+    	if (debug){
+	    	System.out.println("Signature form terminal as String:");
+	    	System.out.println(sig_term);
+	    	System.out.println();
+    	}
 		
-    	// Send new balance and msg to the smart card and get the signature.
+    	/*
+    	 *  Send new balance and msg in bytes to the smart card and get the signature.
+    	 */
     	byte[] sig_card_bytes = new byte[SIG_SIZE];
         ResponseAPDU resp;
         try {
         	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
         	sig_card_bytes = resp.getData();
-
             if ( debug == true){
             	System.out.println("Reply for UPDATE_BALANCE_CHARGE, the signature of smartcard is:");
             	for (byte b :  sig_card_bytes)
             		System.out.format("0x%x ", b);
             	System.out.println();
-            	System.exit(1);
             }
-
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
 			System.out.println("Getting logs failed.");
-			System.exit(1);
 		}
+		// Convert the signature to string to store it in the database.
 		String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
-    	
+		if (debug){		
+	    	System.out.println("Signature form card as String:");
+	    	System.out.println(sig_card);
+        	System.out.println();
+    	}
     	// Verify signature of smart card.
-    	// TODO convert msg to bytes
     	// ECCTerminal.performSignatureVerification(msg, sig_card_bytes, this.cardKeyBytes)
-    	
+    	if ( debug ){
+    		System.exit(1);
+    	}
     	// Save log entry to the database.
-    	db.addlog(card.cardID, card.balance, this.MONTHLY_ALLOWANCE, (int) this.termID, this.get_date(), sig_card, sig_term);
+    	db.addlog(card.cardID, card.balance, this.MONTHLY_ALLOWANCE, (int)this.termID, this.get_date(), sig_card, sig_term);
     	
     	// Update balance in table sara_card
     	db.updateBalance(card.cardID, new_balance);
@@ -285,14 +303,10 @@ public class ChargingTerminal extends AraTerminal {
     	
     	// calculate new balance. 
     	short new_balance = (short) (card.balance + this.MONTHLY_ALLOWANCE); 
-    	
-    	// construct the message that has to be signed by both the terminal and the smart card.
-    	String stermID = new sun.misc.BASE64Encoder().encode(new byte[] { this.termID }); 
-    	String msg = stermID + this.get_date();
-    	
+    
     	// perform an atomic operation of updating the 
     	// balance and storing the signatures to the database.
-    	status = updateBalance(card, new_balance, msg);
+    	status = updateBalance(card, new_balance);
     	if (!status){
     		System.out.println("Updating balance failed.");
     		System.exit(1);
