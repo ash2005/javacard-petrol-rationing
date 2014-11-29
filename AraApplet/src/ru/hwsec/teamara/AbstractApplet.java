@@ -91,17 +91,8 @@ public abstract class AbstractApplet extends Applet {
         	    	case Instruction.SET_PRIV_KEY:
         			break;
 
-                    case Instruction.SET_KEY_EXPIRY:
-                    break;
-
-                    case Instruction.SET_SIGNATURE:
-                    break;
-
                     case Instruction.SET_PIN:
                         this.setPIN(apdu);
-                    break;
-
-                    case Instruction.SET_BALANCE:
                     break;
 
     	    	default:
