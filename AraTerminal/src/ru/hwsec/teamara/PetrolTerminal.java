@@ -2,20 +2,11 @@ package ru.hwsec.teamara;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.List;
 import java.util.Scanner;
 
-import javacard.framework.Util;
-
-import javax.smartcardio.Card;
-import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
-import javax.smartcardio.CardTerminal;
-import javax.smartcardio.CardTerminals;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
-import javax.smartcardio.TerminalFactory;
-
 
 public class PetrolTerminal extends AraTerminal {
 
@@ -23,40 +14,26 @@ public class PetrolTerminal extends AraTerminal {
         super(ttermID); // set the terminal ID.
     }
 
-    /* Check the revocation status of the card.
-     * Return false if revoked.
-     * Do not proceed further and end all communications with the card.*/
-    private boolean checkRevoke(){
-    	return true;
-    }
-
     /* 
      * Get requested fuel withdrawal amount from car owner 
      * and verify that there is enough balance.
      */
     private int askForAmount(int balance){
+        int amount = 0;
         System.out.print("Enter amount: ");
-        String newLine = System.getProperty("line.separator");// Retrieve line separator dependent on OS.
-        boolean done = false;
-        
-        while (!done){
-	        Scanner in = new Scanner( System.in );
+        Scanner in = new Scanner( System.in );
+        while(true){	        
 	        try{
-	        	int amount = Integer.parseInt(in.next());
+	        	amount = Integer.parseInt(in.next());
 	        	if ( amount > balance )
-	        		throw new IllegalStateException("");
-	        	done = true;
-	        	return amount;
+	        		System.out.println("There is not enough balance on the card.");
+	        	else
+	        		break;
 	        } catch(NumberFormatException ex) {
-	        	System.out.print("invalid number " + newLine + newLine + "try again: ");
-	        } catch(IllegalStateException ex){
-	    		System.out.println("not have enough balance " + newLine + newLine + "try again:");
-	        } catch (Exception ex) {
-	            System.out.println("IO error.");
-	            System.exit(1);
+	        	System.out.print("Invalid integer, try again: ");
 	        }
         }
-    	return 1;
+        return amount;
     }
 
     
@@ -64,52 +41,51 @@ public class PetrolTerminal extends AraTerminal {
      * Call this function if verifyBalance returns true
      * Create message and signature to update card balance.
      */
-    boolean updateBalance(short new_balance){
+    boolean updateBalance(short newBalance){
     	/* 
     	 * Construct msg that has to be signed.
     	 * [ termID |  Date   | Balance ]
     	 */
-    	byte[] msg_bytes = new byte[18]; // Static.
-    	String Date = this.get_date();
-    	
+    	byte[] payloadBytes = new byte[18];
+    	byte[] messageBytes = new byte[CARD_SIG_POS];
+    	byte[] temp = {};
+    	String date = this.get_date();
 		try {
-			byte[] temp = new sun.misc.BASE64Decoder().decodeBuffer(Date);
-			msg_bytes[0] = this.termID;
-			System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
-			msg_bytes[16] = (byte)(new_balance);
-			msg_bytes[17] = (byte)((new_balance >> 8) & 0xFF);
-			
-            if ( debug == true){
-            	System.out.println("The message that has to be signed is:");
-            	System.out.format("0x%x", this.termID);
-            	System.out.println( Date + Short.toString(new_balance));
-                for (byte b :  msg_bytes)
-                	System.out.format("0x%x ", b);
-            	System.out.println();
-            	System.out.println();
-            }
+			temp = new sun.misc.BASE64Decoder().decodeBuffer(date);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(1);
 		}
 		
-		byte[] msg_toSend_bytes = new byte[CARD_SIG_POS]; 
-		System.arraycopy(msg_bytes, (short) 0, msg_toSend_bytes, (short) 0, (short) 18);
+		payloadBytes[0] = this.termID;
+		System.arraycopy(temp, 0, payloadBytes, 1, temp.length);
+		payloadBytes[16] = (byte)(newBalance);
+		payloadBytes[17] = (byte)((newBalance >> 8) & 0xFF);
+		
+        if (debug == true){
+        	System.out.println("The message that has to be signed is:");
+        	System.out.format("0x%x", this.termID);
+        	System.out.println(date + Short.toString(newBalance));
+            for (byte b : payloadBytes)
+            	System.out.format("0x%x ", b);
+        	System.out.print("\n\n");
+        }
+		
+		System.arraycopy(payloadBytes, (short) 0, messageBytes, (short) 0, (short) 18);
 		/*
 		 *  Create local signature in bytes from msg in bytes.
 		 */
-    	byte[] sig_term_bytes;
+    	byte[] signatureBytes;
     	byte[] sig_term_bytes_padded = new byte[SIG_SIZE];
 		try {
-			sig_term_bytes = ECCTerminal.performSignature(msg_bytes);
+			signatureBytes = ECCTerminal.performSignature(payloadBytes);
 			
-			System.arraycopy(sig_term_bytes, (short) 0, sig_term_bytes_padded, (short) 0, (short) sig_term_bytes.length);
-			System.arraycopy(sig_term_bytes_padded, (short) 0, msg_toSend_bytes, (short) 18, (short) SIG_SIZE);
+			System.arraycopy(signatureBytes, (short) 0, sig_term_bytes_padded, (short) 0, (short) signatureBytes.length);
+			System.arraycopy(sig_term_bytes_padded, (short) 0, messageBytes, (short) 18, (short) SIG_SIZE);
 			
 			
             if ( debug == true){
-            	System.out.println("Signature from terminal, length: " + sig_term_bytes.length);
-                for (byte b :  sig_term_bytes)
+            	System.out.println("Signature from terminal, length: " + signatureBytes.length);
+                for (byte b :  signatureBytes)
                 	System.out.format("0x%x ", b);
                 System.out.println();
             }
@@ -136,7 +112,7 @@ public class PetrolTerminal extends AraTerminal {
 		ResponseAPDU resp;
 		try {
 			resp = this.cardComm.sendToCard(new CommandAPDU(0,
-					Instruction.UPDATE_BALANCE_PETROL, 0, 0, msg_toSend_bytes));
+					Instruction.UPDATE_BALANCE_PETROL, 0, 0, messageBytes));
 			response = resp.getData();
 			if (response[0] == (byte) 0x01){
 				System.out.println("Petrol Deduction is successful. You can withdraw fuel now.");

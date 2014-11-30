@@ -27,7 +27,7 @@ public class Main {
 		
 		PetrolTerminal pumping = new PetrolTerminal( (byte) 0x11 );
 		//pumping.execute();
-		//pumping.use();
+		pumping.use();
 		pumping.use();
 
 		charging.use();

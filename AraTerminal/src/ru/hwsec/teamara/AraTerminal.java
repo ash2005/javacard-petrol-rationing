@@ -68,10 +68,8 @@ public class AraTerminal {
      */
     public AraTerminal(byte b){
     	this.termID = b;
-        
     	try {
-			//cardComm = new CardComm(false);
-			cardComm = new CardComm(true); // Simulator.
+			cardComm = new CardComm();
 		} catch (CardException e) {
 			System.out.println("Could not connect to the card or simulator.");
 			System.exit(1);
@@ -344,11 +342,6 @@ public class AraTerminal {
 
     public static void main(String[] arg) {
     	AraTerminal araTerminal = new AraTerminal((byte) 0x01);
-        try {
-			araTerminal.cardComm = new CardComm(true);
-		} catch (CardException e) {
-			System.out.println("Could not connect to the card or simulator.");
-		}
     	araTerminal.execute();
     }
 }

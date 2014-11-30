@@ -128,25 +128,21 @@ public class ECCTerminal {
      * Generally not useful. For testing purpose.
     */
     public static boolean performSignatureVerification(byte[] data, byte[] signature) throws GeneralSecurityException {
-
 		PublicKey terminalKey = getPublicKey(PUBLIC_KEY_BYTES);
 		Signature signer = Signature.getInstance("SHA1withECDSA", cryptoProvider);
         signer.initVerify(terminalKey);
         signer.update(data);
         return signer.verify(signature);
-        
     }
     
     
     // Performs signature verification of messages signed by other entities, e.g card
     public static boolean performSignatureVerification(byte[] data, byte[] signature, byte[] OTHER_PUBLIC_KEY_BYTES) throws GeneralSecurityException {
-
 		PublicKey otherKey = getPublicKey(OTHER_PUBLIC_KEY_BYTES);
 		Signature signer = Signature.getInstance("SHA1withECDSA", cryptoProvider);
         signer.initVerify(otherKey);
         signer.update(data);
         return signer.verify(signature);
-        
     }
     
 }

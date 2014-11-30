@@ -49,7 +49,7 @@ public class AraApplet extends Applet {
          * 656 bytes (7..663) scrap memory for encrypting/decrypting apdus
          * Total: 664
          */
-        this.transmem = JCSystem.makeTransientByteArray((short)664, JCSystem.CLEAR_ON_DESELECT);
+        this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
 
         this.register();
 	}
@@ -311,60 +311,63 @@ public class AraApplet extends Applet {
     }
 
      private void genSecretKeys(APDU apdu) {
-
-    	 byte[] hashOut = JCSystem.makeTransientByteArray((short)20, JCSystem.CLEAR_ON_DESELECT);
-
-    	 this.cardEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-    	 this.cardMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-    	 this.cardIV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-    	 this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-    	 this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-    	 this.terminalIV  = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-
-
-    	 MessageDigest hash = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
-    	 transmem[33] = (byte) 0x00;	//cardEncKey
-         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
-         Util.arrayCopy(hashOut, (short) 0, this.cardEncKey, (short)0, (short) 16);
-         /*
-         apdu.setOutgoing();
-         apdu.setOutgoingLength((short) 34);
-         Util.arrayCopy(this.transmem, (short) 0, apdu.getBuffer(), (short)0, (short) 34);
-         apdu.sendBytes((short)0, (short) 34); // (offset, length)
-         */
-
-         transmem[33] = (byte) 0x01;	//cardMacKey
-         hash.reset();
-         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
-         Util.arrayCopy(hashOut, (short) 0, this.cardMacKey, (short)0, (short) 16);
-
-         transmem[33] = (byte) 0x02;	//cardIV
-         hash.reset();
-         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
-         Util.arrayCopy(hashOut, (short) 0, this.cardIV, (short)0, (short) 16);
-
-         transmem[33] = (byte) 0xA0;	//TerminalEncKey
-         hash.reset();
-         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
-         Util.arrayCopy(hashOut, (short) 0, this.terminalEncKey, (short)0, (short) 16);
-
-         transmem[33] = (byte) 0xA1;	//TerminalMacKey
-         hash.reset();
-         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
-         Util.arrayCopy(hashOut, (short) 0, this.terminalMacKey, (short)0, (short) 16);
-
-         transmem[33] = (byte) 0xA2;	//Terminal IV
-         hash.reset();
-         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
-         Util.arrayCopy(hashOut, (short) 0, this.terminalIV, (short)0, (short) 16);
-
-
-         apdu.setOutgoing();
-         apdu.setOutgoingLength((short) (16));
-         Util.arrayCopy(this.terminalIV, (short) 0, apdu.getBuffer(), (short)0, (short) 16);
-         apdu.sendBytes((short)0, (short) (16)); // (offset, length)
-         
-         SymApplet.init(cardIV, (short)0, terminalIV, (short)0, cardEncKey, (short)0, terminalEncKey, (short)0, cardMacKey, (short)0, terminalMacKey, (short)0);
+    	 try {
+	    	 byte[] hashOut = JCSystem.makeTransientByteArray((short)20, JCSystem.CLEAR_ON_DESELECT);
+	
+	    	 this.cardEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+	    	 this.cardMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+	    	 this.cardIV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+	    	 this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+	    	 this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+	    	 this.terminalIV  = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+	
+	
+	    	 MessageDigest hash = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+	    	 transmem[33] = (byte) 0x00;	//cardEncKey
+	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+	         Util.arrayCopy(hashOut, (short) 0, this.cardEncKey, (short)0, (short) 16);
+	         /*
+	         apdu.setOutgoing();
+	         apdu.setOutgoingLength((short) 34);
+	         Util.arrayCopy(this.transmem, (short) 0, apdu.getBuffer(), (short)0, (short) 34);
+	         apdu.sendBytes((short)0, (short) 34); // (offset, length)
+	         */
+	
+	         transmem[33] = (byte) 0x01;	//cardMacKey
+	         hash.reset();
+	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+	         Util.arrayCopy(hashOut, (short) 0, this.cardMacKey, (short)0, (short) 16);
+	
+	         transmem[33] = (byte) 0x02;	//cardIV
+	         hash.reset();
+	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+	         Util.arrayCopy(hashOut, (short) 0, this.cardIV, (short)0, (short) 16);
+	
+	         transmem[33] = (byte) 0xA0;	//TerminalEncKey
+	         hash.reset();
+	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+	         Util.arrayCopy(hashOut, (short) 0, this.terminalEncKey, (short)0, (short) 16);
+	
+	         transmem[33] = (byte) 0xA1;	//TerminalMacKey
+	         hash.reset();
+	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+	         Util.arrayCopy(hashOut, (short) 0, this.terminalMacKey, (short)0, (short) 16);
+	
+	         transmem[33] = (byte) 0xA2;	//Terminal IV
+	         hash.reset();
+	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
+	         Util.arrayCopy(hashOut, (short) 0, this.terminalIV, (short)0, (short) 16);
+	
+	
+	         apdu.setOutgoing();
+	         apdu.setOutgoingLength((short) (16));
+	         Util.arrayCopy(this.terminalIV, (short) 0, apdu.getBuffer(), (short)0, (short) 16);
+	         apdu.sendBytes((short)0, (short) (16)); // (offset, length)
+	         
+	         SymApplet.init(cardIV, (short)0, terminalIV, (short)0, cardEncKey, (short)0, terminalEncKey, (short)0, cardMacKey, (short)0, terminalMacKey, (short)0);
+    	 } catch(CryptoException ex) {
+    		 
+    	 }
      }
 
      /**** Starting Charging Stage ****/

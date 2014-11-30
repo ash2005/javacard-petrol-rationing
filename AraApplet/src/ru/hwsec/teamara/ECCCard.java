@@ -1,5 +1,6 @@
 package ru.hwsec.teamara;
 
+import javacard.security.CryptoException;
 import javacard.security.ECPublicKey;
 import javacard.security.ECPrivateKey;
 import javacard.security.KeyBuilder;
@@ -103,18 +104,22 @@ public final class ECCCard {
 	}
 
 	public static ECPrivateKey getCardPrivateKey() {
-		ECPrivateKey privateKey = getBlankPrivateKey();
-        privateKey.setS(PRIVATE_KEY_BYTES, (short)0, (short)PRIVATE_KEY_BYTES.length);
-		return privateKey;
+		try {
+			ECPrivateKey privateKey = getBlankPrivateKey();
+	        privateKey.setS(PRIVATE_KEY_BYTES, (short)0, (short)PRIVATE_KEY_BYTES.length);
+			return privateKey;
+		} catch(CryptoException ex) {
+			return null;
+		}
 	}
 
-	public static ECPublicKey getChargingIntermediateKey() {
+	private static ECPublicKey getChargingIntermediateKey() {
 		ECPublicKey publicKey = getBlankPublicKey();
 		publicKey.setW(CHARGING_TERMINAL_INTERMEDIATE, (short)0, (short)CHARGING_TERMINAL_INTERMEDIATE.length);
 		return publicKey;
 	}
 
-	public static ECPublicKey getPumpIntermediateKey() {
+	private static ECPublicKey getPumpIntermediateKey() {
 		ECPublicKey publicKey = getBlankPublicKey();
 		publicKey.setW(PUMP_TERMINAL_INTERMEDIATE, (short)0, (short)CHARGING_TERMINAL_INTERMEDIATE.length);
 		return publicKey;
@@ -130,31 +135,50 @@ public final class ECCCard {
 	}
 
 	/* Perform signature on data and put in signature out
-	 * Generally not useful */
+	 * Generally not useful
+	 * Returns the number of bytes of signature output in signatureOut
+	 */
     public static short performSignature(byte[] dataIn, byte[] signatureOut) {
-    	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
-    	sign.init(getCardPrivateKey(), Signature.MODE_SIGN); 
-    	
-    	return sign.sign(dataIn, (short) 0, (short) dataIn.length, signatureOut, (short) 0);
-    	// Returns the number of bytes of signature output in signatureOut (which is 54)
+    	try {
+	    	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
+	    	sign.init(getCardPrivateKey(), Signature.MODE_SIGN);
+	    	return sign.sign(dataIn, (short) 0, (short) dataIn.length, signatureOut, (short) 0);
+    	} catch(CryptoException ex) {
+    		return 0;
+    	}
     }
     
     /* Perform signature on data and put in signature out
      * Same as above, but has a lot more customisation possibilities e.g. offset and length
+     * Returns the number of bytes of signature output in signatureOut
      * */
     public static short performSignature(byte[] dataIn, short inOffset, short inputLength, byte[] signatureOut, short sigOffset) {
-    	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
-    	sign.init(getCardPrivateKey(), Signature.MODE_SIGN); 
-    	
-    	return sign.sign(dataIn, (short) inOffset, inputLength, signatureOut, sigOffset);
-    	// Returns the number of bytes of signature output in signatureOut (which is 54)
+    	try {
+    		Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
+    		sign.init(getCardPrivateKey(), Signature.MODE_SIGN);    	
+    		return sign.sign(dataIn, (short) inOffset, inputLength, signatureOut, sigOffset);
+    	} catch(CryptoException ex) {
+    		return 0;
+    	}    	
     }
 	
 	public static boolean verifyChargingTerminal(byte[] signedKey, short offset) {
-		return verifySignature(signedKey, offset, getChargingIntermediateKey());
+		boolean result = false;
+		try {
+			result = verifySignature(signedKey, offset, getChargingIntermediateKey());
+		} catch(CryptoException ex) {
+			return false;
+		}
+		return result;
 	}
 
 	public static boolean verifyPumpTerminal(byte[] signedKey, short offset) {
-		return verifySignature(signedKey, offset, getPumpIntermediateKey());
+		boolean result = false;
+		try {
+			result = verifySignature(signedKey, offset, getPumpIntermediateKey());
+		} catch(CryptoException ex) {
+			return false;
+		}
+		return result;
 	}
 }
