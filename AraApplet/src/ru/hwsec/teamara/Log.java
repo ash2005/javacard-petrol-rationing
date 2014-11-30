@@ -113,10 +113,11 @@ public class Log {
 				apdu.sendBytes((short)0, (short) TRANSACTION_LENGTH); // (offset, length)
 				break;
 			case (short) 2:
-				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 2));			// 129 * 2
+				short len = TRANSACTION_LENGTH * (short) 2;
+				apdu.setOutgoingLength(len);			// 129 * 2
 				Util.arrayCopy(transaction1, (short) 0, buffer, (short)0, (short) TRANSACTION_LENGTH);
 				Util.arrayCopy(transaction2, (short) 0, buffer, (short)TRANSACTION_LENGTH, (short) TRANSACTION_LENGTH);
-				apdu.sendBytes((short)0, (short) (TRANSACTION_LENGTH * 2)); // (offset, length)
+				apdu.sendBytes((short)0, len); // (offset, length)
 				break;
 			case (short) 3:
 				apdu.setOutgoingLength((short) (TRANSACTION_LENGTH * 3));			// 129 * 3

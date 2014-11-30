@@ -32,7 +32,7 @@ public class AraTerminal {
     // This is the monthly allowance defined in the design document.
     final static short MONTHLY_ALLOWANCE = 200;
     	
-	protected final boolean debug = false;
+	protected final boolean debug = true;
 	
 	/*
 	 * Log raw structure in the smart card:
@@ -149,12 +149,13 @@ public class AraTerminal {
         
         pinCheck();
         
-        boolean eq = true;
-        for(int i = 0; i < this.terminalIV.length; i++)
-        	if(this.terminalIV[i] != cardSecret[i])
-        		eq = false;
-        System.out.println(eq);
-		
+        if (this.debug){
+	        boolean eq = true;
+	        for(int i = 0; i < this.terminalIV.length; i++)
+	        	if(this.terminalIV[i] != cardSecret[i])
+	        		eq = false;
+	        System.out.println("The key establishment returns: " + eq);
+        }
     }
 
     public void setKeys(byte[] termRndBytes, byte[] cardRndBytes, byte[] terminalSecret) throws CardException, GeneralSecurityException {
