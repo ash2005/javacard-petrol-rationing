@@ -95,6 +95,8 @@ public class AraTerminal {
         /* Issued State */
         try {
 			this.performHandshake();
+			this.pinCheck();
+			this.pinCheck();
 		} catch (CardException e) {
 			System.out.println("Could not perform the handshake with the card.");
 		} catch (GeneralSecurityException e) {
@@ -151,7 +153,7 @@ public class AraTerminal {
     	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
         byte[] ctext = resp.getData();
         byte[] ptext = SymTerminal.decrypt(ctext);
-        pinCheck();
+        
         
     }
 
@@ -339,8 +341,13 @@ public class AraTerminal {
     	return balance;
     }
 
-    public static void main(String[] arg) {
+    public static void main(String[] arg) throws CardException {
     	AraTerminal araTerminal = new AraTerminal((byte) 0x01);
     	araTerminal.execute();
+    	try{
+    		araTerminal.cardComm.card.disconnect(false);
+    	}catch (CardException e) {
+    		System.out.println("Could not close card connection.");
+    	}
     }
 }
