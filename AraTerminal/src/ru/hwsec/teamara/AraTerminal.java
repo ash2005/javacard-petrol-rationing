@@ -131,39 +131,17 @@ public class AraTerminal {
 		} catch (GeneralSecurityException e) {
 			System.out.println("An error occured while verifying the card key.");
 		}
-
+		
 		// Generate DH Secret
-        byte[] terminalSecret = ECCTerminal.performDH(cardKeyBytes);
-        
-    	byte[] hashOut = new byte[20];
+    	byte[] terminalSecret = ECCTerminal.performDH(cardKeyBytes);
     	MessageDigest md = MessageDigest.getInstance("SHA");
     	md.update(terminalSecret);
-    	hashOut = md.digest();
-    	
+    	setKeys(termRndBytes, cardRndBytes, md.digest());        
         
-        
-        
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0));
-        byte[] cardSecret = resp.getData();
-        /*
-        boolean eq = true;
-        for(int i = 0; i < terminalSecret.length; i++)
-        	if(terminalSecret[i] != cardSecret[i])
-        		eq = false;
-        System.out.println(eq);
-         */  
-        setKeys(termRndBytes, cardRndBytes, hashOut);
-        
-        if (this.debug){
-        	System.out.println(cardSecret.length);
-	        boolean eq = true;
-	        for(int i = 0; i < this.terminalIV.length; i++)
-	        	if(this.terminalIV[i] != cardSecret[i])
-	        		eq = false;
-	        System.out.println("The key establishment returns: " + eq);
-        }
-        
-
+    	byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
+    	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
+        byte[] ctext = resp.getData();
+        byte[] ptext = SymTerminal.decrypt(ctext);
         pinCheck();
         
     }

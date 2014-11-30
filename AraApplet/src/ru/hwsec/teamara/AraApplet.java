@@ -291,16 +291,21 @@ public class AraApplet extends Applet {
                 buffer[0] = (byte) 0xff;
                 apdu.sendBytes((short)0, (short)1);
             } else {
-            	genSecretKeys(apdu);/*
-                apdu.setOutgoing();
-                apdu.setOutgoingLength(secretLength);
-                Util.arrayCopy(transmem, (short)8, apdu.getBuffer(), (short)0, secretLength);
-                apdu.sendBytes((short)0, (short)secretLength); // (offset, length)*/
+            	genSecretKeys(apdu);
+            	Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, transmem, (short)8, (short)16);
+            	SymApplet.decrypt(transmem, (short)8, (short)16, transmem, (short)24);
+            	SymApplet.encrypt(transmem, (short)24, (short)4, transmem, (short)41);
+            	apdu.setOutgoing();
+                apdu.setOutgoingLength((short)16);
+                Util.arrayCopy(transmem, (short)41, apdu.getBuffer(), (short)0, (short)16);
+            	//apdu.getBuffer()[0] = 0x05;
+                apdu.sendBytes((short)0, (short)16);
             }
 
             // Update the current state
             this.currentState = CurrentState.CHANGE_CIPHER;
         } catch (CryptoException e) {
+        	this.currentState = CurrentState.ZERO;
             byte[] buffer = apdu.getBuffer();
             apdu.setOutgoing();
             apdu.setOutgoingLength((short)1);
@@ -332,12 +337,6 @@ public class AraApplet extends Applet {
 	    	 transmem[33] = (byte) 0x00;	//cardEncKey
 	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
 	         Util.arrayCopy(hashOut, (short) 0, this.cardEncKey, (short)0, (short) 16);
-	         /*
-	         apdu.setOutgoing();
-	         apdu.setOutgoingLength((short) 34);
-	         Util.arrayCopy(this.transmem, (short) 0, apdu.getBuffer(), (short)0, (short) 34);
-	         apdu.sendBytes((short)0, (short) 34); // (offset, length)
-	         */
 	
 	         transmem[33] = (byte) 0x01;	//cardMacKey
 	         hash.reset();
@@ -364,15 +363,9 @@ public class AraApplet extends Applet {
 	         hash.doFinal(this.transmem, (short)0, (short)34, hashOut, (short)0);
 	         Util.arrayCopy(hashOut, (short) 0, this.terminalIV, (short)0, (short) 16);
 	
-	
-	         apdu.setOutgoing();
-	         apdu.setOutgoingLength((short) (16));
-	         Util.arrayCopy(this.terminalIV, (short) 0, apdu.getBuffer(), (short)0, (short) 16);
-	         apdu.sendBytes((short)0, (short) (16)); // (offset, length)
-	         
 	         SymApplet.init(cardIV, (short)0, terminalIV, (short)0, cardEncKey, (short)0, terminalEncKey, (short)0, cardMacKey, (short)0, terminalMacKey, (short)0);
     	 } catch(CryptoException ex) {
-    		 
+    		 this.currentState = CurrentState.ZERO; 
     	 }
      }
 
