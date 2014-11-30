@@ -24,6 +24,7 @@ class CardComm {
 
     private Simulator simulator;
     private CardChannel applet;
+    protected Card card;
 
     public CardComm() throws CardException {
         if(USE_SIMULATOR)
@@ -55,7 +56,8 @@ class CardComm {
             throw new CardException("Could not find any cards.");
         for(CardTerminal c : cs) {
             if (c.isCardPresent()) {
-                Card card = c.connect("*");
+                //Card card = c.connect("*");
+            	this.card = c.connect("*");
                 this.applet = card.getBasicChannel();
                 if (this.applet.transmit(SELECT_APDU).getSW() != 0x9000)
                     throw new CardException("Could no select AraApplet.");

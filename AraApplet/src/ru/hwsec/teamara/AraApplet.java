@@ -37,6 +37,9 @@ public class AraApplet extends Applet {
 	public AraApplet() {
         this.currentState = CurrentState.ZERO;
         this.pin = new OwnerPIN(PIN_TRY_LIMIT, MAX_PIN_SIZE);
+        byte[] buf = JCSystem.makeTransientByteArray((short)4, JCSystem.CLEAR_ON_DESELECT);
+        buf[0] = 0x31;	buf[1] = 0x31;	buf[2] = 0x31;	buf[3] = 0x31;		// The default password is '1111'
+        this.pin.update(buf, (short) 0, MAX_PIN_SIZE);
         //this.permanentState = PermanentState.INIT_STATE;
         this.permanentState = PermanentState.ISSUED_STATE;
         this.log = new Log();
@@ -49,7 +52,8 @@ public class AraApplet extends Applet {
          * 656 bytes (7..663) scrap memory for encrypting/decrypting apdus
          * Total: 664
          */
-        this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
+        // NOTE: Alvin moved transmem down to TERMINAL_HELLO. The constructor is called only once.
+        //this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
 
         this.register();
 	}
@@ -57,7 +61,16 @@ public class AraApplet extends Applet {
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
 		new AraApplet();
 	}
+	
+	public boolean select() {
+		// The applet declines to be selected
+		// if the pin is blocked.
+	  if ( pin.getTriesRemaining() == 0 )
+	  return false;
 
+	  return true;
+	}// end of select method
+	
 	public void process(APDU apdu) {
 		// Good practice: Return 9000 on SELECT
 		if (selectingApplet()) {
@@ -186,7 +199,7 @@ public class AraApplet extends Applet {
     	 apdu.setOutgoing();
          apdu.setOutgoingLength((short)1);
          apdu.getBuffer()[0] = 0x01;
-         apdu.sendBytes((short)0, (short)2); // (offset, length)
+         apdu.sendBytes((short)0, (short)1); // (offset, length)
     }
 
     /* Check the user entered PIN */
@@ -201,9 +214,11 @@ public class AraApplet extends Applet {
         // Send 0x00 if PIN wrong, else 0x01
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)2);
-        this.transmem[59] = this.temp;
-        //this.buffer_PIN[1]= pin.getTriesRemaining();
-        Util.arrayCopy(transmem, (short)59, apdu.getBuffer(), (short)0, (short)2);
+        byte[] buffer = apdu.getBuffer();
+        buffer[0] = this.temp;
+        buffer[1] = this.pin.getTriesRemaining();
+        //this.transmem[59] = this.temp;
+        //Util.arrayCopy(transmem, (short)59, apdu.getBuffer(), (short)0, (short)2);
         apdu.sendBytes((short)0, (short)2); // (offset, length)
 
     	return (temp == (byte) 0x01);
@@ -216,7 +231,8 @@ public class AraApplet extends Applet {
 	 */
     private void processTerminalHello(APDU apdu) {
         this.currentState = CurrentState.ZERO;
-
+        
+        this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
         // Copy 4 bytes int nonce sent by terminal
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)0, (short)4);
 
