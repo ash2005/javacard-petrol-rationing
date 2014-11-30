@@ -134,7 +134,16 @@ public class AraTerminal {
 
 		// Generate DH Secret
         byte[] terminalSecret = ECCTerminal.performDH(cardKeyBytes);
-		resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0));
+        
+    	byte[] hashOut = new byte[20];
+    	MessageDigest md = MessageDigest.getInstance("SHA");
+    	md.update(terminalSecret);
+    	hashOut = md.digest();
+    	
+        
+        
+        
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0));
         byte[] cardSecret = resp.getData();
         /*
         boolean eq = true;
@@ -143,17 +152,20 @@ public class AraTerminal {
         		eq = false;
         System.out.println(eq);
          */  
-        setKeys(termRndBytes, cardRndBytes, terminalSecret);
-        
-        pinCheck();
+        setKeys(termRndBytes, cardRndBytes, hashOut);
         
         if (this.debug){
+        	System.out.println(cardSecret.length);
 	        boolean eq = true;
 	        for(int i = 0; i < this.terminalIV.length; i++)
 	        	if(this.terminalIV[i] != cardSecret[i])
 	        		eq = false;
 	        System.out.println("The key establishment returns: " + eq);
         }
+        
+
+        pinCheck();
+        
     }
 
     public void setKeys(byte[] termRndBytes, byte[] cardRndBytes, byte[] terminalSecret) throws CardException, GeneralSecurityException {
@@ -170,7 +182,7 @@ public class AraTerminal {
     	
     	System.arraycopy(termRndBytes, 0, hashInput, 0, 4);
     	System.arraycopy(cardRndBytes, 0, hashInput, 4, 4);
-    	System.arraycopy(terminalSecret, 0, hashInput, 8, 25);
+    	System.arraycopy(terminalSecret, 0, hashInput, 8, 20);
 
     	// cardEncKey
     	hashInput[33] = (byte) 0x00;
