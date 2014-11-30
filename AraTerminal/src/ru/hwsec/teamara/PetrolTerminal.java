@@ -1,6 +1,7 @@
 package ru.hwsec.teamara;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.Scanner;
 
@@ -46,21 +47,28 @@ public class PetrolTerminal extends AraTerminal {
     	 * Construct msg that has to be signed.
     	 * [ termID |  Date   | Balance ]
     	 */
-    	byte[] payloadBytes = new byte[18];
-    	byte[] messageBytes = new byte[CARD_SIG_POS];
+    	byte[] payloadBytes = new byte[TERM_SIG_POS]; // 2 Bytes for the balance.
+    	byte[] messageBytes = new byte[UPDATE_BALANCE_PETROL_LENGTH];
     	byte[] temp = {};
     	String date = this.get_date();
+
 		try {
-			temp = new sun.misc.BASE64Decoder().decodeBuffer(date);
-		} catch (IOException e) {
+			//temp = new sun.misc.BASE64Decoder().decodeBuffer(date);
+			//String test = new sun.misc.BASE64Encoder().encode(temp);
+			temp = date.getBytes(Charset.forName("UTF-8"));
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 		payloadBytes[0] = this.termID;
 		System.arraycopy(temp, 0, payloadBytes, 1, temp.length);
-		payloadBytes[16] = (byte)(newBalance);
-		payloadBytes[17] = (byte)((newBalance >> 8) & 0xFF);
-		
+		if (temp.length != DATE_SIZE){
+			System.out.println("System call get_date() uses different length than the designed.");
+			System.exit(1);
+		}
+		payloadBytes[BALANCE_POS] = (byte)(newBalance);
+		payloadBytes[BALANCE_POS+1] = (byte)((newBalance >> 8) & 0xFF);
+    	System.out.println("SIZE: " + payloadBytes.length + " BALANCE_POS: " + BALANCE_POS);
         if (debug == true){
         	System.out.println("The message that has to be signed is:");
         	System.out.format("0x%x", this.termID);
@@ -69,8 +77,8 @@ public class PetrolTerminal extends AraTerminal {
             	System.out.format("0x%x ", b);
         	System.out.print("\n\n");
         }
+		System.arraycopy(payloadBytes, (short) 0, messageBytes, (short) 0, (short) TERM_SIG_POS);
 		
-		System.arraycopy(payloadBytes, (short) 0, messageBytes, (short) 0, (short) 18);
 		/*
 		 *  Create local signature in bytes from msg in bytes.
 		 */
@@ -80,7 +88,7 @@ public class PetrolTerminal extends AraTerminal {
 			signatureBytes = ECCTerminal.performSignature(payloadBytes);
 			
 			System.arraycopy(signatureBytes, (short) 0, sig_term_bytes_padded, (short) 0, (short) signatureBytes.length);
-			System.arraycopy(sig_term_bytes_padded, (short) 0, messageBytes, (short) 18, (short) SIG_SIZE);
+			System.arraycopy(sig_term_bytes_padded, (short) 0, messageBytes, (short) TERM_SIG_POS, (short) SIG_SIZE);
 			
 			
             if ( debug == true){

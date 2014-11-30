@@ -1,6 +1,7 @@
 package ru.hwsec.teamara;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
@@ -52,12 +53,15 @@ public class ChargingTerminal extends AraTerminal {
     	boolean status = true;
     	
     	// The buffer that temporary stores the logs. 
-    	byte[] buffer = new byte[MAX_LOGS*LOG_SIZE];
+    	byte[] buffer = new byte[LOG_SIZE+3]; // ?????
     	Arrays.fill( buffer, (byte) 0x00 );
+    	buffer[0] = (byte) 0xFF;
 
     	// Size of the buffer that contains usefull information.
     	int buffer_size = 0;
     	
+    	// Send command GET_LOGS and get response.
+    	// It is getting logs, until it gets a single 0xFF byte.
         try {
         	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
 			byte[] temp = resp.getData();
@@ -78,7 +82,7 @@ public class ChargingTerminal extends AraTerminal {
 			System.exit(1);
 		}
 
-		int number_of_logs = 0;
+/*		int number_of_logs = 0;
 		try {
 			number_of_logs = (buffer_size + 1) / LOG_SIZE;
 			if (number_of_logs > 5) // Maximum log capacity is 5.
@@ -87,14 +91,13 @@ public class ChargingTerminal extends AraTerminal {
         	System.out.print(ex.getMessage());
 		} catch (IllegalStateException ex) {
 			System.out.println(ex.getMessage());
-		}
+		}*/
 		
 		// Decode each log and store it in the database.
-		for ( int i = 0; i < number_of_logs; i++){
-			int index = 0 + i * LOG_SIZE; // Starting index of each log.
-			
+		while (buffer[0] != (byte) 0xFF ){
+			int index = 0; 
 			int ttermID = (int) buffer[index];
-			short balance = (short) (buffer[BALANCE_POS] | (buffer[BALANCE_POS+1] << 8 ));
+			short balance = (short) ((buffer[BALANCE_POS+1] << 8) + (buffer[BALANCE_POS]&0xFF));
 			short transaction = (short) 1; // transaction must be calculated in a later version.
 			byte date_bytes[] = new byte[DATE_SIZE]; 
 			byte sig_term_bytes[] = new byte[SIG_SIZE];
@@ -104,7 +107,7 @@ public class ChargingTerminal extends AraTerminal {
 			System.arraycopy(buffer, index + TERM_SIG_POS, sig_term_bytes, 0, SIG_SIZE);
 			System.arraycopy(buffer, index + CARD_SIG_POS, sig_card_bytes, 0, SIG_SIZE);
 			
-			String date     = new sun.misc.BASE64Encoder().encode(date_bytes);
+			String date     = new String(date_bytes);
 			String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
 			String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
 			
@@ -113,6 +116,25 @@ public class ChargingTerminal extends AraTerminal {
 	    		System.out.println("Storing logs failed.");
 	    		System.exit(1);
 	    	}
+	        try {
+	        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
+				byte[] temp = resp.getData();
+				buffer_size = temp.length;
+	            if ( debug == true){
+	            	System.out.println("In function getLogs..");
+	            	for (byte b :  temp)
+	            		System.out.format("0x%x ", b);
+	            	System.out.println();
+	            }
+				if (temp[0] == (byte) 0xFF) // Signal that defines that card logs are empty.
+					return true;
+				// copy bytes to the buffer.
+				System.arraycopy(temp, 0, buffer, 0, buffer_size);			
+			} catch (CardException ex) {
+				System.out.println(ex.getMessage());
+				System.out.println("Getting logs failed.");
+				System.exit(1);
+			}
 		}
         return true;
     }
@@ -161,28 +183,23 @@ public class ChargingTerminal extends AraTerminal {
     	 * Construct msg that has to be signed.
     	 * [ termID |  Date   | Balance ]
     	 */
-    	byte[] msg_bytes = new byte[18]; // Static.
+    	byte[] msg_bytes = new byte[UPDATE_BALANCE_CHARGE_LENGTH];
     	String Date = this.get_date();
     	
-		try {
-			byte[] temp = new sun.misc.BASE64Decoder().decodeBuffer(Date);
-			msg_bytes[0] = this.termID;
-			System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
-			msg_bytes[16] = (byte)(new_balance);
-			msg_bytes[17] = (byte)((new_balance >> 8) & 0xFF);
-            if ( debug == true){
-            	System.out.println("The message that has to be signed is:");
-            	System.out.format("0x%x", this.termID);
-            	System.out.println( Date + Short.toString(new_balance));
-                for (byte b :  msg_bytes)
-                	System.out.format("0x%x ", b);
-            	System.out.println();
-            	System.out.println();
-            }
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+		byte[] temp = Date.getBytes(Charset.forName("UTF-8"));
+		msg_bytes[0] = this.termID;
+		System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
+		msg_bytes[BALANCE_POS] = (byte)(new_balance);
+		msg_bytes[BALANCE_POS+1] = (byte)((new_balance >> 8) & 0xFF);
+        if ( debug == true){
+        	System.out.println("The message that has to be signed is:");
+        	System.out.format("0x%x", this.termID);
+        	System.out.println( Date + Short.toString(new_balance));
+            for (byte b :  msg_bytes)
+            	System.out.format("0x%x ", b);
+        	System.out.println("With length: " + msg_bytes.length);
+        	System.out.println();
+        }
 		
 		/*
 		 *  Create local signature in bytes from msg in bytes.

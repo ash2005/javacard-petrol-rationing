@@ -37,27 +37,34 @@ public class AraTerminal {
 	/*
 	 * Log raw structure in the smart card:
 	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
-	 * Bytes:          1        15         2         56        56
-	 * Starting Pos:   0         1        16         18        74
+	 * Bytes:          1        19         2         56        56
+	 * Starting Pos:   0         1        20         22        78
 	 */
-	// The constant byte size of each log entry.
-	final protected int LOG_SIZE  = 130;
+
 	// Maximum number of log.
 	final protected int MAX_LOGS  = 5;
 	/* ---     Sizes      --- */
 	// The length of the date field.
-	final protected int DATE_SIZE = 15;
+	final protected int DATE_SIZE = 19;
 	// The length of each signature.
 	final protected int SIG_SIZE  = 56;
 	/* ---   Positions    --- */
 	// Starting position of the date field.
 	final protected int DATE_POS  = 1;
 	// Starting position of the balance field.
-	final protected int BALANCE_POS  = 16;
+	final protected int BALANCE_POS  = DATE_POS + DATE_SIZE;
 	// Starting position of the terminal signature field.
-	final protected int TERM_SIG_POS = 18;
+	final protected int TERM_SIG_POS = BALANCE_POS + 2;         // 22
 	// Starting position of the card signature field.
-	final protected int CARD_SIG_POS = 74;
+	final protected int CARD_SIG_POS = TERM_SIG_POS + SIG_SIZE; // 78
+	// The constant byte size of each log entry.
+	final protected int LOG_SIZE  = CARD_SIG_POS + SIG_SIZE;    // 134
+	// The buffer of the UPDATE_BALANCE_CHARGE command includes:
+	// [ termID |  Date   | Balance ]
+	final protected int UPDATE_BALANCE_CHARGE_LENGTH = TERM_SIG_POS;
+	// The buffer of the UPDATE_BALANCE_PETROL command includes:
+	// [ termID |  Date   | Balance | Term Sig ]
+	final protected int UPDATE_BALANCE_PETROL_LENGTH = CARD_SIG_POS;
 	
 	
     protected CardComm cardComm;
@@ -92,7 +99,9 @@ public class AraTerminal {
 			System.out.println("Could not perform the handshake with the card.");
 		} catch (GeneralSecurityException e) {
 			System.out.println("There was a crypto problem on the terminal side.");
-		}
+		} /*catch (Exception e){
+			System.out.println(e.getMessage());
+		}*/
     }
 
     /* Mutual Authentication Functions */
