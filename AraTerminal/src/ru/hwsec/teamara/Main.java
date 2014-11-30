@@ -22,7 +22,7 @@ public class Main {
 		//issue.createuser(db);
 
 		ChargingTerminal charging = new ChargingTerminal(db, (byte) 0x21);
-		//charging.execute();
+		charging.execute();
 		charging.use();
 		
 		PetrolTerminal pumping = new PetrolTerminal( (byte) 0x11 );
@@ -30,8 +30,16 @@ public class Main {
 		pumping.use();
 		pumping.use();
 
-
+		/*
+		short new_balance = 200;
+		byte [] balance = new byte[2];
+		balance[0] = (byte)(new_balance);
+		balance[1] = (byte)((new_balance >> 8) & 0xFF);
 		
+		
+		new_balance = (short) ((balance[1] << 8) + (balance[0]&0xFF));
+		System.out.println("Alvin:Test");
+		System.out.println(new_balance);*/
 	}
 
 }

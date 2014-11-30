@@ -32,7 +32,7 @@ public class AraTerminal {
     // This is the monthly allowance defined in the design document.
     final static short MONTHLY_ALLOWANCE = 200;
     	
-	protected final boolean debug = true;
+	protected final boolean debug = false;
 	
 	/*
 	 * Log raw structure in the smart card:
@@ -325,6 +325,7 @@ public class AraTerminal {
             	System.out.println();
             	System.out.println("Balance is: " + balance);
             }
+            System.out.println("Your current balance is: " + balance);
 			if (balance < 0)
 				throw new IllegalStateException("Balance cannot be negative");
         	return balance;

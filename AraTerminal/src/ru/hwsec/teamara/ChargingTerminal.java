@@ -221,13 +221,13 @@ public class ChargingTerminal extends AraTerminal {
 				for (byte b : sig_card_bytes)
 					System.out.format("0x%x ", b);
 				System.out.println();
-/*				try{
-					//System.out.println(ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
-					System.out.println("yo");
+				try{
+					System.out.println("Signature received from card is: " + ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
+					
 				}
 				catch (GeneralSecurityException e){
 					System.out.println("Signature Verification Error");
-				}*/
+				}
 				
 			}
 		} catch (CardException ex) {
@@ -238,7 +238,7 @@ public class ChargingTerminal extends AraTerminal {
 		String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
 		if (debug) {
 			System.out.println("Signature form card as String:");
-			System.out.println(sig_card.length());
+			System.out.println(sig_card);
 			System.out.println();
 		}
     	// Verify signature of smart card.

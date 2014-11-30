@@ -84,6 +84,7 @@ public class Log {
 		//Log.balance = (short) (transaction[1] | (transaction[2]<< 8 ));		
 		byte[] buffer = apdu.getBuffer();
 		apdu.setOutgoing();
+		apdu.setOutgoingLength((short) 1);
 		buffer[0] = (byte) 0x01;					//	signifies OK
 		apdu.sendBytes((short)0, (short) 1); // (offset, length)	
 	}

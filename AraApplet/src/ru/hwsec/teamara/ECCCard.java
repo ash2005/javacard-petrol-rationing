@@ -146,7 +146,7 @@ public final class ECCCard {
     	Signature sign = Signature.getInstance(Signature.ALG_ECDSA_SHA, false);
     	sign.init(getCardPrivateKey(), Signature.MODE_SIGN); 
     	
-    	return sign.sign(dataIn, (short) inOffset, inputLength, signatureOut, (short) 0);
+    	return sign.sign(dataIn, (short) inOffset, inputLength, signatureOut, sigOffset);
     	// Returns the number of bytes of signature output in signatureOut (which is 54)
     }
 	

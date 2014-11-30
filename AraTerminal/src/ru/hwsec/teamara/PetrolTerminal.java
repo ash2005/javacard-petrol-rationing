@@ -5,6 +5,8 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Scanner;
 
+import javacard.framework.Util;
+
 import javax.smartcardio.Card;
 import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
@@ -91,12 +93,20 @@ public class PetrolTerminal extends AraTerminal {
 			System.exit(1);
 		}
 		
+		byte[] msg_toSend_bytes = new byte[CARD_SIG_POS]; 
+		System.arraycopy(msg_bytes, (short) 0, msg_toSend_bytes, (short) 0, (short) 18);
 		/*
 		 *  Create local signature in bytes from msg in bytes.
 		 */
-    	byte[] sig_term_bytes = new byte[SIG_SIZE];
+    	byte[] sig_term_bytes;
+    	byte[] sig_term_bytes_padded = new byte[SIG_SIZE];
 		try {
 			sig_term_bytes = ECCTerminal.performSignature(msg_bytes);
+			
+			System.arraycopy(sig_term_bytes, (short) 0, sig_term_bytes_padded, (short) 0, (short) sig_term_bytes.length);
+			System.arraycopy(sig_term_bytes_padded, (short) 0, msg_toSend_bytes, (short) 18, (short) SIG_SIZE);
+			
+			
             if ( debug == true){
             	System.out.println("Signature from terminal, length: " + sig_term_bytes.length);
                 for (byte b :  sig_term_bytes)
@@ -108,44 +118,39 @@ public class PetrolTerminal extends AraTerminal {
 			e.printStackTrace();
 		}
 		// Convert the signature to string to store it in the database.
+		/*
+		 * Alvin: There is no database for petrol terminal
     	String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
     	if (debug){
 	    	System.out.println("Signature form terminal as String:");
 	    	System.out.println(sig_term);
 	    	System.out.println();
     	}
-		
+		*/
     	/*
     	 *  Send new balance and msg in bytes to the smart card and get the signature.
     	 */
-		byte[] sig_card_bytes = new byte[SIG_SIZE];
+		
+		byte [] response;
+		
 		ResponseAPDU resp;
 		try {
 			resp = this.cardComm.sendToCard(new CommandAPDU(0,
-					Instruction.UPDATE_BALANCE_PETROL, 0, 0, msg_bytes));
-			sig_card_bytes = resp.getData();
-			if (debug == true) {
-				System.out.println("Reply for UPDATE_BALANCE_PETROL, the signature of smartcard is:");
-				for (byte b : sig_card_bytes)
-					System.out.format("0x%x ", b);
-				System.out.println();
+					Instruction.UPDATE_BALANCE_PETROL, 0, 0, msg_toSend_bytes));
+			response = resp.getData();
+			if (response[0] == (byte) 0x01){
+				System.out.println("Petrol Deduction is successful. You can withdraw fuel now.");
 			}
+			else{
+				System.out.println("Petrol Deduction unsuccessful. Please try again.");
+			}
+			
+			
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
 			System.out.println("Getting logs failed.");
 		}
-		// Convert the signature to string to store it in the database.
-		String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
-		if (debug) {
-			System.out.println("Signature form card as String:");
-			System.out.println(sig_card);
-			System.out.println();
-		}
-    	// Verify signature of smart card.
-    	// ECCTerminal.performSignatureVerification(msg, sig_card_bytes, this.cardKeyBytes)
-    	if ( debug ){
-    		//System.exit(1);
-    	}
+		
     	return true;
     }
     
