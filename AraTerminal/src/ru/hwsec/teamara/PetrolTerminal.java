@@ -10,7 +10,7 @@ import javax.smartcardio.ResponseAPDU;
 public class PetrolTerminal extends AraTerminal {
 
     public PetrolTerminal(byte termID){
-        super(termID);
+        super(termID, (byte)0x02);
     }
 
     /* 

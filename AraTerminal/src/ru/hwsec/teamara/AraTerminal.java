@@ -1,6 +1,5 @@
 package ru.hwsec.teamara;
 
-import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.text.DateFormat;
@@ -17,39 +16,30 @@ import javax.smartcardio.ResponseAPDU;
 
 public class AraTerminal {
 
-	protected byte[] cardKeyBytes;
-    private byte[] cardEncKey;
+    protected final boolean debug = true;
+	protected CardComm cardComm;
+
+	public static final short MONTHLY_ALLOWANCE = 200;
+	
+	private byte[] cardEncKey;
     private byte[] cardMacKey;
     private byte[] cardIV;
     private byte[] terminalEncKey;
     private byte[] terminalMacKey;
     private byte[] terminalIV;
     
-    // This variable save the ID of the terminal.
-    protected byte termID;
+    protected byte[] cardKeyBytes;
     
-    // This is the monthly allowance defined in the design document.
-    final static short MONTHLY_ALLOWANCE = 200;
-    	
-	protected final boolean debug = true;
-	
-	/*
-	 * Log raw structure in the smart card:
-	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
-	 * Bytes:          1        19         2         56        56
-	 * Starting Pos:   0         1        20         22        78
-	 */
-
-	// Maximum number of log.
-	final protected int MAX_LOGS  = 5;
-	protected CardComm cardComm;
-
+    protected byte termID;
+    protected byte type;
+    
     /*
      * Constructor, gets the termID as an argument.
-     * TODO, set the public/private key also.
      */
-    public AraTerminal(byte b){
-    	this.termID = b;
+    
+    public AraTerminal(byte termID, byte type) {
+    	this.termID = termID;
+    	this.type = type;
     	try {
 			cardComm = new CardComm();
 		} catch (CardException e) {
@@ -60,30 +50,19 @@ public class AraTerminal {
     }
     
     protected void execute() {
-        /* INITIALISATION STATE */
-        /*
-        this.setPIN();
-        this.pinCheck();
-        this.pinCheck();
-        */
-
-        /* Issued State */
         try {
 			this.performHandshake();
-			this.pinCheck();
-			this.pinCheck();
+			this.checkPIN();
 		} catch (CardException e) {
-			System.out.println("Could not perform the handshake with the card.");
+			System.out.println("In AraTerminal.execute an error occured when communicating with the card");
 		} catch (GeneralSecurityException e) {
-			System.out.println("There was a crypto problem on the terminal side.");
-		} /*catch (Exception e){
-			System.out.println(e.getMessage());
-		}*/
+			System.out.println("In AraTerminal.execute a crypto error occured");
+		}
     }
 
     /* Mutual Authentication Functions */
 
-    private void performHandshake() throws CardException, GeneralSecurityException {
+    private boolean performHandshake() throws CardException, GeneralSecurityException {
         ResponseAPDU resp;
         // We first generate 4 random bytes to send the card
         Random rnd = new Random(Calendar.getInstance().getTimeInMillis());
@@ -93,6 +72,8 @@ public class AraTerminal {
         // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
         resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_HELLO, 0, 0, termRndBytes));
         byte[] cardRndBytes = resp.getData();
+        if(cardRndBytes.length != 4)
+        	return false;
 
         // Send the public key of the terminal with the signature
         // 51 bytes (0..50) public key of the terminal
@@ -104,8 +85,10 @@ public class AraTerminal {
         // P1 specifies what type of terminal this is:
         // P1 = 1 ==> charging terminal
         // P1 = 2 ==> pump terminal
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_KEY, 1, 0, signedKey));
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_KEY, this.type, 0, signedKey));
         byte[] data = resp.getData();
+        if(data.length == 1) // means that only the error status was sent
+        	return false;
 
         // Verify the public key and signature received from the card
         this.cardKeyBytes = new byte[51];
@@ -113,9 +96,11 @@ public class AraTerminal {
         System.arraycopy(data, 0, this.cardKeyBytes, 0, 51);
         System.arraycopy(data, 51, cardSignatureBytes, 0, 54);
         try {
-			ECCTerminal.verifyCardKey(this.cardKeyBytes, cardSignatureBytes);
+			if(!ECCTerminal.verifyCardKey(this.cardKeyBytes, cardSignatureBytes))
+				return false;
 		} catch (GeneralSecurityException e) {
 			System.out.println("An error occured while verifying the card key.");
+			return false;
 		}
 		
 		// Generate DH Secret
@@ -126,6 +111,11 @@ public class AraTerminal {
         
     	byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
     	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
+    	data = resp.getData();
+    	if(data.length != 1 || data[0] != 0x01)
+    		return false;
+    	
+    	return true;
     }
 
     public void setKeys(byte[] termRndBytes, byte[] cardRndBytes, byte[] terminalSecret) throws CardException, GeneralSecurityException {
@@ -189,81 +179,51 @@ public class AraTerminal {
     	SymTerminal.init(terminalIV, cardIV, terminalEncKey, cardEncKey, terminalMacKey, cardMacKey);
     }
     
-    /* PIN Functions */
-
-    public void setPIN() throws CardException {
-    	System.out.print("INITIALISATION: Please choose a strong PIN Code");
-    	byte pincode[] = ask_for_PIN();
-
+    public boolean checkPIN() {
+    	byte pincode[] = this.askForPIN();
+    	try {
+			pincode = SymTerminal.encrypt(pincode);
+		} catch (GeneralSecurityException e) {
+			System.out.println("In AraTerminal.checkPIN a crypto exception occured");
+			return false;
+		}
+		
         ResponseAPDU resp;
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.SET_PIN, 0, 0, pincode));
-        /*
-        byte[] cardRndBytes = resp.getData();
-        System.out.println(cardRndBytes.length);
-
-        for (byte b :  cardRndBytes)
-        	System.out.format("0x%x ", b);
-        System.out.println();
-        */
-    }
-
-    public boolean pinCheck() throws CardException, GeneralSecurityException {
-    	byte pincode[] = ask_for_PIN();
-    	pincode = SymTerminal.encrypt(pincode);
-        ResponseAPDU resp;
-        // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHECK_PIN, 0, 0, pincode));
-        byte[] cardRndBytes = resp.getData();
-        /*System.out.println(cardRndBytes.length);
-        for (byte b :  cardRndBytes)
-        	System.out.format("0x%x ", b);
-        System.out.println();*/
-        if(cardRndBytes[0] == (byte) 0x01)
+        try {
+			resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHECK_PIN, 0, 0, pincode));
+		} catch (CardException e) {
+			System.out.println("In AraTerminal.checkPIN an error occured while communicating with the card");
+			return false;
+		}
+		
+        byte[] respBytes = resp.getData();
+        if(respBytes.length == 1 && respBytes[0] == 0x01)
         		System.out.println("Correct PIN");
         else{
         		System.out.println("Wrong PIN");
-        		System.out.printf("Tries Remaining: ");
-        		System.out.println(cardRndBytes[1]);
+        		System.out.println("Tries Remaining: " + String.valueOf(respBytes[1]));
         }
+        
         return true;
     }
 
 
-    // Asks user for PIN and returns the byte array.
-    private byte [] ask_for_PIN(){
+    private byte [] askForPIN(){
     	String input = null;
-    	byte[] bytes = ByteBuffer.allocate(4).putInt(1111).array(); // initialize
+    	byte[] bytes = new byte[4];
 
-        System.out.println("");
         System.out.print("Enter PIN: ");
-        Scanner in = new Scanner( System.in );
-
-        try{
+        Scanner in = new Scanner(System.in);
+        try {
         	input = in.next();
-        	int pin = Integer.parseInt(input); // Just to check if it is an integer, var is not used.
-
-
-        	int i = 0;
-        	for(char charUserOutput : String.valueOf(input).toCharArray())
-        	{
-            	 bytes[i] = (byte) charUserOutput;
-            	 i++;
-        	}
-        	/*
-            for (byte b : bytes)
-            {
-            	System.out.format("0x%x ", b);
-            }
-            System.out.println();
-            */
-
+        	Integer.parseInt(input);
         } catch(NumberFormatException e) {
         	System.out.println("Input is not a number");
         	System.exit(1);
-        } catch (Exception e) {
-            System.out.println("IO error.");
-            System.exit(1);
         }
+        
+    	for(int i = 0; i < 4; i++)
+        	 bytes[i] = (byte)String.valueOf(input).toCharArray()[i];
         return bytes;
     }
     
@@ -297,7 +257,7 @@ public class AraTerminal {
     }
 
     public static void main(String[] arg) throws CardException {
-    	AraTerminal araTerminal = new AraTerminal((byte)0x01);
+    	AraTerminal araTerminal = new AraTerminal((byte)0x01, (byte)0x01);
     	araTerminal.execute();
     	try{
     		araTerminal.cardComm.card.disconnect(false);

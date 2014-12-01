@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.Provider;
 
 import javax.crypto.Cipher;
-import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -57,8 +56,9 @@ public class SymTerminal {
 	}
 	
 	public static boolean verifyMac(byte[] plaintext, byte[] mac) throws GeneralSecurityException {
-		byte[] gmac = generateMac(plaintext);
-		return MessageDigest.isEqual(mac, gmac);
+		MessageDigest m = MessageDigest.getInstance("SHA1", cryptoProvider);
+		m.update(vMacKey);
+		return MessageDigest.isEqual(mac, m.digest(plaintext));
 	}
 	
 	public static byte[] encrypt(byte[] plaintext) throws GeneralSecurityException {

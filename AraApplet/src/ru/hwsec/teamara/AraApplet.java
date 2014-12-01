@@ -259,9 +259,9 @@ public class AraApplet extends Applet {
         boolean valid = false;
         try {
         	this.currentTerminalType = apdu.getBuffer()[ISO7816.OFFSET_P1];
-	        if(this.currentTerminalType == (byte)1)
+	        if(this.currentTerminalType == (byte)0x01)
 	            valid = ECCCard.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
-	        else if(this.currentTerminalType == (byte)2)
+	        else if(this.currentTerminalType == (byte)0x02)
 	            valid = ECCCard.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         } catch(CryptoException ex) {
         	// prevent crash on the card, the rest is done in the next if statement

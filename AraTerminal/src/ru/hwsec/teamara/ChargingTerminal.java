@@ -1,8 +1,6 @@
 package ru.hwsec.teamara;
 
-import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
 
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
@@ -13,7 +11,7 @@ public class ChargingTerminal extends AraTerminal {
 	private MySql db;
 	
 	public ChargingTerminal(MySql tdb, byte termID) {
-        super(termID);
+        super(termID, (byte)0x01);
         this.db = tdb;
     }
 
