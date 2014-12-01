@@ -29,7 +29,7 @@ public class AraApplet extends Applet {
     private byte[] terminalMacKey;
     private byte[] terminalIV;
 
-	public AraApplet() {
+    public AraApplet() {
         this.currentState = CurrentState.ZERO;
         this.pin = new OwnerPIN((byte)0x03, (byte)0x04);
 
@@ -59,39 +59,39 @@ public class AraApplet extends Applet {
         /*
          * Initialize transient memory for crypto material
          */
-	   	this.cardEncKey     = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-		this.cardMacKey     = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-		this.cardIV         = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-		this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-		this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-		this.terminalIV     = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        this.cardEncKey     = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        this.cardMacKey     = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        this.cardIV         = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        this.terminalIV     = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
 
         this.register();
-	}
+    }
 
-	public static void install(byte[] bArray, short bOffset, byte bLength) {
-		new AraApplet();
-	}
+    public static void install(byte[] bArray, short bOffset, byte bLength) {
+        new AraApplet();
+    }
 
-	public boolean select() {
+    public boolean select() {
         // The applet declines to be selected if the pin is blocked.
         if(pin.getTriesRemaining() == 0)
             return false;
         return true;
     }
 
-	public void process(APDU apdu) {
-		// Good practice: Return 9000 on SELECT
-		if(selectingApplet()) {
-			return;
-		}
+    public void process(APDU apdu) {
+        // Good practice: Return 9000 on SELECT
+        if(selectingApplet()) {
+            return;
+        }
 
-		byte[] buffer = apdu.getBuffer();
-		byte ins = buffer[ISO7816.OFFSET_INS];
+        byte[] buffer = apdu.getBuffer();
+        byte ins = buffer[ISO7816.OFFSET_INS];
 
-		switch(permanentState) {
+        switch(permanentState) {
             case PermanentState.INIT_STATE:
-			switch (ins) {
+            switch (ins) {
                 case Instruction.SET_PRIV_KEY:
                     this.setPrivateKey(apdu);
                     break;
@@ -110,11 +110,11 @@ public class AraApplet extends Applet {
 
                 default:
                     ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-			}
-			break;
+            }
+            break;
 
             case PermanentState.ISSUED_STATE:
-			switch (ins) {
+            switch (ins) {
 
                 // HANDSHAKE stage
                 case Instruction.TERMINAL_HELLO:
@@ -160,14 +160,14 @@ public class AraApplet extends Applet {
                 default:
                     // good practice: If you don't know the INStruction, say so:
                     ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-			}
-			break;
+            }
+            break;
 
             default:
                 // good practice: If you don't know the INStruction, say so:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-		}
-	}
+        }
+    }
 
     /*
      *  All the functions bellow are used for processing command APDUs sent by the terminal.
@@ -178,10 +178,10 @@ public class AraApplet extends Applet {
         this.sendSuccess(apdu);
     }
 
-	private void setPublicKey(APDU apdu) {
-		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, ECCCard.PRIVATE_KEY_BYTES, (short)0, (short)50);
-		this.sendSuccess(apdu);
-	}
+    private void setPublicKey(APDU apdu) {
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, ECCCard.PRIVATE_KEY_BYTES, (short)0, (short)50);
+        this.sendSuccess(apdu);
+    }
 
     private void setPIN(APDU apdu) {
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
@@ -190,14 +190,14 @@ public class AraApplet extends Applet {
     }
 
     private void issueCard(APDU apdu) {
-    	this.permanentState = PermanentState.ISSUED_STATE;
-    	this.sendSuccess(apdu);
+        this.permanentState = PermanentState.ISSUED_STATE;
+        this.sendSuccess(apdu);
     }
 
     boolean checkPIN(APDU apdu){
-    	SymApplet.decrypt(apdu.getBuffer(), ISO7816.OFFSET_CDATA, (byte)16, this.transmem, (short)59);
+        SymApplet.decrypt(apdu.getBuffer(), ISO7816.OFFSET_CDATA, (byte)16, this.transmem, (short)59);
         if(this.pin.check(this.transmem, (short) 59, (byte)4) == true) {
-        	this.sendPINSuccess(apdu, this.pin.getTriesRemaining());
+            this.sendPINSuccess(apdu, this.pin.getTriesRemaining());
             return true;
         } else {
             this.sendPINFailure(apdu, this.pin.getTriesRemaining());
@@ -207,8 +207,8 @@ public class AraApplet extends Applet {
 
     /*
      * This method processes the TERMINAL_HELLO command and sends back a CARD_HELLO
-	 * The 64-bit of random nonces are exchanged and stored in transmem[0...7]
-	 */
+     * The 64-bit of random nonces are exchanged and stored in transmem[0...7]
+     */
 
     private void processTerminalHello(APDU apdu) {
         this.currentState = CurrentState.ZERO;
@@ -232,8 +232,8 @@ public class AraApplet extends Applet {
 
     /*
      * This method receives the Terminal certificate and verifies it
-	 * If it is valid, the 51-byte terminal cert is stored in transmem[8...58]
-	 */
+     * If it is valid, the 51-byte terminal cert is stored in transmem[8...58]
+     */
 
     private void processTerminalKey(APDU apdu) {
         if(this.currentState != CurrentState.HELLO) {
@@ -304,31 +304,31 @@ public class AraApplet extends Applet {
         transmem[31] = (byte) 0x00;
         transmem[32] = (byte) 0x00;
 
-        transmem[33] = (byte) 0x00;	//cardEncKey
+        transmem[33] = (byte) 0x00; //cardEncKey
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.cardEncKey, (short)0, (short)16);
 
-        transmem[33] = (byte) 0x01;	//cardMacKey
+        transmem[33] = (byte) 0x01; //cardMacKey
         hash.reset();
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.cardMacKey, (short)0, (short)16);
 
-        transmem[33] = (byte) 0x02;	//cardIV
+        transmem[33] = (byte) 0x02; //cardIV
         hash.reset();
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.cardIV, (short)0, (short)16);
 
-        transmem[33] = (byte) 0xA0;	//TerminalEncKey
+        transmem[33] = (byte) 0xA0; //TerminalEncKey
         hash.reset();
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.terminalEncKey, (short)0, (short)16);
 
-        transmem[33] = (byte) 0xA1;	//TerminalMacKey
+        transmem[33] = (byte) 0xA1; //TerminalMacKey
         hash.reset();
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.terminalMacKey, (short)0, (short)16);
 
-        transmem[33] = (byte) 0xA2;	//Terminal IV
+        transmem[33] = (byte) 0xA2; //Terminal IV
         hash.reset();
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.terminalIV, (short)0, (short)16);
