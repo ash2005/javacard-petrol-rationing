@@ -2,18 +2,17 @@ package ru.hwsec.teamara;
 
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
 import java.util.Scanner;
 
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 
 public class AraTerminal {
@@ -43,31 +42,7 @@ public class AraTerminal {
 
 	// Maximum number of log.
 	final protected int MAX_LOGS  = 5;
-	/* ---     Sizes      --- */
-	// The length of the date field.
-	final protected int DATE_SIZE = 19;
-	// The length of each signature.
-	final protected int SIG_SIZE  = 56;
-	/* ---   Positions    --- */
-	// Starting position of the date field.
-	final protected int DATE_POS  = 1;
-	// Starting position of the balance field.
-	final protected int BALANCE_POS  = DATE_POS + DATE_SIZE;
-	// Starting position of the terminal signature field.
-	final protected int TERM_SIG_POS = BALANCE_POS + 2;         // 22
-	// Starting position of the card signature field.
-	final protected int CARD_SIG_POS = TERM_SIG_POS + SIG_SIZE; // 78
-	// The constant byte size of each log entry.
-	final protected int LOG_SIZE  = CARD_SIG_POS + SIG_SIZE;    // 134
-	// The buffer of the UPDATE_BALANCE_CHARGE command includes:
-	// [ termID |  Date   | Balance ]
-	final protected int UPDATE_BALANCE_CHARGE_LENGTH = TERM_SIG_POS;
-	// The buffer of the UPDATE_BALANCE_PETROL command includes:
-	// [ termID |  Date   | Balance | Term Sig ]
-	final protected int UPDATE_BALANCE_PETROL_LENGTH = CARD_SIG_POS;
-	
-	
-    protected CardComm cardComm;
+	protected CardComm cardComm;
 
     /*
      * Constructor, gets the termID as an argument.
@@ -133,28 +108,24 @@ public class AraTerminal {
         byte[] data = resp.getData();
 
         // Verify the public key and signature received from the card
-        cardKeyBytes = new byte[51];
+        this.cardKeyBytes = new byte[51];
         byte[] cardSignatureBytes = new byte[54];
-        System.arraycopy(data, 0, cardKeyBytes, 0, 51);
+        System.arraycopy(data, 0, this.cardKeyBytes, 0, 51);
         System.arraycopy(data, 51, cardSignatureBytes, 0, 54);
         try {
-			ECCTerminal.verifyCardKey(cardKeyBytes, cardSignatureBytes);
+			ECCTerminal.verifyCardKey(this.cardKeyBytes, cardSignatureBytes);
 		} catch (GeneralSecurityException e) {
 			System.out.println("An error occured while verifying the card key.");
 		}
 		
 		// Generate DH Secret
-    	byte[] terminalSecret = ECCTerminal.performDH(cardKeyBytes);
+    	byte[] terminalSecret = ECCTerminal.performDH(this.cardKeyBytes);
     	MessageDigest md = MessageDigest.getInstance("SHA");
     	md.update(terminalSecret);
     	setKeys(termRndBytes, cardRndBytes, md.digest());        
         
     	byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
     	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
-        byte[] ctext = resp.getData();
-        byte[] ptext = SymTerminal.decrypt(ctext);
-        
-        
     }
 
     public void setKeys(byte[] termRndBytes, byte[] cardRndBytes, byte[] terminalSecret) throws CardException, GeneralSecurityException {
@@ -297,52 +268,36 @@ public class AraTerminal {
     }
     
     /*
-     * Return the date in mysql DATETIME format.
+     * Get the current date in MySQL DATETIME format
      */
-    protected String get_date(){
+    
+    protected String getDate(){
     	DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    	Date date = new Date();
-    	//System.out.println(dateFormat.format(date)); //2014/08/06 15:59:48
-    	return dateFormat.format(date);
+    	return dateFormat.format(new Date());
     }
     
-    /**
-     * Send instruction START_PUMPING to the card and
-     * retrieve the balance. 
-     * ATM. It is used for both Charging and terminal.
-     */
     protected short getBalance(){
-        ResponseAPDU resp;
         short balance = 0;
         try {
-        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_BALANCE, 1, 0));
-			byte[] temp = resp.getData();
-			balance = (short) ((temp[1] << 8) + (temp[0]&0xFF));
-            if ( debug == true){
-            	System.out.println("Getting balance..");
-            	for (byte b :  temp)
+        	ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_BALANCE, 1, 0));
+			byte[] data = resp.getData();
+			balance = (short) ((data[1] << 8) + (data[0] & 0xff));
+            if(debug) {
+            	System.out.println("AraTerminal.getBalance returns the value");
+            	for (byte b :  data)
             		System.out.format("0x%x ", b);
-            	System.out.println();
-            	System.out.println("Balance is: " + balance);
+            	System.out.println("\nBalance is: " + balance);
             }
-            System.out.println("Your current balance is: " + balance);
-			if (balance < 0)
-				throw new IllegalStateException("Balance cannot be negative");
-        	return balance;
-        } catch (IllegalStateException ex) {
-			System.out.println(ex.getMessage());
-    		System.out.println("Card is corrupted.");
-			System.exit(1);
-		} catch (CardException ex) {
-			System.out.println(ex.getMessage());
-			System.out.println("Getting logs failed.");
-			System.exit(1);
+			if(balance < 0)
+				System.out.println("In AraTerminal.getBalance an error occured because balance value is less than 0");
+        } catch (CardException ex) {
+        	System.out.println("In AraTerminal.getBalance an error occured when sending APDU to the card");
 		}
     	return balance;
     }
 
     public static void main(String[] arg) throws CardException {
-    	AraTerminal araTerminal = new AraTerminal((byte) 0x01);
+    	AraTerminal araTerminal = new AraTerminal((byte)0x01);
     	araTerminal.execute();
     	try{
     		araTerminal.cardComm.card.disconnect(false);

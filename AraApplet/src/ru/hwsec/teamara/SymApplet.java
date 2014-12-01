@@ -5,7 +5,6 @@ import javacard.framework.Util;
 import javacard.security.AESKey;
 import javacard.security.KeyBuilder;
 import javacard.security.MessageDigest;
-import javacard.security.Signature;
 import javacardx.crypto.Cipher;
 
 public class SymApplet {
@@ -128,7 +127,7 @@ public class SymApplet {
             byte[] mac, short offsetMac
         ) {
     	sha.reset();
-    	sha.update(gMacKey, offsetGMacKey, (short)16);
+    	sha.update(vMacKey, offsetVMacKey, (short)16);
     	sha.doFinal(input, offsetInput, lengthInput, trans, (short)32);
     	for(short i = 0; i < (short)20; i++)
     		if(mac[i] != trans[i + (short)32])

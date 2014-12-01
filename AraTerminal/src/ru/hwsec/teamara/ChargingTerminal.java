@@ -1,148 +1,65 @@
 package ru.hwsec.teamara;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-
-import javacard.security.CryptoException;
 
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
-
-
 public class ChargingTerminal extends AraTerminal {
 
-	/*
-	 * Class used to represent the card that it is used at the moment.
-	 */
-	public class Card {
-		protected int cardID;
-		protected short balance;
-		public Card(){
-			
-		}
-		public Card(int cardID, short balance) {
-			this.cardID = cardID;
-			this.balance = balance;
-		}
-	}
-	
-	/* Charging terminal is online and has access to the database. */
 	private MySql db;
 	
-	public ChargingTerminal(MySql tdb, byte ttermID){
-        super(ttermID); // set the terminal ID.
+	public ChargingTerminal(MySql tdb, byte termID) {
+        super(termID);
         this.db = tdb;
     }
 
-	/**
-     * Get card logs adn store them in the database.
-     * 
-     * Additionally,    TODO
-     * Check if the card logs fulfil specified criteria
-     *  - less than 200 litres per month
-     *  - Only 5 withdrawals
-	 * @param card obj Card with the details of the connected card.
-	 * @return true/false depending on success.
-	 */
 	private boolean getLogs(Card card) {
-        ResponseAPDU resp;
-    	boolean status = true;
-    	
-    	// The buffer that temporary stores the logs. 
-    	byte[] buffer = new byte[LOG_SIZE+3]; // ?????
-    	Arrays.fill( buffer, (byte) 0x00 );
-    	buffer[0] = (byte) 0xFF;
-
-    	// Size of the buffer that contains usefull information.
-    	int buffer_size = 0;
-    	
-    	// Send command GET_LOGS and get response.
-    	// It is getting logs, until it gets a single 0xFF byte.
-        try {
-        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
-			byte[] temp = resp.getData();
-			buffer_size = temp.length;
-            if ( debug == true){
-            	System.out.println("In function getLogs..");
-            	for (byte b :  temp)
-            		System.out.format("0x%x ", b);
-            	System.out.println();
-            }
-			if (temp[0] == (byte) 0xFF) // Signal that defines that card logs are empty.
-				return true;
-			// copy bytes to the buffer.
-			System.arraycopy(temp, 0, buffer, 0, buffer_size);			
-		} catch (CardException ex) {
-			System.out.println(ex.getMessage());
-			System.out.println("Getting logs failed.");
-			System.exit(1);
-		}
-
-/*		int number_of_logs = 0;
-		try {
-			number_of_logs = (buffer_size + 1) / LOG_SIZE;
-			if (number_of_logs > 5) // Maximum log capacity is 5.
-				throw new IllegalStateException("Cannot handle " + number_of_logs + " logs.");
-        } catch(NumberFormatException ex) {
-        	System.out.print(ex.getMessage());
-		} catch (IllegalStateException ex) {
-			System.out.println(ex.getMessage());
-		}*/
-		
-		// Decode each log and store it in the database.
-		while (buffer[0] != (byte) 0xFF ){
-			int index = 0; 
-			int ttermID = (int) buffer[index];
-			short balance = (short) ((buffer[BALANCE_POS+1] << 8) + (buffer[BALANCE_POS]&0xFF));
-			short transaction = (short) 1; // transaction must be calculated in a later version.
-			byte date_bytes[] = new byte[DATE_SIZE]; 
-			byte sig_term_bytes[] = new byte[SIG_SIZE];
-			byte sig_card_bytes[] = new byte[SIG_SIZE];
-			// copy bytes to the buffer.
-			System.arraycopy(buffer, index + DATE_POS,     date_bytes,     0, DATE_SIZE);			
-			System.arraycopy(buffer, index + TERM_SIG_POS, sig_term_bytes, 0, SIG_SIZE);
-			System.arraycopy(buffer, index + CARD_SIG_POS, sig_card_bytes, 0, SIG_SIZE);
-			
-			String date     = new String(date_bytes);
-			String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
-			String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
-			
-			status = db.addlog(card.cardID, balance, transaction, ttermID, date, sig_card, sig_term);
-	    	if (!status){
-	    		System.out.println("Storing logs failed.");
-	    		System.exit(1);
-	    	}
+    	while(true) {
+    		ResponseAPDU resp = null;
 	        try {
-	        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 1, 0));
-				byte[] temp = resp.getData();
-				buffer_size = temp.length;
-	            if ( debug == true){
-	            	System.out.println("In function getLogs..");
-	            	for (byte b :  temp)
+	        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 0, 0));
+	            if(debug == true) {
+	            	System.out.println("In function ChargingTerminal.getLogs");
+	            	System.out.println("Contents of log response from card");
+	            	for (byte b :  resp.getData())
 	            		System.out.format("0x%x ", b);
 	            	System.out.println();
 	            }
-				if (temp[0] == (byte) 0xFF) // Signal that defines that card logs are empty.
-					return true;
-				// copy bytes to the buffer.
-				System.arraycopy(temp, 0, buffer, 0, buffer_size);			
 			} catch (CardException ex) {
-				System.out.println(ex.getMessage());
-				System.out.println("Getting logs failed.");
-				System.exit(1);
+				System.out.println("Error occured in function ChargingTerminal.getLogs while sending APDU to the card");
 			}
-		}
+			
+			if(resp.getData().length == 1 && resp.getData()[0] == 0xff) // signal that card log is empty
+				break;
+		
+			byte dateBytes[] = new byte[Constants.Transaction.DATE_LENGTH]; 
+			byte termSigBytes[] = new byte[Constants.Transaction.SIG_LENGTH];
+			byte cardSigBytes[] = new byte[Constants.Transaction.SIG_LENGTH];
+			byte[] log = resp.getData();
+			
+			int termID = log[0];
+			short balance = (short)((log[Constants.Transaction.BALANCE_OFFSET + 1] << 8) + (log[Constants.Transaction.BALANCE_OFFSET] & 0xff));
+			
+			System.arraycopy(log, Constants.Transaction.DATE_OFFSET,     dateBytes,    0, Constants.Transaction.DATE_LENGTH);			
+			System.arraycopy(log, Constants.Transaction.TERM_SIG_OFFSET, termSigBytes, 0, Constants.Transaction.SIG_LENGTH);
+			System.arraycopy(log, Constants.Transaction.CARD_SIG_OFFSET, cardSigBytes, 0, Constants.Transaction.SIG_LENGTH);
+			
+			String date    = new String(dateBytes);
+			String termSig = new sun.misc.BASE64Encoder().encode(termSigBytes);
+			String cardSig = new sun.misc.BASE64Encoder().encode(cardSigBytes);
+			
+			boolean status = db.addlog(card.cardID, balance, (short)0, termID, date, cardSig, termSig);
+	    	if(!status)
+	    		System.out.println("In ChargingTerminal.getLogs an error occured while storing logs");
+    	}
         return true;
     }
 	
-	/**
-	 * Just send command CLEAR LOGS to the smartcard.
-	 */
-	private boolean clearLogs(){
+	private boolean clearLogs() { // TODO: check if needed
 		try {
 			this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CLEAR_LOGS, 1, 0));
 			return true;
@@ -152,12 +69,12 @@ public class ChargingTerminal extends AraTerminal {
 		}
 	}
 
-	/**
+	/*
 	 * Compare the cardID's balance at the smart card and at the database.
 	 */
-	private boolean verifyBalance(Card card){
+	private boolean verifyBalance(Card card) {
 		int tbalance = db.get_balance(card.cardID);
-		if ( tbalance == card.balance)
+		if(tbalance == card.balance)
 			return true;
 		else if (tbalance == -1)
 			System.out.println("cardID: " + card.cardID + " has not been found.");
@@ -167,148 +84,103 @@ public class ChargingTerminal extends AraTerminal {
 	}
 	
     /* Revoke the card if backend database has revoke flag set for that card*/
-    private boolean revoke(){
+    private boolean revoke() {
     	return true;
     }
 
-    /**
+    /*
      * Perform an atomic operation. TODO!!!
      * - Sign the message
      * - Send message and new balance to the smart card
      * - Get the signature
      * - Store the message and the signatures to the database
      */
-    private boolean updateBalance(Card card, short new_balance){
-    	/* 
-    	 * Construct msg that has to be signed.
-    	 * [ termID |  Date   | Balance ]
-    	 */
-    	byte[] msg_bytes = new byte[UPDATE_BALANCE_CHARGE_LENGTH];
-    	String Date = this.get_date();
+    private boolean updateBalance(Card card, short newBalance){
+    	byte[] messageBytes = new byte[Constants.Transaction.MSG_TOSIGN_LENGTH];
+    	byte[] termSignatureBytes = null;
+    	String currentDate = this.getDate();
+		int dateLength = currentDate.getBytes().length;
+		
+		if(debug && dateLength != Constants.Transaction.DATE_LENGTH)
+			System.out.println("In ChargingTerminal.updateBalance the length of the current date is wrong");
     	
-		byte[] temp = Date.getBytes(Charset.forName("UTF-8"));
-		msg_bytes[0] = this.termID;
-		System.arraycopy(temp, 0, msg_bytes, 1, temp.length);
-		msg_bytes[BALANCE_POS] = (byte)(new_balance);
-		msg_bytes[BALANCE_POS+1] = (byte)((new_balance >> 8) & 0xFF);
-        if ( debug == true){
-        	System.out.println("The message that has to be signed is:");
-        	System.out.format("0x%x", this.termID);
-        	System.out.println( Date + Short.toString(new_balance));
-            for (byte b :  msg_bytes)
-            	System.out.format("0x%x ", b);
-        	System.out.println("With length: " + msg_bytes.length);
-        	System.out.println();
-        }
+		messageBytes[0] = this.termID;
+		System.arraycopy(currentDate.getBytes(), 0, messageBytes, Constants.Transaction.DATE_OFFSET, Constants.Transaction.DATE_LENGTH);
+		messageBytes[Constants.Transaction.BALANCE_OFFSET] = (byte)(newBalance);
+		messageBytes[Constants.Transaction.BALANCE_OFFSET + 1] = (byte)((newBalance >> 8) & 0xff);
 		
-		/*
-		 *  Create local signature in bytes from msg in bytes.
-		 */
-    	byte[] sig_term_bytes = new byte[SIG_SIZE];
 		try {
-			sig_term_bytes = ECCTerminal.performSignature(msg_bytes);
-            if ( debug == true){
-            	System.out.println("Signature from terminal, length: " + sig_term_bytes.length);
-                for (byte b :  sig_term_bytes)
-                	System.out.format("0x%x ", b);
-                System.out.println();
-            }
+			termSignatureBytes = ECCTerminal.performSignature(messageBytes);
 		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("In ChargingTerminal.updateBalance a crypto exception occured");
 		}
-		// Convert the signature to string to store it in the database.
-    	String sig_term = new sun.misc.BASE64Encoder().encode(sig_term_bytes);
-    	if (debug){
-	    	System.out.println("Signature form terminal as String:");
-	    	System.out.println(sig_term);
-	    	System.out.println();
-    	}
 		
-    	/*
-    	 *  Send new balance and msg in bytes to the smart card and get the signature.
-    	 */
-		byte[] sig_card_bytes = new byte[SIG_SIZE];
-		ResponseAPDU resp;
+		byte[] cardSignatureBytes = new byte[Constants.Transaction.SIG_LENGTH];
 		try {
-			resp = this.cardComm.sendToCard(new CommandAPDU(0,Instruction.UPDATE_BALANCE_CHARGE, 0, 0, msg_bytes));
-			sig_card_bytes = resp.getData();
-			if (debug == true) {
-				System.out.println("Reply for UPDATE_BALANCE_CHARGE, the signature of smartcard is:");
-				for (byte b : sig_card_bytes)
-					System.out.format("0x%x ", b);
-				System.out.println();
-				try{
-					System.out.println("Signature received from card is: " + ECCTerminal.performSignatureVerification(msg_bytes, sig_card_bytes, super.cardKeyBytes));
-					
-				}
-				catch (GeneralSecurityException e){
-					System.out.println("Signature Verification Error");
-				}
-				
-			}
+			ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0,Instruction.UPDATE_BALANCE_CHARGE, 0, 0, messageBytes));
+			cardSignatureBytes = resp.getData();
 		} catch (CardException ex) {
-			System.out.println(ex.getMessage());
 			System.out.println("Getting logs failed.");
 		}
-		// Convert the signature to string to store it in the database.
-		String sig_card = new sun.misc.BASE64Encoder().encode(sig_card_bytes);
-		if (debug) {
-			System.out.println("Signature form card as String:");
-			System.out.println(sig_card);
-			System.out.println();
+		
+		if(debug) {
+			try{
+				boolean validSig =  ECCTerminal.performSignatureVerification(messageBytes, cardSignatureBytes, super.cardKeyBytes);
+				System.out.println("Signature received from card is valid: " + String.valueOf(validSig));	
+			}
+			catch (GeneralSecurityException e){
+				System.out.println("Signature Verification Error");
+			}
 		}
-    	// Verify signature of smart card.
-    	// ECCTerminal.performSignatureVerification(msg, sig_card_bytes, this.cardKeyBytes)
-    	if ( debug ){
-    		//System.exit(1);
-    	}
-    	// Save log entry to the database.
-    	db.addlog(card.cardID, card.balance, this.MONTHLY_ALLOWANCE, (int)this.termID, this.get_date(), sig_card, sig_term);
-    	
-    	// Update balance in table sara_card
-    	db.updateBalance(card.cardID, new_balance);
-    	
+		
+		String cardSignature = new sun.misc.BASE64Encoder().encode(cardSignatureBytes);
+		String termSignature = new sun.misc.BASE64Encoder().encode(termSignatureBytes);
+    	db.addlog(card.cardID, card.balance, AraTerminal.MONTHLY_ALLOWANCE, this.termID, currentDate, cardSignature, termSignature);
+    	db.updateBalance(card.cardID, newBalance);
     	return true;
     }
     
-    void use (){
+    void use() {
     	System.out.println("Welcome to charging terminal.");
     	
-    	// exit if it turns false. 
-    	boolean status = true;
-    	// get balance from smartcard. 
-    	short balance = getBalance();
-    	// object that describes the connected card. 
-    	Card card = new Card( (int) 0xA1, balance );  
+    	short balance = this.getBalance();
+    	Card card = new Card(0xa1, balance);  
     	
     	// retrieve and store logs as well as get the basic info of the card.
-    	status = getLogs(card);
+    	boolean status = this.getLogs(card);
 
-    	// if getting logs was successful, inform smart card to clear the entries. 
-    	// Not needed. See note below above the function
-    	//status = clearLogs();
-    	
     	// verify that the balance in the smart card
     	// matches the balance in the database.
     	//status = verifyBalance(card);
+    	
     	if (!status){
     		System.out.println("Card is corrupted.");
-    		// REVOKE CARD.
     		revoke();
     		System.exit(1);
     	}    	
     	
     	// calculate new balance. 
-    	short new_balance = (short) (card.balance + this.MONTHLY_ALLOWANCE); 
-    
-    	// perform an atomic operation of updating the 
-    	// balance and storing the signatures to the database.
-    	status = updateBalance(card, new_balance);
-    	if (!status){
+    	int newBalance = card.balance + AraTerminal.MONTHLY_ALLOWANCE; 
+    	status = updateBalance(card, (short)newBalance);
+    	if (!status)
     		System.out.println("Updating balance failed.");
-    	}
     	else
     		System.out.println("Card is charged.");
     }
+    
+    /*
+	 * Class used to represent the card that it is used at the moment.
+	 */
+    
+	public static class Card {
+		protected int cardID;
+		protected short balance;
+		
+		public Card() { }
+		
+		public Card(int cardID, short balance) {
+			this.cardID = cardID;
+			this.balance = balance;
+		}
+	}
 }

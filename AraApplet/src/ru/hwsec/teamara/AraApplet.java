@@ -30,7 +30,7 @@ public class AraApplet extends Applet {
     private byte[] terminalIV;
 
     public AraApplet() {
-        this.currentState = CurrentState.ZERO;
+        this.currentState = Constants.CurrentState.ZERO;
         this.pin = new OwnerPIN((byte)0x03, (byte)0x04);
 
         // The default PIN is '1111'
@@ -42,7 +42,7 @@ public class AraApplet extends Applet {
         this.pin.update(buf, (short) 0, (byte)4);
 
         //this.permanentState = PermanentState.INIT_STATE;
-        this.permanentState = PermanentState.ISSUED_STATE;
+        this.permanentState = Constants.PermanentState.ISSUED_STATE;
 
         this.log = new Log();
         this.cardID = (byte) 0xA1;
@@ -90,7 +90,7 @@ public class AraApplet extends Applet {
         byte ins = buffer[ISO7816.OFFSET_INS];
 
         switch(permanentState) {
-            case PermanentState.INIT_STATE:
+            case Constants.PermanentState.INIT_STATE:
             switch (ins) {
                 case Instruction.SET_PRIV_KEY:
                     this.setPrivateKey(apdu);
@@ -113,7 +113,7 @@ public class AraApplet extends Applet {
             }
             break;
 
-            case PermanentState.ISSUED_STATE:
+            case Constants.PermanentState.ISSUED_STATE:
             switch (ins) {
 
                 // HANDSHAKE stage
@@ -145,7 +145,7 @@ public class AraApplet extends Applet {
 
                 // CHARGING stage.
                 case Instruction.GET_LOGS:
-                    this.log.getLogs(apdu);
+                    this.log.getLastLog(apdu);
                     break;
 
                 case Instruction.CLEAR_LOGS:
@@ -190,7 +190,7 @@ public class AraApplet extends Applet {
     }
 
     private void issueCard(APDU apdu) {
-        this.permanentState = PermanentState.ISSUED_STATE;
+        this.permanentState = Constants.PermanentState.ISSUED_STATE;
         this.sendSuccess(apdu);
     }
 
@@ -211,7 +211,7 @@ public class AraApplet extends Applet {
      */
 
     private void processTerminalHello(APDU apdu) {
-        this.currentState = CurrentState.ZERO;
+        this.currentState = Constants.CurrentState.ZERO;
 
         // Copy 4 bytes int nonce sent by terminal
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)0, (short)4);
@@ -227,7 +227,7 @@ public class AraApplet extends Applet {
         apdu.sendBytes((short)0, (short)4);
 
         // Update the current state
-        this.currentState = CurrentState.HELLO;
+        this.currentState = Constants.CurrentState.HELLO;
      }
 
     /*
@@ -236,8 +236,8 @@ public class AraApplet extends Applet {
      */
 
     private void processTerminalKey(APDU apdu) {
-        if(this.currentState != CurrentState.HELLO) {
-            this.currentState = CurrentState.ZERO;
+        if(this.currentState != Constants.CurrentState.HELLO) {
+            this.currentState = Constants.CurrentState.ZERO;
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
 
@@ -249,7 +249,7 @@ public class AraApplet extends Applet {
             valid = ECCCard.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
         if(!valid) {
             // If verification fails then we abort
-            this.currentState = CurrentState.ZERO;
+            this.currentState = Constants.CurrentState.ZERO;
             this.sendFailure(apdu);
             return;
         }
@@ -265,7 +265,7 @@ public class AraApplet extends Applet {
         apdu.sendBytes((short)0, (short)(51 + 54));
 
         // Update the current state
-        this.currentState = CurrentState.KEY_EXCHANGE;
+        this.currentState = Constants.CurrentState.KEY_EXCHANGE;
      }
 
     /*
@@ -274,8 +274,8 @@ public class AraApplet extends Applet {
      */
 
     private void changeCipherSpec(APDU apdu) {
-        if(this.currentState != CurrentState.KEY_EXCHANGE) {
-            this.currentState = CurrentState.ZERO;
+        if(this.currentState != Constants.CurrentState.KEY_EXCHANGE) {
+            this.currentState = Constants.CurrentState.ZERO;
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
 
@@ -290,7 +290,7 @@ public class AraApplet extends Applet {
                 this.sendSuccess(apdu);
             }
             // Update the current state
-            this.currentState = CurrentState.CHANGE_CIPHER;
+            this.currentState = Constants.CurrentState.CHANGE_CIPHER;
         } catch (CryptoException e) {
             this.sendFailure(apdu);
         }
