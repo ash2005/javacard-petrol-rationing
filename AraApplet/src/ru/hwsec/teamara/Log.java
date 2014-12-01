@@ -7,11 +7,11 @@ import javacard.framework.Util;
 
 public class Log {
 
-	/* Transactions are byte arrays comprised of
-	 * Terminal ID+Date			: Byte 0...15			< 16 bytes >
-	 * Balance							: Byte 16...17		<  2 bytes >
-	 * Terminal Signature			: Byte 18...73		< 56 bytes >
-	 * Card Signature				: Byte 74...129		< 56 bytes >
+	/*
+	 * Log raw structure in the smart card:
+	 *             [ termID |  Date   | Balance | Term Sig | Card Sig ]
+	 * Bytes:          	 1        19       	2         	56     		56
+	 * Starting Pos:   0        1     	   20         22      		78
 	 */
 	private static byte[] transaction1;
 	private static byte[] transaction2;
@@ -25,9 +25,11 @@ public class Log {
 	private static final short MSG_TOSIGN_LENGTH = 22;
 	private static final short CARD_SIGNATURE_OFFSET = 78;
 	private static final short PETROL_UPDATE_LENGTH = 78;
-	private static final short TRANSACTION_LENGTH= 136;
+	private static final short TRANSACTION_LENGTH= 134;
 	private static final short SIGNATURE_LENGTH= 56;
 	
+	private byte[] signature;
+	private byte[] message;
 	
 	static{
 		Log.transaction1 = new byte[TRANSACTION_LENGTH];
@@ -38,7 +40,11 @@ public class Log {
 		Log.balance = new byte[2];		// balance[0] corresponds to transaction[1], balance[1] corresponds to transaction[2],  
 		Log.index = 0;
 	}
-		
+	
+	public Log(){
+		signature =  JCSystem.makeTransientByteArray(SIGNATURE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
+		message =  JCSystem.makeTransientByteArray((short) MSG_TOSIGN_LENGTH, JCSystem.CLEAR_ON_DESELECT);
+	}
 	
 	//  PETROL PUMP FUNCTIONS
 	public void getBalance(APDU apdu){
@@ -79,14 +85,13 @@ public class Log {
 	private void updateTransactionPetrol(APDU apdu, byte[] transaction){
 		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, transaction, (short) 0, PETROL_UPDATE_LENGTH );
 		ECCCard.performSignature(transaction, (short) 0, (short) MSG_TOSIGN_LENGTH, transaction, CARD_SIGNATURE_OFFSET );
+		//TODO: Throws SW:0x6F00!? why when updateTransactionCharge works?
 		Log.balance[0] = transaction[BALANCE_OFFSET];
-		Log.balance[1] = transaction[BALANCE_OFFSET + 1];
-		//Log.balance = (short) (transaction[1] | (transaction[2]<< 8 ));		
-		byte[] buffer = apdu.getBuffer();
-		apdu.setOutgoing();
-		apdu.setOutgoingLength((short) 1);
-		buffer[0] = (byte) 0x01;					//	signifies OK
-		apdu.sendBytes((short)0, (short) 1); // (offset, length)	
+		Log.balance[1] = transaction[BALANCE_OFFSET + 1];		
+	   	apdu.setOutgoing();
+	    apdu.setOutgoingLength((short)1);
+	    apdu.getBuffer()[0] = 0x01;
+	    apdu.sendBytes((short)0, (short)1); // (offset, length)
 	}
 	
 	
@@ -159,8 +164,7 @@ public class Log {
 	 **/
 	public void updateTransactionCharge(APDU apdu){
 		//updateTransactionPetrol(apdu, Log.transaction1);
-		byte[] signature =  JCSystem.makeTransientByteArray(SIGNATURE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
-		byte[] message =  JCSystem.makeTransientByteArray((short) MSG_TOSIGN_LENGTH, JCSystem.CLEAR_ON_DESELECT);
+
 		
 		Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, message, (short) 0, MSG_TOSIGN_LENGTH );
 		ECCCard.performSignature(message, (short) 0, MSG_TOSIGN_LENGTH , signature, (short) 0);

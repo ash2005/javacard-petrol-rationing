@@ -52,9 +52,14 @@ public class AraApplet extends Applet {
          * 656 bytes (7..663) scrap memory for encrypting/decrypting apdus
          * Total: 664
          */
-        // NOTE: Alvin moved transmem down to TERMINAL_HELLO. The constructor is called only once.
-        //this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
-
+        
+        this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
+	   	this.cardEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+		this.cardMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+		this.cardIV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+		this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+		this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+		this.terminalIV  = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
         this.register();
 	}
 
@@ -232,7 +237,6 @@ public class AraApplet extends Applet {
     private void processTerminalHello(APDU apdu) {
         this.currentState = CurrentState.ZERO;
         
-        this.transmem = JCSystem.makeTransientByteArray((short)100, JCSystem.CLEAR_ON_DESELECT);
         // Copy 4 bytes int nonce sent by terminal
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)0, (short)4);
 
@@ -333,14 +337,10 @@ public class AraApplet extends Applet {
 
      private void genSecretKeys(APDU apdu) {
     	 try {
+    		 //TODO: Get rid of this call to transient
 	    	 byte[] hashOut = JCSystem.makeTransientByteArray((short)20, JCSystem.CLEAR_ON_DESELECT);
 	
-	    	 this.cardEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-	    	 this.cardMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-	    	 this.cardIV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-	    	 this.terminalEncKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-	    	 this.terminalMacKey = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-	    	 this.terminalIV  = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+
 	
 	
 	    	 MessageDigest hash = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
