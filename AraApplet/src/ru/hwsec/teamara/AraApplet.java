@@ -39,7 +39,7 @@ public class AraApplet extends Applet {
         buf[1] = 0x31;
         buf[2] = 0x31;
         buf[3] = 0x31;
-        this.pin.update(buf, (short) 0, MAX_PIN_SIZE);
+        this.pin.update(buf, (short) 0, (byte)4);
 
         //this.permanentState = PermanentState.INIT_STATE;
         this.permanentState = PermanentState.ISSUED_STATE;
@@ -185,7 +185,7 @@ public class AraApplet extends Applet {
 
     private void setPIN(APDU apdu) {
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
-        this.pin.update(this.transmem, (short)59, MAX_PIN_SIZE);
+        this.pin.update(this.transmem, (short)59, (byte)4);
         this.sendSuccess(apdu);
     }
 
@@ -196,7 +196,7 @@ public class AraApplet extends Applet {
 
     boolean checkPIN(APDU apdu){
     	SymApplet.decrypt(apdu.getBuffer(), ISO7816.OFFSET_CDATA, (byte)16, this.transmem, (short)59);
-        if(this.pin.check(this.transmem, (short) 59, MAX_PIN_SIZE) == true) {
+        if(this.pin.check(this.transmem, (short) 59, (byte)4) == true) {
         	this.sendPINSuccess(apdu, this.pin.getTriesRemaining());
             return true;
         } else {
