@@ -20,6 +20,7 @@ public class AraApplet extends Applet {
     private byte currentState;
     private byte permanentState;
     private byte cardID;
+    private byte currentTerminalType;
 
     private byte[] transmem;
     private byte[] cardEncKey;
@@ -174,35 +175,44 @@ public class AraApplet extends Applet {
      */
 
     private void setPrivateKey(APDU apdu) {
+    	JCSystem.beginTransaction();
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, ECCCard.PRIVATE_KEY_BYTES, (short)0, (short)25);
+        JCSystem.commitTransaction();
         this.sendSuccess(apdu);
     }
 
     private void setPublicKey(APDU apdu) {
+    	JCSystem.beginTransaction();
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, ECCCard.PRIVATE_KEY_BYTES, (short)0, (short)50);
+        JCSystem.commitTransaction();
         this.sendSuccess(apdu);
     }
 
     private void setPIN(APDU apdu) {
+    	JCSystem.beginTransaction();
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, this.transmem, (short)59, (short)4);
         this.pin.update(this.transmem, (short)59, (byte)4);
+        JCSystem.commitTransaction();
         this.sendSuccess(apdu);
     }
 
     private void issueCard(APDU apdu) {
+    	JCSystem.beginTransaction();
         this.permanentState = Constants.PermanentState.ISSUED_STATE;
+        JCSystem.commitTransaction();
         this.sendSuccess(apdu);
     }
 
-    boolean checkPIN(APDU apdu){
-        SymApplet.decrypt(apdu.getBuffer(), ISO7816.OFFSET_CDATA, (byte)16, this.transmem, (short)59);
-        if(this.pin.check(this.transmem, (short) 59, (byte)4) == true) {
-            this.sendPINSuccess(apdu, this.pin.getTriesRemaining());
-            return true;
-        } else {
-            this.sendPINFailure(apdu, this.pin.getTriesRemaining());
-            return false;
-        }
+    private void checkPIN(APDU apdu) {
+    	try {
+	        SymApplet.decrypt(apdu.getBuffer(), ISO7816.OFFSET_CDATA, (byte)16, this.transmem, (short)59);
+	        if(this.pin.check(this.transmem, (short) 59, (byte)4) == true)
+	            this.sendPINSuccess(apdu, this.pin.getTriesRemaining());
+	        else
+	            this.sendPINFailure(apdu, this.pin.getTriesRemaining());
+    	} catch(CryptoException ex) {
+    		this.sendPINFailure(apdu, this.pin.getTriesRemaining());    		
+    	}
     }
 
     /*
@@ -211,6 +221,7 @@ public class AraApplet extends Applet {
      */
 
     private void processTerminalHello(APDU apdu) {
+    	JCSystem.beginTransaction();
         this.currentState = Constants.CurrentState.ZERO;
 
         // Copy 4 bytes int nonce sent by terminal
@@ -228,6 +239,7 @@ public class AraApplet extends Applet {
 
         // Update the current state
         this.currentState = Constants.CurrentState.HELLO;
+        JCSystem.commitTransaction();
      }
 
     /*
@@ -238,17 +250,26 @@ public class AraApplet extends Applet {
     private void processTerminalKey(APDU apdu) {
         if(this.currentState != Constants.CurrentState.HELLO) {
             this.currentState = Constants.CurrentState.ZERO;
-            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+            this.sendFailure(apdu);
+            return;
         }
-
+        
+        JCSystem.beginTransaction();
         // Verify signature on the received public key
         boolean valid = false;
-        if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)1)
-            valid = ECCCard.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
-        else if(apdu.getBuffer()[ISO7816.OFFSET_P1] == (byte)2)
-            valid = ECCCard.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+        try {
+        	this.currentTerminalType = apdu.getBuffer()[ISO7816.OFFSET_P1];
+	        if(this.currentTerminalType == (byte)1)
+	            valid = ECCCard.verifyChargingTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+	        else if(this.currentTerminalType == (byte)2)
+	            valid = ECCCard.verifyPumpTerminal(apdu.getBuffer(), ISO7816.OFFSET_CDATA);
+        } catch(CryptoException ex) {
+        	// prevent crash on the card, the rest is done in the next if statement
+        }
+        
         if(!valid) {
             // If verification fails then we abort
+        	JCSystem.abortTransaction();
             this.currentState = Constants.CurrentState.ZERO;
             this.sendFailure(apdu);
             return;
@@ -266,6 +287,7 @@ public class AraApplet extends Applet {
 
         // Update the current state
         this.currentState = Constants.CurrentState.KEY_EXCHANGE;
+        JCSystem.commitTransaction();
      }
 
     /*
@@ -280,6 +302,7 @@ public class AraApplet extends Applet {
         }
 
         try {
+        	JCSystem.beginTransaction();
             KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DH, false);
             DH.init(ECCCard.getCardPrivateKey());
             short secretLength = DH.generateSecret(transmem, (short) 8, (short) 51, transmem, (short) 8);
@@ -291,7 +314,10 @@ public class AraApplet extends Applet {
             }
             // Update the current state
             this.currentState = Constants.CurrentState.CHANGE_CIPHER;
+            JCSystem.commitTransaction();
         } catch (CryptoException e) {
+        	JCSystem.abortTransaction();
+        	this.currentState = Constants.CurrentState.ZERO;
             this.sendFailure(apdu);
         }
     }
