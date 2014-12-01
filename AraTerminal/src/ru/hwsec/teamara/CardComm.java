@@ -40,6 +40,14 @@ class CardComm {
         } else
             return this.applet.transmit(apdu);
     }
+    
+    public void close() {
+    	try {
+			card.disconnect(false);
+		} catch (CardException e) {
+			System.out.println("Could not disconnect from the card");
+		}
+    }
 
     private void initSimulator() {
         this.simulator = new Simulator();

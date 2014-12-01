@@ -305,7 +305,7 @@ public class AraApplet extends Applet {
         	JCSystem.beginTransaction();
             KeyAgreement DH = KeyAgreement.getInstance(KeyAgreement.ALG_EC_SVDP_DH, false);
             DH.init(ECCCard.getCardPrivateKey());
-            short secretLength = DH.generateSecret(transmem, (short) 8, (short) 51, transmem, (short) 8);
+            short secretLength = DH.generateSecret(this.transmem, (short)8, (short)51, this.transmem, (short)8);
             if(secretLength < 1)
                 this.sendFailure(apdu);
             else {

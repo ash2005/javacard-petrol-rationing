@@ -57,19 +57,10 @@ public class ChargingTerminal extends AraTerminal {
         return true;
     }
 	
-	private boolean clearLogs() { // TODO: check if needed
-		try {
-			this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CLEAR_LOGS, 1, 0));
-			return true;
-		} catch (CardException ex) {
-			System.out.println(ex.getMessage());
-			return false;
-		}
-	}
-
 	/*
 	 * Compare the cardID's balance at the smart card and at the database.
 	 */
+	
 	private boolean verifyBalance(Card card) {
 		int tbalance = db.get_balance(card.cardID);
 		if(tbalance == card.balance)
@@ -81,11 +72,6 @@ public class ChargingTerminal extends AraTerminal {
 		return false;
 	}
 	
-    /* Revoke the card if backend database has revoke flag set for that card*/
-    private boolean revoke() {
-    	return true;
-    }
-
     /*
      * Perform an atomic operation. TODO!!!
      * - Sign the message
@@ -93,6 +79,7 @@ public class ChargingTerminal extends AraTerminal {
      * - Get the signature
      * - Store the message and the signatures to the database
      */
+	
     private boolean updateBalance(Card card, short newBalance){
     	byte[] messageBytes = new byte[Constants.Transaction.MSG_TOSIGN_LENGTH];
     	byte[] termSignatureBytes = null;
@@ -146,14 +133,8 @@ public class ChargingTerminal extends AraTerminal {
     	
     	// retrieve and store logs as well as get the basic info of the card.
     	boolean status = this.getLogs(card);
-
-    	// verify that the balance in the smart card
-    	// matches the balance in the database.
-    	//status = verifyBalance(card);
-    	
     	if (!status){
     		System.out.println("Card is corrupted.");
-    		revoke();
     		System.exit(1);
     	}    	
     	

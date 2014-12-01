@@ -6,11 +6,9 @@ import javax.smartcardio.ResponseAPDU;
 
 public class PersonalisationTerminal {
 	
-	private MySql db;
 	protected CardComm cardComm;
 	
-	public PersonalisationTerminal(MySql tdb){
-        this.db = tdb;
+	public PersonalisationTerminal() {
         try {
 			this.cardComm = new CardComm();
 		} catch (CardException e) {
@@ -45,5 +43,4 @@ public class PersonalisationTerminal {
         
 		return true;
 	}
-
 }

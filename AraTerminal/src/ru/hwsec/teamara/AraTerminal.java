@@ -49,7 +49,7 @@ public class AraTerminal {
 		System.out.println("Connected to the smart card.");
     }
     
-    protected void execute() {
+    protected void connectToCard() {
         try {
 			this.performHandshake();
 			this.checkPIN();
@@ -58,6 +58,10 @@ public class AraTerminal {
 		} catch (GeneralSecurityException e) {
 			System.out.println("In AraTerminal.execute a crypto error occured");
 		}
+    }
+    
+    public void disconnectFromCard() {
+    	this.cardComm.close();
     }
 
     /* Mutual Authentication Functions */
@@ -106,8 +110,7 @@ public class AraTerminal {
 		// Generate DH Secret
     	byte[] terminalSecret = ECCTerminal.performDH(this.cardKeyBytes);
     	MessageDigest md = MessageDigest.getInstance("SHA");
-    	md.update(terminalSecret);
-    	setKeys(termRndBytes, cardRndBytes, md.digest());        
+    	setKeys(termRndBytes, cardRndBytes, md.digest(terminalSecret));        
         
     	byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
     	resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
@@ -258,11 +261,7 @@ public class AraTerminal {
 
     public static void main(String[] arg) throws CardException {
     	AraTerminal araTerminal = new AraTerminal((byte)0x01, (byte)0x01);
-    	araTerminal.execute();
-    	try{
-    		araTerminal.cardComm.card.disconnect(false);
-    	}catch (CardException e) {
-    		System.out.println("Could not close card connection.");
-    	}
+    	araTerminal.connectToCard();
+    	araTerminal.disconnectFromCard();
     }
 }
