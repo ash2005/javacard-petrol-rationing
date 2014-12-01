@@ -23,22 +23,22 @@ public class PersonalisationTerminal {
 		byte[] cardPublicKey = {};
 		byte[] cardPin = {};
 		
-		ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.SET_PRIV_KEY, 1, 0, cardPrivateKey));
+		ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.SET_PRIV_KEY, 1, 0, cardPrivateKey));
         byte[] data = resp.getData();
         if(data.length != 1 || data[0] != 1)
         	return false;
 		
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.SET_PUB_KEY, 1, 0, cardPublicKey));
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.SET_PUB_KEY, 1, 0, cardPublicKey));
         data = resp.getData();
         if(data.length != 1 || data[0] != 1)
         	return false;
         
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.SET_PIN, 1, 0, cardPin));
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.SET_PIN, 1, 0, cardPin));
         data = resp.getData();
         if(data.length != 1 || data[0] != 1)
         	return false;
         
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.ISSUE_CARD, 1, 0));
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.ISSUE_CARD, 1, 0));
         data = resp.getData();
         if(data.length != 1 || data[0] != 1)
         	return false;

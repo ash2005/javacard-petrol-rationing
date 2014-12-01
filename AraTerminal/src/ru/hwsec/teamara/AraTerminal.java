@@ -70,7 +70,7 @@ public class AraTerminal {
         rnd.nextBytes(termRndBytes);
 
         // Send TERMINAL_HELLO and get back the CARD_HELLO answer containing 4 random bytes
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_HELLO, 0, 0, termRndBytes));
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.TERMINAL_HELLO, 0, 0, termRndBytes));
         byte[] cardRndBytes = resp.getData();
         if(cardRndBytes.length != 4)
         	return false;
@@ -85,7 +85,7 @@ public class AraTerminal {
         // P1 specifies what type of terminal this is:
         // P1 = 1 ==> charging terminal
         // P1 = 2 ==> pump terminal
-        resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.TERMINAL_KEY, this.type, 0, signedKey));
+        resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.TERMINAL_KEY, this.type, 0, signedKey));
         byte[] data = resp.getData();
         if(data.length == 1) // means that only the error status was sent
         	return false;
@@ -110,7 +110,7 @@ public class AraTerminal {
     	setKeys(termRndBytes, cardRndBytes, md.digest());        
         
     	byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
-    	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
+    	resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
     	data = resp.getData();
     	if(data.length != 1 || data[0] != 0x01)
     		return false;
@@ -190,7 +190,7 @@ public class AraTerminal {
 		
         ResponseAPDU resp;
         try {
-			resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CHECK_PIN, 0, 0, pincode));
+			resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CHECK_PIN, 0, 0, pincode));
 		} catch (CardException e) {
 			System.out.println("In AraTerminal.checkPIN an error occured while communicating with the card");
 			return false;
@@ -239,7 +239,7 @@ public class AraTerminal {
     protected short getBalance(){
         short balance = 0;
         try {
-        	ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_BALANCE, 1, 0));
+        	ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.GET_BALANCE, 1, 0));
 			byte[] data = resp.getData();
 			balance = (short) ((data[1] << 8) + (data[0] & 0xff));
             if(debug) {

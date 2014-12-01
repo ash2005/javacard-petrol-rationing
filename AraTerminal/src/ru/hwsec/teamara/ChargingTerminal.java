@@ -19,7 +19,7 @@ public class ChargingTerminal extends AraTerminal {
     	while(true) {
     		ResponseAPDU resp = null;
 	        try {
-	        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.GET_LOGS, 0, 0));
+	        	resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.GET_LOGS, 0, 0));
 	            if(debug == true) {
 	            	System.out.println("In function ChargingTerminal.getLogs");
 	            	System.out.println("Contents of log response from card");
@@ -59,7 +59,7 @@ public class ChargingTerminal extends AraTerminal {
 	
 	private boolean clearLogs() { // TODO: check if needed
 		try {
-			this.cardComm.sendToCard(new CommandAPDU(0, Instruction.CLEAR_LOGS, 1, 0));
+			this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CLEAR_LOGS, 1, 0));
 			return true;
 		} catch (CardException ex) {
 			System.out.println(ex.getMessage());
@@ -115,7 +115,7 @@ public class ChargingTerminal extends AraTerminal {
 		
 		byte[] cardSignatureBytes = new byte[Constants.Transaction.SIG_LENGTH];
 		try {
-			ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0,Instruction.UPDATE_BALANCE_CHARGE, 0, 0, messageBytes));
+			ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.UPDATE_BALANCE_CHARGE, 0, 0, messageBytes));
 			cardSignatureBytes = resp.getData();
 		} catch (CardException ex) {
 			System.out.println("Getting logs failed.");

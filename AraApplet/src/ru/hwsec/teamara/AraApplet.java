@@ -93,19 +93,19 @@ public class AraApplet extends Applet {
         switch(permanentState) {
             case Constants.PermanentState.INIT_STATE:
             switch (ins) {
-                case Instruction.SET_PRIV_KEY:
+                case Constants.Instruction.SET_PRIV_KEY:
                     this.setPrivateKey(apdu);
                     break;
 
-                case Instruction.SET_PUB_KEY:
+                case Constants.Instruction.SET_PUB_KEY:
                     this.setPublicKey(apdu);
                     break;
 
-                case Instruction.SET_PIN:
+                case Constants.Instruction.SET_PIN:
                     this.setPIN(apdu);
                     break;
 
-                case Instruction.ISSUE_CARD:
+                case Constants.Instruction.ISSUE_CARD:
                     this.issueCard(apdu);
                     break;
 
@@ -118,42 +118,42 @@ public class AraApplet extends Applet {
             switch (ins) {
 
                 // HANDSHAKE stage
-                case Instruction.TERMINAL_HELLO:
+                case Constants.Instruction.TERMINAL_HELLO:
                     this.processTerminalHello(apdu);
                     break;
 
-                case Instruction.TERMINAL_KEY:
+                case Constants.Instruction.TERMINAL_KEY:
                     this.processTerminalKey(apdu);
                     break;
 
-                case Instruction.CHANGE_CIPHER_SPEC:
+                case Constants.Instruction.CHANGE_CIPHER_SPEC:
                     this.changeCipherSpec(apdu);
                     break;
 
-                case Instruction.CHECK_PIN:
+                case Constants.Instruction.CHECK_PIN:
                     this.checkPIN(apdu);
                     break;
 
 
                 // PUMPING stage
-                case Instruction.GET_BALANCE:
+                case Constants.Instruction.GET_BALANCE:
                     this.log.getBalance(apdu);
                     break;
 
-                case Instruction.UPDATE_BALANCE_PETROL:
+                case Constants.Instruction.UPDATE_BALANCE_PETROL:
                     this.log.updateTransactionPetrol(apdu);
                     break;
 
                 // CHARGING stage.
-                case Instruction.GET_LOGS:
+                case Constants.Instruction.GET_LOGS:
                     this.log.getLastLog(apdu);
                     break;
 
-                case Instruction.CLEAR_LOGS:
+                case Constants.Instruction.CLEAR_LOGS:
                     this.log.clearLogs(apdu, this.cardID);
                     break;
 
-                case Instruction.UPDATE_BALANCE_CHARGE:
+                case Constants.Instruction.UPDATE_BALANCE_CHARGE:
                     this.log.updateTransactionCharge(apdu);
                     break;
 

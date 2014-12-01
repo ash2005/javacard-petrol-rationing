@@ -67,7 +67,7 @@ public class PetrolTerminal extends AraTerminal {
 		System.arraycopy(signatureBytes, 0, transactionBytes, Constants.Transaction.TERM_SIG_OFFSET, Constants.Transaction.SIG_LENGTH);
 
 		try {
-			ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Instruction.UPDATE_BALANCE_PETROL, 0, 0, transactionBytes));
+			ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.UPDATE_BALANCE_PETROL, 0, 0, transactionBytes));
 			if (resp.getData()[0] == (byte) 0x01)
 				System.out.println("Petrol Deduction is successful. You can withdraw fuel now.");
 			else
