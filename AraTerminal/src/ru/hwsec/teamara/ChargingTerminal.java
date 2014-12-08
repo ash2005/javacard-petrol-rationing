@@ -31,7 +31,7 @@ public class ChargingTerminal extends AraTerminal {
 				System.out.println("Error occured in function ChargingTerminal.getLogs while sending APDU to the card");
 			}
 			
-			if(resp.getData().length == 1 && resp.getData()[0] == 0xff) // signal that card log is empty
+			if(resp.getData().length == 1 && resp.getData()[0] == (byte) 0xff) // signal that card log is empty
 				break;
 		
 			byte dateBytes[] = new byte[Constants.Transaction.DATE_LENGTH]; 

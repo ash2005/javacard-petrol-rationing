@@ -64,8 +64,7 @@ public class PetrolTerminal extends AraTerminal {
 		}
 		
 		System.arraycopy(messageBytes, 0, transactionBytes, 0, Constants.Transaction.MSG_TOSIGN_LENGTH);
-		System.arraycopy(signatureBytes, 0, transactionBytes, Constants.Transaction.TERM_SIG_OFFSET, Constants.Transaction.SIG_LENGTH);
-
+		System.arraycopy(signatureBytes, 0, transactionBytes, Constants.Transaction.TERM_SIG_OFFSET, signatureBytes.length);
 		try {
 			ResponseAPDU resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.UPDATE_BALANCE_PETROL, 0, 0, transactionBytes));
 			if (resp.getData()[0] == (byte) 0x01)
