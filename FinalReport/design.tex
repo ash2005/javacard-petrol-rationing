@@ -9,7 +9,7 @@
 %opening
 \title{Petrol rationing smartcard project}
 \subtitle{Design document - Group 5 (TU/e)}
-\author{Alvin Cai - s4404114 \\ Romanos Dodopoulos - s4415191 \\ Alexandru Geana - s4420438}
+\author{Alvin Cai - s4404114 \\ Romanos Dodopoulos - s4415191 \\ Alexandru Geana - s4420438 \\ Saurabh Kulkarni}
 \institute{}
 
 \begin{document}
@@ -193,7 +193,7 @@ Next to these requirements, we also make the following assumptions regarding the
 
 \subsection{Card Personalisation}
 \label{Design:Personalisation}
-During the Initialisation phase at a secure government site, a Personalisation Terminal will load the certs, private keys and PIN as mentioned in Section \ref{personalisation} into the ration card. This process causes the ration card to permanently transit from an Initialised State to an Operational State.
+During the Initialisation phase at a secure government site, a Personalisation Terminal will load the certs, private keys and PIN as mentioned in Section \ref{personalisation} into the ration card. This process causes the ration card to permanently transit from the Personalisation State to an Issued State.
 
 \subsection{Certificate hierarchy}
 In order to provide a system for mutual authentication and the required framework for sharing secrets, we decided to make use of a PKI system. For this project a custom Certificate Authority (CA) is used, which generates new certificates using a hierarchical approach, based on three separate tiers. Each of the devices, cards and terminals alike, will possess its own unique certificate.
@@ -277,7 +277,9 @@ Date\\
 
 \subsection{Petrol Charging Terminal}
 \label{subsection:chargingterminal}
-After mutual authentication and PIN entry, the charging terminal and ration card follow the communication protocol described in Figure \ref{figure:charging}. The charging terminal is also used to retrieve the logs thus freeing the memory of the smartcard for additional logs. The logs constitute the non-repudiation evidence for any smartcard or terminal. Immediately after transferring the logs, the terminal verifies that the card is valid and that the balance is correct. Afterwards there are three different cases according to the result of the verification. An error means that the card must be revoked and the process ends. Otherwise, we distinct two cases for whether the card had already been charged that month. 
+After mutual authentication and PIN entry, the charging terminal and ration card follow the communication protocol described in Figure \ref{figure:charging}. The charging terminal is also used to retrieve the logs thus freeing the memory of the smartcard for additional logs. The logs constitute the non-repudiation evidence for any smartcard or terminal. Immediately after transferring the logs, the terminal verifies that the card is valid and that the balance is correct. This validation check involves checking that the card and terminal signatures of all transactions are valid, that the balance strictly decreases as time progresses and that the constraints described in Section \ref{section:lost} (i.e. not more than 5 transactions totalling 250 litres) are fulfilled. If any of these checks fail, then the card is revoked by toggling it's REVOKE-flag, again described further in Section \ref{section:lost}.
+
+Afterwards there are three different cases according to the result of the verification. An error means that the card must be revoked and the process ends. Otherwise, we distinct two cases for whether the card had already been charged that month. 
 
 \usetikzlibrary{matrix,shapes,arrows,positioning,chains, calc}
 
@@ -349,45 +351,68 @@ Additionally, cards only allow three consecutive wrong PIN entries before the ca
 
 The next layer of defence is for the Government CA to revoke cards which are reported to be misplaced or stolen. This is updated in the back-end database to which charging terminals are connected. When a revoked card is presented to a charging terminal, the charging terminal will disable the card by toggling a 'REVOKE-FLAG' within the card.
 
-A third layer of defence for lost cards is to limit the amount of petrol withdrawals it can make in between each visit to the charging terminal. As such, cards can only make five withdrawals from petrol pumps before they need to visit a charging terminal (where the REVOKE-FLAG could be set if necessary).
+A third layer of defence for lost cards is to limit the amount of petrol withdrawals it can make in between each visit to the charging terminal. As such, cards can only make five withdrawals from petrol pumps, totalling a maximum of 250 litres, before they need to visit a charging terminal (where the REVOKE-FLAG could be set if necessary).
 
 Another potential solution is for petrol terminals to check the revocation status of the cards. Manually updating the certificate revocation list (CRL) within the pumps is not an efficient solution. More ideally, petrol terminals are online and are able to query the Government CA to check the revocation status by OCSP. However, we will not implement this in the project as this has more to do with the backend.
 
 \subsubsection{Compromised Petrol Terminals}
-\label{Design:CompromisedPT}
+
 The possibility of private keys within petrol terminals being compromised is very rare. Nevertheless, the impact can be significant as fraudulent deductions by compromised terminals can create public mistrust in the rationing system. This threat is mitigated by loading CRLs (consisting of compromised petrol terminals) onto ration cards each time they visit a charging terminal. Ration cards will check the petrol terminal identity against the CRL before continuing the transaction.
 
 \section{Implementation}
 
 \subsection{Scope}
-We implemented all aspects of the design except the personalisation phase described in Section \ref{Design:Personalisation} due to time constraints. To demonstrate the cryptographic functionality in the Operational Phase, we chose instead to use hard-coded keys which were generated using OpenSSL. Revocation and backend database checks described in Section \ref{section:lost} and \ref{Design:CompromisedPT} were also not implemented. 
+Due to time constraints, we did not implement the following aspects of the design:
+\begin{enumerate}
+ \item Personalisation phase described in Section \ref{Design:Personalisation}. The workaround to demonstrate the cryptographic functionality was to use hard-coded certs, cert signatures and private keys which were generated using OpenSSL. As there is no personalisation terminal, smartcards locked due to exceeding the try-limit cannot be unlocked.
+  \item Revocation of both cards and petrol terminals as described in Section \ref{section:lost} 
+  \item The Charging Terminal's validation checks of the card's transaction logs as described in Section \ref{subsection:chargingterminal} were not implemented. This involved signature verification and checking of transaction limits.
+  \item Instead of loading two public-private keys pairs in the card, one for the purpose of key exchange and another for the purpose of public signatures \ref{personalisation}, we instead chose to use a single key pair for both. This seems unlikely to have significant security risks as the card does not act as a signing oracle, and signs only fixed length and type of data.
+\end{enumerate}
 
-Finally, instead of loading two public-private keys pairs in the card, one for the purpose of key exchange and another for the purpose of public signatures \ref{personalisation}, we instead chose to use a single key pair for both. This seems unlikely to have significant security risks as the card does not act as a signing oracle, and signs only fixed length and type of data.
+\subsection{State Diagram}
+The UML state diagram of the functions implemented on the card is detailed in Figure \ref{figure:state}. The UML state diagram of the Pump Terminal and Charging Terminal is not provided as it closely resembles Figure \ref{figure:petrol} and Figure \ref{figure:charging}.
 
-\subsection{Cryptography}
-\subsubsection{Mutual Authentication}
-Mutual Authentication employs ECDH-ECDSA, which employs the SECG curve over a 193 bit binary field. A binary field is chosen to better employ the cryptographic hardware on the smartcard. Thereafter, the DH shared secret together with the random nonces (to ensure freshness) are input into a pseudo-random function that uses a SHA-1 hash to create an Initialisation Vector (IV), Encryption Key, MAC Key for both the Card and the Terminal. 
+    \begin{figure*}
+      \centering
+      \includegraphics[scale=0.38]{img/state.jpg}
+      \caption{\label{figure:state}UML State Diagram. @Saurabh, can you convert this into a nice digital diagram?}
+    \end{figure*}  
 
-\subsubsection{Message Encryption and Authentication}
+
+
+More details of some of the states are provided below:
+\subsubsection{Process Terminal Key State}
+Mutual Authentication employs ECDH-ECDSA, which employs the SECG curve over a 193 bit binary field. A binary field is chosen to better employ the cryptographic hardware on the smartcard. 
+
+\subsubsection{Change Cipher Spec State}
+The Card Initialisation Vector (IV) is generated as SHA-1(Terminal Random Nonce, Card Random Nonce, Diffie-Hellman Shared Secret, "Byte representing Card IV"), where the multiple inputs to the SHA-1 are concatenated together. The Card Encryption Key, Card MAC Key, Terminal IV, Terminal Encryption Key and Terminal IV are similarly generated by changing the last input Byte. 
+
+\subsubsection{Message Encryption and Authentication in Check PIN State}
 AES-128 with PKCS7 padding was chosen for encryption while HMAC with SHA-1 was chosen for message authentication. As padding for AES was not provided by the javacard cryptographic libraries, and we had to manually implement it. Our implementation integrates well with the Terminal's Bouncy castle 'AES-128 with PCKS7' API.
 
 The card sends messages encrypted with the Card Encryption Key, using the card IV as input and authenticated with the Card MAC key. Correspondingly, the terminal sends messages encrypted with the Terminal Encryption Key, using the Terminal IV as input and authenticated with the Terminal MAC key. Card and Terminal can decrypt and verify each other's messages as they have all six keys.
 
 The IVs are updated after each message is sent, using the last sent 16-byte block of that sent message.
 
-\subsection{Petrol and Charging Transactions}
-The Petrol and Charging Terminals and the corresponding logic of the ration card are implemented as described in \ref{Design:PetrolPT} and \ref{subsection:chargingterminal}. Transactions with petrol and charging terminals are only possible after the smartcard permanently transits into the Operational State, after loading of private keys in Initialisation state.
+\subsubsection{Get Balance, Get Logs, Petrol Pump Transaction and Charging Transaction State}
+Transactions with the Petrol and Charging Terminals are implemented very closely to Figure \ref{Design:PetrolPT} and \ref{subsection:chargingterminal} in the design. 
 
-Thereafter, there are many transient states e.g. mutual auth -> PIN Check -> .... To prevent bypass of any security checks, these states should transit sequentially. This is ensured by by using a variable to store the current transient state.
 
+\subsection{Database Design}
+
+@Romanos want to talk something about the nice Database here?
+
+\subsection{Additional protection}
+@Alex, want to talk about some of the atomicity you implemented? And also how it differs from the initial Design (if at all)?
 
 \subsection{Notes}
 Some interesting observations about javacard APIs and coding environment:
 
 \begin{enumerate}
  \item The cryptographic libraries used by the javacard and terminal are implemented slightly differently. For example, the Diffie-Hellman Key exchange (ALG\_EC\_SVDP\_DH) on Terminal returns a byte array of length 25, while the card returns a byte array of length 20. This is because the Card automatically applies a SHA-1 hash on the EC-point while Terminal does not.
- \item Multi Dimensional arrays cannot be used on the card
  \item CMAC implementation on the javacard is buggy
 \end{enumerate}
  
 \end{document}
+
