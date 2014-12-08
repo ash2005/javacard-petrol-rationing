@@ -71,7 +71,7 @@ public class Log {
     }
 
     private void updateTransactionPetrol(APDU apdu, byte[] transaction){
-        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, transaction, (short) 0, Constants.Transaction.MSG_TOSIGN_LENGTH);
+        Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, transaction, (short) 0, Constants.Transaction.CARD_SIG_OFFSET);
         ECCCard.performSignature(transaction, (short) 0, (short)Constants.Transaction.MSG_TOSIGN_LENGTH, transaction, Constants.Transaction.CARD_SIG_OFFSET);
         //TODO: Throws SW:0x6F00!? why when updateTransactionCharge works?
         Log.balance[0] = transaction[Constants.Transaction.BALANCE_OFFSET];

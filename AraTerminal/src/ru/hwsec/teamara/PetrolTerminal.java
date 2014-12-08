@@ -95,6 +95,9 @@ public class PetrolTerminal extends AraTerminal {
     		System.out.println("Error, pumping failed.");
     	else
     		System.out.println("Pumping has been completed.");
+        System.out.println();
+        System.out.println();
     }
+
 
 }
