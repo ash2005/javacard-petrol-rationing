@@ -122,6 +122,7 @@ public class ChargingTerminal extends AraTerminal {
 		String termSignature = new sun.misc.BASE64Encoder().encode(termSignatureBytes);
     	db.addlog(card.cardID, card.balance, AraTerminal.MONTHLY_ALLOWANCE, this.termID, currentDate, cardSignature, termSignature);
     	db.updateBalance(card.cardID, newBalance);
+    	db.charged(card.cardID);
     	return true;
     }
     
@@ -138,13 +139,20 @@ public class ChargingTerminal extends AraTerminal {
     		System.exit(1);
     	}    	
     	
+    	if (db.charge(card.cardID) == false){
+    		System.out.println("Card is already charged, exiting!");
+    		System.exit(1);
+    	}
+    		
     	// calculate new balance. 
     	int newBalance = card.balance + AraTerminal.MONTHLY_ALLOWANCE; 
     	status = updateBalance(card, (short)newBalance);
     	if (!status)
     		System.out.println("Updating balance failed.");
     	else
-    		System.out.println("Card is charged.");
+    		System.out.println("Charging completed!");
+    	System.out.println();
+    	System.out.println();
     }
     
     /*

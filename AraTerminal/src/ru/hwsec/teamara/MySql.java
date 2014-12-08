@@ -68,7 +68,7 @@ public class MySql {
 		execute_query(query);
 		
 		// TESTING...
-		//addcard(1001, 250, "PK"); // TODO: REMOVE IT.
+		addcard(161, 200, "PK"); // TODO: REMOVE IT.
 		//adduser(2001, 1001, "Romanos", "Mauritsstraat");
 	}
 
@@ -155,6 +155,62 @@ public class MySql {
 		}
 		return tbalance; // 
 	}
+
+	public boolean charge(int cardID){
+		try {
+			con = DriverManager.getConnection(url, user, password);
+			st = con.createStatement();
+
+			String query = "SELECT charged "
+				+ " FROM sara_card "
+				+ " WHERE cardID=" 
+				+ cardID;
+			rs = st.executeQuery(query);
+
+			if (rs.next()) {
+				System.out.println(Integer.parseInt(rs.getString(1)));
+				if (Integer.parseInt(rs.getString(1)) == 1)
+					return true;
+				else
+					return false;
+			}
+			else
+				return false;
+			
+		} catch (SQLException ex) {
+			Logger lgr = Logger.getLogger(MySql.class.getName());
+			lgr.log(Level.SEVERE, ex.getMessage(), ex);
+			return false;
+        } catch(NumberFormatException e) {
+        	System.out.println("Input is not a number.. this has to be fixed asap.");
+        	System.exit(1);
+		} finally {
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+				if (st != null) {
+					st.close();
+				}
+				if (con != null) {
+					con.close();
+				}
+
+			} catch (SQLException ex) {
+				Logger lgr = Logger.getLogger(MySql.class.getName());
+				lgr.log(Level.WARNING, ex.getMessage(), ex);
+				System.out.println("Entry was inserted but db was not closed.");
+				System.exit(1);
+			}
+		}
+		return false; // 
+	}
+
+	public boolean charged(int cardID) {
+		String query = "UPDATE sara_card SET charged=0 WHERE cardID=" + cardID;
+		return execute_query(query);
+	}
+
 	
 	/*
 	 * Mark card as invalid. If a cardID exists:
@@ -193,7 +249,7 @@ public class MySql {
 				+ "cardID, balance, charged, publicKey, expDATE)" + "VALUES ("
 				+ tcardID + "," 
 				+ tbalance + "," 
-				+ 0	+ "," // It will be charged for this month.
+				+ 1	+ "," // It will not be charged for this month.
 				+ "\"" + publickey + "\"," 
 				+ "curdate() + INTERVAL " + SMART_CARD_LIFE_CYCLE + " YEAR" // Expire date is in 4 years.
 				+ ")";
