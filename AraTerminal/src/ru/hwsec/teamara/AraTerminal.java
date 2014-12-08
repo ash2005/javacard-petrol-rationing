@@ -16,7 +16,7 @@ import javax.smartcardio.ResponseAPDU;
 
 public class AraTerminal {
 
-    protected final boolean debug = true;
+    protected final boolean debug = false;
 	protected CardComm cardComm;
 
 	public static final short MONTHLY_ALLOWANCE = 200;
@@ -109,11 +109,14 @@ public class AraTerminal {
 		
 		// Generate DH Secret
     	byte[] terminalSecret = ECCTerminal.performDH(this.cardKeyBytes);
-    	MessageDigest md = MessageDigest.getInstance("SHA");
-    	setKeys(termRndBytes, cardRndBytes, md.digest(terminalSecret));        
+    	// Uncomment this if using real card
+    	//MessageDigest md = MessageDigest.getInstance("SHA");
+    	//setKeys(termRndBytes, cardRndBytes, md.digest(terminalSecret));        
         
-    	byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
-    	resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CHANGE_CIPHER_SPEC, 1, 0, payload));
+    	setKeys(termRndBytes, cardRndBytes, terminalSecret);
+    	
+    	//byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
+    	resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CHANGE_CIPHER_SPEC, 1, 0));
     	data = resp.getData();
     	if(data.length != 1 || data[0] != 0x01)
     		return false;
@@ -135,7 +138,8 @@ public class AraTerminal {
     	
     	System.arraycopy(termRndBytes, 0, hashInput, 0, 4);
     	System.arraycopy(cardRndBytes, 0, hashInput, 4, 4);
-    	System.arraycopy(terminalSecret, 0, hashInput, 8, 20);
+    	//System.arraycopy(terminalSecret, 0, hashInput, 8, 20);
+    	System.arraycopy(terminalSecret, 0, hashInput, 8, 25);
 
     	// cardEncKey
     	hashInput[33] = (byte) 0x00;
@@ -200,7 +204,7 @@ public class AraTerminal {
 		}
 		
         byte[] respBytes = resp.getData();
-        if(respBytes.length == 1 && respBytes[0] == 0x01)
+        if(respBytes[0] == 0x01)
         		System.out.println("Correct PIN");
         else{
         		System.out.println("Wrong PIN");

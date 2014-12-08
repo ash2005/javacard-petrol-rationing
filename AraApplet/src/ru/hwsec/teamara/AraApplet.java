@@ -324,12 +324,13 @@ public class AraApplet extends Applet {
 
     private void genSecretKeys() {
         MessageDigest hash = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+        /*
         transmem[28] = (byte) 0x00;
         transmem[29] = (byte) 0x00;
         transmem[30] = (byte) 0x00;
         transmem[31] = (byte) 0x00;
         transmem[32] = (byte) 0x00;
-
+         */
         transmem[33] = (byte) 0x00; //cardEncKey
         hash.doFinal(this.transmem, (short)0, (short)34, this.transmem, (short)35);
         Util.arrayCopy(this.transmem, (short)35, this.cardEncKey, (short)0, (short)16);

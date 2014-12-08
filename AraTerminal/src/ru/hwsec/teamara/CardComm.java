@@ -17,7 +17,7 @@ import com.licel.jcardsim.base.Simulator;
 
 class CardComm {
 	
-	private static final boolean USE_SIMULATOR = false;
+	private static final boolean USE_SIMULATOR = true;
 	
 	static final byte[] ARA_APPLET_AID = new byte[]{ (byte) 0xde, (byte) 0xad, (byte) 0xba, (byte) 0xbe, (byte) 0x01 };
     static final CommandAPDU SELECT_APDU = new CommandAPDU((byte) 0x00, (byte) 0xA4, (byte) 0x04, (byte) 0x00, ARA_APPLET_AID);
