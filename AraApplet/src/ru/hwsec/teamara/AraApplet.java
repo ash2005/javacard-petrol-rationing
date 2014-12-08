@@ -150,10 +150,6 @@ public class AraApplet extends Applet {
                     this.log.getLastLog(apdu);
                     break;
 
-                case Constants.Instruction.CLEAR_LOGS:
-                    this.log.clearLogs(apdu, this.cardID);
-                    break;
-
                 case Constants.Instruction.UPDATE_BALANCE_CHARGE:
                     this.log.updateTransactionCharge(apdu);
                     break;
