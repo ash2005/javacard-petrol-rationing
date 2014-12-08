@@ -49,15 +49,17 @@ public class AraTerminal {
 		System.out.println("Connected to the smart card.");
     }
     
-    protected void connectToCard() {
+    protected boolean connectToCard() {
         try {
 			this.performHandshake();
-			this.checkPIN();
+			while(!this.checkPIN());
+			return true;
 		} catch (CardException e) {
 			System.out.println("In AraTerminal.execute an error occured when communicating with the card");
 		} catch (GeneralSecurityException e) {
 			System.out.println("In AraTerminal.execute a crypto error occured");
 		}
+		return false;
     }
     
     public void disconnectFromCard() {
@@ -204,14 +206,22 @@ public class AraTerminal {
 		}
 		
         byte[] respBytes = resp.getData();
-        if(respBytes[0] == 0x01)
+        if(respBytes[0] == 0x01){
         		System.out.println("Correct PIN");
+        		return true;
+        }
         else{
         		System.out.println("Wrong PIN");
         		System.out.println("Tries Remaining: " + String.valueOf(respBytes[1]));
+        		//System.out.printf("0x%x", respBytes[1]);
+        		if (respBytes[1] == (byte) 0x0){
+        			System.out.println("Maximum Pin tries reached. Please contact system administrator.");
+        			System.exit(1);
+        		}
+        		return false;
         }
         
-        return true;
+        
     }
 
 
