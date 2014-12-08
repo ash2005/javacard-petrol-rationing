@@ -68,8 +68,7 @@ public class MySql {
 		execute_query(query);
 		
 		// TESTING...
-		addcard(161, 200, "PK"); // TODO: REMOVE IT.
-		//adduser(2001, 1001, "Romanos", "Mauritsstraat");
+		addcard(161, 0, "PK"); // Start with 0 balance.
 	}
 
 	/*
@@ -206,8 +205,10 @@ public class MySql {
 		return false; // 
 	}
 
-	public boolean charged(int cardID) {
+	public boolean charged(int cardID, int newBalance) {
 		String query = "UPDATE sara_card SET charged=0 WHERE cardID=" + cardID;
+		execute_query(query);
+		query = "UPDATE sara_card SET balance=" + newBalance + " WHERE cardID=" + cardID;
 		return execute_query(query);
 	}
 

@@ -122,7 +122,7 @@ public class ChargingTerminal extends AraTerminal {
 		String termSignature = new sun.misc.BASE64Encoder().encode(termSignatureBytes);
     	db.addlog(card.cardID, card.balance, AraTerminal.MONTHLY_ALLOWANCE, this.termID, currentDate, cardSignature, termSignature);
     	db.updateBalance(card.cardID, newBalance);
-    	db.charged(card.cardID);
+    	db.charged(card.cardID, newBalance);
     	return true;
     }
     

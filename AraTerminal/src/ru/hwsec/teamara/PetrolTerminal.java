@@ -83,8 +83,9 @@ public class PetrolTerminal extends AraTerminal {
     	
     	System.out.println("Your current balance is " + String.valueOf(balance));
     	if(balance <= 1) {
-    		System.out.println("The card does not have enough balance.");
-    		System.exit(1);
+    		System.out.println("The card does not have enough balance. Card is disconnected.");
+    		System.out.println();
+    		return;
     	}
     	
     	int amount = askForAmount(balance);
