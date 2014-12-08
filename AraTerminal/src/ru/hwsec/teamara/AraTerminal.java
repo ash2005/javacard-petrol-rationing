@@ -33,6 +33,8 @@ public class AraTerminal {
     protected byte termID;
     protected byte type;
     
+    // Change this when using simulator or card
+    boolean simulator = true;
     /*
      * Constructor, gets the termID as an argument.
      */
@@ -111,11 +113,15 @@ public class AraTerminal {
 		
 		// Generate DH Secret
     	byte[] terminalSecret = ECCTerminal.performDH(this.cardKeyBytes);
-    	// Uncomment this if using real card
-    	//MessageDigest md = MessageDigest.getInstance("SHA");
-    	//setKeys(termRndBytes, cardRndBytes, md.digest(terminalSecret));        
-        
-    	setKeys(termRndBytes, cardRndBytes, terminalSecret);
+    	if(this.simulator){
+        	setKeys(termRndBytes, cardRndBytes, terminalSecret);
+    	}
+    	else
+    	{
+        	MessageDigest md = MessageDigest.getInstance("SHA");
+        	setKeys(termRndBytes, cardRndBytes, md.digest(terminalSecret));         		
+    	}
+
     	
     	//byte[] payload = SymTerminal.encrypt(new byte[]{0x01, 0x02, 0x03, 0x04});
     	resp = this.cardComm.sendToCard(new CommandAPDU(0, Constants.Instruction.CHANGE_CIPHER_SPEC, 1, 0));

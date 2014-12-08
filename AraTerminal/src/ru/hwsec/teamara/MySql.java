@@ -167,7 +167,6 @@ public class MySql {
 			rs = st.executeQuery(query);
 
 			if (rs.next()) {
-				System.out.println(Integer.parseInt(rs.getString(1)));
 				if (Integer.parseInt(rs.getString(1)) == 1)
 					return true;
 				else
