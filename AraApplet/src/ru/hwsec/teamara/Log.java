@@ -36,16 +36,19 @@ public class Log {
     /*
      * Pump terminal functions
      */
-    
+
     public void getBalance(APDU apdu){
+    	JCSystem.beginTransaction();
         apdu.setOutgoing();
         apdu.setOutgoingLength((short) 2);
         Util.arrayCopy(balance, (short)0, apdu.getBuffer(), (short)0, (short)2);
         apdu.sendBytes((short)0, (short)2);
+        JCSystem.commitTransaction();
     }
 
     public boolean updateTransactionPetrol(APDU apdu){
         if(index < 5) {
+            JCSystem.beginTransaction();
             switch(index) {
                 case (short)0:
                     updateTransactionPetrol(apdu, Log.transaction1);
@@ -65,6 +68,7 @@ public class Log {
                 default:
             }
             index++;
+            JCSystem.commitTransaction();
             return true;
         } else
             return false;
@@ -85,10 +89,11 @@ public class Log {
     /*
      * Charging terminal functions
      */
-    
+
     public void getLastLog(APDU apdu){
         byte[] buffer = apdu.getBuffer();
         apdu.setOutgoing();
+        JCSystem.beginTransaction();
         if(index == 0) {
         	apdu.setOutgoingLength((short)1);
             buffer[0] = (byte)0xff;
@@ -108,27 +113,31 @@ public class Log {
         	apdu.sendBytes((short)0, Constants.Transaction.LOG_LENGTH);
         	index--;
         }
+        JCSystem.commitTransaction();
     }
 
-    /* 
+    /*
      * Clear the logs, reset the log index and return card ID
      */
-    
+
     public void clearLogs(APDU apdu, byte cardID){
+        JCSystem.beginTransaction();
         Log.index = 0;
         byte[] buffer = apdu.getBuffer();
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)1);
         buffer[0] = cardID;
         apdu.sendBytes((short)0, (short)1);
+        JCSystem.commitTransaction();
     }
 
     /*
      * Updates the log with the new balance
      * Send card signature to charging terminal
      */
-    
+
     public void updateTransactionCharge(APDU apdu){
+        JCSystem.beginTransaction();
         Util.arrayCopy(apdu.getBuffer(), ISO7816.OFFSET_CDATA, message, (short) 0, Constants.Transaction.MSG_TOSIGN_LENGTH);
         ECCCard.performSignature(message, (short) 0, Constants.Transaction.MSG_TOSIGN_LENGTH , signature, (short)0);
         Log.balance[0] = message[Constants.Transaction.BALANCE_OFFSET];
@@ -139,5 +148,6 @@ public class Log {
         apdu.setOutgoingLength(Constants.Transaction.SIG_LENGTH);
         Util.arrayCopy(signature, (short) 0, apdu.getBuffer(), (short)0, Constants.Transaction.SIG_LENGTH);
         apdu.sendBytes((short)0, Constants.Transaction.SIG_LENGTH);
+        JCSystem.commitTransaction();
     }
 }
