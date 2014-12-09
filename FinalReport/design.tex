@@ -353,7 +353,7 @@ Cards may be misplaced or stolen. The first layer of defence against abuse by an
 
 Additionally, cards only allow three consecutive wrong PIN entries before the card is locked and all functionality prohibited. Locked cards can be re-activated by the legitimate card owner at government centres where human staff can physically authenticate the card owner e.g. against identity cards.
 
-The next layer of defence is for the Government CA to revoke cards which are reported to be misplaced or stolen. This is updated in the back-end database to which charging terminals are connected. When a revoked card is presented to a charging terminal, the charging terminal will disable the card by toggling a 'REVOKE-FLAG' within the card.
+The next layer of defence is for the Government CA to revoke cards which are reported to be misplaced or stolen. This is updated in the backend database to which charging terminals are connected. When a revoked card is presented to a charging terminal, the charging terminal will disable the card by toggling a 'REVOKE-FLAG' within the card.
 
 A third layer of defence for lost cards is to limit the amount of petrol withdrawals it can make in between each visit to the charging terminal. As such, cards can only make five withdrawals from petrol pumps, totalling a maximum of 250 litres, before they need to visit a charging terminal (where the REVOKE-FLAG could be set if necessary).
 
@@ -367,6 +367,7 @@ The possibility of private keys within petrol terminals being compromised is ver
 
 \subsection{Scope}
 Due to time constraints, we did not implement the following aspects of the design:
+\label{chapter:limitations}
 \begin{enumerate}
  \item Personalisation phase described in Section \ref{Design:Personalisation}. The workaround to demonstrate the cryptographic functionality was to use hard-coded certs, cert signatures and private keys which were generated using OpenSSL. As there is no personalisation terminal, smartcards locked due to exceeding the try-limit cannot be unlocked.
   \item Revocation of both cards and petrol terminals as described in Section \ref{section:lost}
@@ -405,8 +406,42 @@ Transactions with the Petrol and Charging Terminals are implemented very closely
 
 \subsection{Database Design}
 
-@Romanos want to talk something about the nice Database here?
+The designed database consists the backend that stores all the information needed in order to successfully implement the proposed 
+protocol. The database was implemented in the beginning without taking into account the limitations that were introduced in 
+Chapter \ref{chapter:limitations}. As a result, many of the following details were not implemented in the final application, 
+although it was initially desired. This Chapter reports the structure of the database and explains why these choices were made.
 
+To begin with, the table 'card' contains the basic information for every valid card at that moment, Figure \ref{figure:dbtable_card}. 
+The ID of the card is the Primary key and BTREE index is used for this attribute. Although the system administrator may search 
+for any value, the most common lookup is done by the charging terminal, which searches for the ID of every inserted smart card. Then, 
+the terminal (according to \ref{subsection:chargingterminal}) verifies the balance, checks that the card has not been expired, 
+checks whether the card has been charged this month, verifies the signature using the public key of the card in the database and, finally, 
+updates the necessary fields. All of there attributes are stored in this single table and no other lookup is needed to be 
+done by the charging terminal to get the informations of the smart card.
+    \begin{figure*}
+    	\centering
+    	\includegraphics[scale=0.38]{img/dbtable_card.png}
+    	\caption{\label{figure:dbtable_card}DB table for all valid cards}
+    \end{figure*}
+    
+Additionally, the table 'log' has an entry for every transaction that has been performed between any smart card and any terminal. In addition to an increasing id that is given to all transactions, the table contains the parts of the message $m$ (common in both protocols \ref{Design:PetrolPT} and \ref{subsection:chargingterminal}) and the signatures of both the involved terminal and the involved smart card. The attributes of the table can be seen in Figure \ref{figure:dbtable_log}. 
+    \begin{figure*}
+    	\centering
+    	\includegraphics[scale=0.38]{img/dbtable_log.png}
+    	\caption{\label{figure:dbtable_log}DB logging table}
+    \end{figure*}
+    
+Finally, there are two extra tables that are not actually used by the application at this moment. Firstly, the table 'terminal' (Figure \ref{figure:dbtable_terminal}) stores the basic informations for every existing terminal and includes a BTREE index for the ID attribute. This attribute, just like the card ID, is supposed to be searched every time that the charging terminal is used. Afterwards, the public key is obtained and used to verify the signature of the terminal. Secondly, the table 'user' stores the basic information for every user of the system. Each row corresponds the user to a card and marks the validity of the card. If the card has changed then the row is marked as invalid and a new entry for the user is entered. As well as the entry of the previous card is removed from the table 'card' and the new one is inserted. The columns can be seen in Figure \ref{figure:dbtable_user}.
+    \begin{figure*}
+    	\centering
+    	\includegraphics[scale=0.38]{img/dbtable_terminal.png}
+    	\caption{\label{figure:dbtable_terminal}DB table for all valid terminals}
+    \end{figure*}    
+    \begin{figure*}
+    	\centering
+    	\includegraphics[scale=0.38]{img/dbtable_user.png}
+    	\caption{\label{figure:dbtable_user}DB table for every user}
+    \end{figure*}
 \subsection{Additional protection}
 
 In order to protect transactions between the card and terminals against card tearing, we have implemented atomicity of operations via the JavaCard API. This includes calls to \emph{JCSystem.beginTransaction()}, \emph{JCSystem.commitTransaction()} when the transaction is successful and \emph{JCsystem.abortTransaction()} when the transaction fails because of an internal error or invalid user input (e.g. attempt to pump more petrol than the available balance allows).
