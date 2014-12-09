@@ -448,7 +448,7 @@ In order to protect transactions between the card and terminals against card tea
 
 Furthermore, the code is modular and designed in such a way that each component returns information regarding the success of an operation. This means that in case of failure, the caller of a method can receive feedback and act according to the success status of an state change.
 
-We also make use of try/catch statemens extensively in an attempt to control the execution flow of the program such that memory corruption and other problems can be avoided entirely. Our team tried to take into consideration both the physical, but also the software security aspects into consideration when implementing the petrol rationing system.
+We also make use of try/catch statements extensively in an attempt to control the execution flow of the program and avoid entirely errors, such that memory corruption. Our team tried to take into consideration both the physical and the software security during the implementation of the petrol rationing system.
 
 \subsection{Notes}
 Some interesting observations about javacard APIs and coding environment:
