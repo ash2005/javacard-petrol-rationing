@@ -376,12 +376,12 @@ Due to time constraints, we did not implement the following aspects of the desig
 \end{enumerate}
 
 \subsection{State Diagram}
-The UML state diagram of the functions implemented on the card is detailed in Figure \ref{figure:state}. The UML state diagram of the Pump Terminal and Charging Terminal is not provided as it closely resembles Figure \ref{figure:petrol} and Figure \ref{figure:charging}.
+The UML state diagram of the functions implemented on the card is detailed in Figure \ref{figure:state}. The UML state diagrams of the Pump Terminal and Charging Terminal is based on the flow chart depicted in Figure \ref{figure:petrol} and Figure \ref{figure:charging} and are not replicated here.
 
     \begin{figure*}
       \centering
-      \includegraphics[scale=0.38]{img/state.jpg}
-      \caption{\label{figure:state}UML State Diagram. @Saurabh, can you convert this into a nice digital diagram?}
+      \includegraphics[scale=0.38]{img/state2.jpg}
+      \caption{\label{figure:state}UML State Diagram.}
     \end{figure*}
 
 
@@ -408,13 +408,13 @@ Transactions with the Petrol and Charging Terminals are implemented very closely
 
 The designed database consists the backend that stores all the information needed in order to successfully implement the proposed 
 protocol. The database was implemented in the beginning without taking into account the limitations that were introduced in 
-Chapter \ref{chapter:limitations}. As a result, many of the following details were not implemented in the final application, 
-although it was initially desired. This Chapter reports the structure of the database and explains why these choices were made.
+Section \ref{chapter:limitations}. As a result, many of the following details were not implemented in the final application, 
+although it was initially desired. This Section reports the structure of the database and explains why these choices were made.
 
-To begin with, the table 'card' contains the basic information for every valid card at that moment, Figure \ref{figure:dbtable_card}. 
+To begin with, the table 'card' in Figure \ref{figure:dbtable_card} contains the basic information for every valid card at that moment. 
 The ID of the card is the Primary key and BTREE index is used for this attribute. Although the system administrator may search 
 for any value, the most common lookup is done by the charging terminal, which searches for the ID of every inserted smart card. Then, 
-the terminal (according to \ref{subsection:chargingterminal}) verifies the balance, checks that the card has not been expired, 
+the terminal (according to \ref{subsection:chargingterminal}) verifies the balance, checks that the card has not  expired, 
 checks whether the card has been charged this month, verifies the signature using the public key of the card in the database and, finally, 
 updates the necessary fields. All of there attributes are stored in this single table and no other lookup is needed to be 
 done by the charging terminal to get the informations of the smart card.
@@ -431,17 +431,20 @@ Additionally, the table 'log' has an entry for every transaction that has been p
     	\caption{\label{figure:dbtable_log}DB logging table}
     \end{figure*}
     
-Finally, there are two extra tables that are not actually used by the application at this moment. Firstly, the table 'terminal' (Figure \ref{figure:dbtable_terminal}) stores the basic informations for every existing terminal and includes a BTREE index for the ID attribute. This attribute, just like the card ID, is supposed to be searched every time that the charging terminal is used. Afterwards, the public key is obtained and used to verify the signature of the terminal. Secondly, the table 'user' stores the basic information for every user of the system. Each row corresponds the user to a card and marks the validity of the card. If the card has changed then the row is marked as invalid and a new entry for the user is entered. As well as the entry of the previous card is removed from the table 'card' and the new one is inserted. The columns can be seen in Figure \ref{figure:dbtable_user}.
+Finally, there are two extra tables that are not actually used by the application at this moment. Firstly, the table 'terminal' (Figure \ref{figure:dbtable_terminal}) stores the basic informations for every existing terminal and is used by the charging terminal to lookup the terminal's public key to verify it's signature on each transaction. Secondly, the table 'user' stores the basic information for every user of the system. Each row corresponds the user to a card and marks the validity of the card which can be used for revocation. If the card has changed then the row is marked as invalid and a new entry for the user is entered. The columns can be seen in Figure \ref{figure:dbtable_user}.
     \begin{figure*}
     	\centering
     	\includegraphics[scale=0.38]{img/dbtable_terminal.png}
     	\caption{\label{figure:dbtable_terminal}DB table for all valid terminals}
     \end{figure*}    
+
     \begin{figure*}
     	\centering
     	\includegraphics[scale=0.38]{img/dbtable_user.png}
     	\caption{\label{figure:dbtable_user}DB table for every user}
     \end{figure*}
+    
+    
 \subsection{Additional protection}
 
 In order to protect transactions between the card and terminals against card tearing, we have implemented atomicity of operations via the JavaCard API. This includes calls to \emph{JCSystem.beginTransaction()}, \emph{JCSystem.commitTransaction()} when the transaction is successful and \emph{JCsystem.abortTransaction()} when the transaction fails because of an internal error or invalid user input (e.g. attempt to pump more petrol than the available balance allows).
@@ -450,13 +453,13 @@ Furthermore, the code is modular and designed in such a way that each component 
 
 We also make use of try/catch statements extensively in an attempt to control the execution flow of the program and avoid entirely errors, such that memory corruption. Our team tried to take into consideration both the physical and the software security aspects during the implementation of the petrol rationing system.
 
-\subsection{Notes}
-Some interesting observations about javacard APIs and coding environment:
+%\subsection{Notes}
+%Some interesting observations about javacard APIs and coding environment:
 
-\begin{enumerate}
- \item The cryptographic libraries used by the javacard and terminal are implemented slightly differently. For example, the Diffie-Hellman Key exchange (ALG\_EC\_SVDP\_DH) on Terminal returns a byte array of length 25, while the card returns a byte array of length 20. This is because the Card automatically applies a SHA-1 hash on the EC-point while Terminal does not.
- \item CMAC implementation on the javacard is buggy
-\end{enumerate}
+%\begin{enumerate}
+% \item The cryptographic libraries used by the javacard and terminal are implemented slightly differently. For example, the Diffie-Hellman Key exchange (ALG\_EC\_SVDP\_DH) on Terminal returns a byte array of length 25, while the card returns a byte array of length 20. This is because the Card automatically applies a SHA-1 hash on the EC-point while Terminal does not.
+% \item CMAC implementation on the javacard is buggy
+%\end{enumerate}
 
 \end{document}
 
