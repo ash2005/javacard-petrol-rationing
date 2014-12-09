@@ -19,11 +19,11 @@
 \section{Introduction}
 \subsection{Purpose of this document}
 
-Since the war "somewhere in the Middle East", the amount of fuel has drastically decreased. As a result, the government has decided to implement a nation wide fuel rationing system to ensure that all citizens have equal access to the resource. This document is meant to describe the involved parties, requirements and design decisions of a such a system. 
+Since the war "somewhere in the Middle East", the amount of petrol available to the general population has drastically decreased. As a result, the government has decided to implement a nation wide rationing system to ensure that all citizens have equal access to the resource. This document is meant to describe the involved parties, system requirements and design, reasoning and decisions and finally the implementation details together with the challenges that were faced.
 
 \subsection{Target audience}
 
-This document is meant to be read by the government officials who are charged with seeing this project to completion. The sections which describe the requirements and the protocol specifications are meant for the hardware manufacturers. The petrol companies and gas station managers may also find this the information of this document informative to understand the underlying details of the system. Lastly, the document should be made public such that card owners can access it for the purpose of understanding how the system deals with lost cards.
+This document is targeted towards government officials who are charged with seeing this project to completion, implementors of the rationing system as well as any stakeholders interested in specific details of the design process and underlying decisions. The sections which describe the requirements and the protocol specifications are meant for the hardware manufacturers. The petrol companies and gas station managers may also find this document informative and useful when trying to understand the finer details of the system. Lastly, the document should be made public such that card owners can access it for the purpose of understanding how the system deals with lost cards.
 
 \subsection{Structure}
 
@@ -45,7 +45,7 @@ The ration card is personalised in the backend before it is issued to the user. 
 \label{personalisation}
 \begin{enumerate}
   \item Car owners apply to the government for personalised ration cards.
-  \item The government verifies that the applicant does not currently have an active card and generates a personalised card loaded with: 
+  \item The government verifies that the applicant does not currently have an active card and generates a personalised card loaded with:
 	\begin{itemize}
 	  \item Two PKI certificates, one each for key exchange and digital signature, signed by the Intermediate Cards Certificate Authority (CA).
 	  \item The corresponding private keys
@@ -63,19 +63,19 @@ Petrol terminals and charging terminals also contain two PKI certificates, one e
 \subsubsection{Petrol Filling Phase}
 \begin{enumerate}
   \item The card sends to the pump terminal its current balance.
-  \item The card owner inputs the amount of petrol he would like to fill into the vehicular and the terminal verifies that he has available balance.
+  \item The card owner inputs the amount of petrol he would like to fill into the vehicle and the terminal verifies that he has available balance.
   \item The pump then atomically reduces the balance on the card accordingly.
   \item The fuel is released.
   \item If the tank could not fit all the prepaid fuel, the terminal updates the balance on the card again.
-  \item Signed logs are stored to reflect the transaction.
+  \item Signed logs are stored on the card to reflect the transaction.
   \item The card can be released.
 \end{enumerate}
 
 \subsubsection{Charging Phase}
 \begin{enumerate}
   \item Charging terminals are connected to a backend database which maintains records of each card owner and their available petrol ration.
-  \item Immediately after the mutual authentication, the charging terminal grabs the logs of the smartcard to clear the memory.  In addition, the terminal safely stores the evidence of the performed transaction (logs) to the database in order to ensure non-repudiation.
-  \item If the card has not been charged already that month, the charging terminal increases the petrol ration in the card by the fixed monthly allowance ( 200 litres ) and updates the backend database. 
+  \item Immediately after the mutual authentication, the charging terminal grabs the logs of the smartcard to clear the memory. In addition, the terminal safely stores the evidence of the performed transaction (logs) to the database in order to ensure non-repudiation.
+  \item If the card has not been charged already on that month, the charging terminal increases the petrol ration in the card by the fixed monthly allowance ( 200 litres ) and updates the backend database. The allowance for the current month is added on top of the existing balance on the card, to the possible maximum value of a 2-byte unsigned value.
   \item If a card owner did not charge the card for the previous month, it does not carry over to the current month, but is forfeit.
 \end{enumerate}
 
@@ -83,22 +83,26 @@ Petrol terminals and charging terminals also contain two PKI certificates, one e
 \subsubsection{Decommissioned Card}
 
 \begin{enumerate}
-  \item Cards may be decommissioned when they are lost or are expired.
+  \item Cards may be decommissioned when they are lost or expire.
   \item Lost cards are reported to the government agency.
-  \item The status of these cards are updated as revoked in the government CA database.
-  \item Charging Terminals no longer accept revoked cards and will disable them permanently.
+  \item The status of these cards is updated as revoked in the government database.
+  \item Charging terminals no longer accept revoked cards and will disable them permanently.
 \end{enumerate}
 
 
 \section{Assets}
 
+In order for the implemented system to work properly, a number of items are required. These items, both physical and non-physical, are listen below.
+
 \begin{enumerate}
-  \item Availability of Petrol and fairness of its distribution
-  \item Integrity of petrol ration allocated to each car owner
-  \item Private keys of root and intermediate CAs
-  \item Private keys of smartcard and terminals
-  \item Symmetric Keys used for confidentiality and authentication of card-terminal communication
-  \item Smartcard PIN
+  \item Petroleum and fairness of its distribution.
+  \item Integrity of petrol ration management and it's allocation to each car owner.
+  \item Petrol and charging terminal stations.
+  \item Smartcards for each car owner.
+  \item Private keys of root and intermediate CAs.
+  \item Private keys of smartcards and terminals.
+  \item Symmetric Keys used for confidentiality and authentication of card-terminal communication.
+  \item Smartcard PINs and appropriate management.
 \end{enumerate}
 
 \section{Stakeholders}
@@ -152,15 +156,15 @@ In order for the system to remain secure against possible attacks, a set of requ
 
 The system {\bf must} ensure that the following requirements are met:
 \begin{enumerate}
-  \item The private keys of the root certificate need to remain confidential at all times. Only the appropriate staff (appointed by the government) may have access to it. 
+  \item The private keys of the root certificate need to remain confidential at all times. Only the appropriate staff (appointed by the government) may have access to it.
   \item The private keys of the three intermediate certificates need to remain secret and only parties which are responsible for issuing new device certificates may have access to it.
   \item The private keys of the cards and terminals may not be made public and should only be stored on the devices themselves.
   \item Each card requires a PIN code which needs to remain secret. Only the owner of the card may know this code. The PIN is used to authenticate the owner to the card during operation.
   \item The protocol requires that the card and terminals be authenticated to each other. Integrity of the messages and freshness of the shared secrets between protocol executions also need to be ensured.
   \item The integrity of the balance value stored on the card needs to be assured. Changes to the balance, when topping up at charging terminals or subtracting at pump terminals, need to be logged accordingly. The system needs to be support non-repudiation of transactions which modify the balance.
   \item The charging terminals should always be connected to the backend (for instance, via internet or a private network) so that the logs are transferred from the card as described in Section (\ref{subsection:chargingterminal}).
-  \item The availability of the petrol pumping terminals should be guaranteed even in the event of network loss. 
-  
+  \item The availability of the petrol pumping terminals should be guaranteed even in the event of network loss.
+
 \end{enumerate}
 
 The system {\bf should} ensure that the following requirements are met:
@@ -208,7 +212,7 @@ The third tier of the CA will consist of certificates which will belong to indiv
 \label{section:mutualauth}
 As specified in the previous chapter, the mutual authentication and sharing of secrets will be done using CAs based on three tiers. Due to the fact that the JavaCard API does not have dedicated classes for the X.509 format, striping down the system to its core components and use those primitives directly is the only alternative. As a result, the card will only store private-public keys, expiry date, the unique serial number and the signatures of the intermediate CA over these information to certify their validity. No extra information which is stored in regular certificates (e.g. common name) will be available on the devices.
 
-The initial data exchange between a card and a terminal (either of the two terminal types) is meant to authenticate the devices to one another and establish a secure communication channel. For this purpose, we attempted to simulate the functionality of the TLS protocol (specifically ECDH-ECDSA). 
+The initial data exchange between a card and a terminal (either of the two terminal types) is meant to authenticate the devices to one another and establish a secure communication channel. For this purpose, we attempted to simulate the functionality of the TLS protocol (specifically ECDH-ECDSA).
 
 The steps of this initial handshake are as follows:
 \begin{enumerate}
@@ -243,7 +247,7 @@ $B\leftarrow$Balance & & & $(2)$ \\[-1mm]
 &  & Display $B$ & $(4)$ \\
 &  & $A\leftarrow$Read amount & $(5)$ \\
 &  & Verify $A\leq$$B$ & $(6)$ \\
-&  & $m\leftarrow$ 
+&  & $m\leftarrow$
 $\begin{cases}
 Certificate ID_t\\
 $B'=B-A$\\
@@ -252,8 +256,8 @@ Date\\
 &  & $S_{t}\leftarrow\{|\#(m)|\}C_{t}$ & $(8)$ \\[-1mm]
 \color{blue}&\color{blue} Send $m$,$S_{t}$ & & $(9)$ \\[-1mm]
 \color{blue}Verify $B'<B$ & & & $(10)$ \\
-\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(11)$ \\ 
-\color{blue}Store $\{m,S_{t},S_{c}$\} in log &  & & $(12)$ \\ 
+\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(11)$ \\
+\color{blue}Store $\{m,S_{t},S_{c}$\} in log &  & & $(12)$ \\
 \color{blue}Update log index &  & & $(13)$ \\[-1mm]
 \color{blue}&\color{blue} Send ACK & & $(14)$ \\[-1mm]
 &  & $F\leftarrow$Release fuel & $(15)$ \\
@@ -279,7 +283,7 @@ Date\\
 \label{subsection:chargingterminal}
 After mutual authentication and PIN entry, the charging terminal and ration card follow the communication protocol described in Figure \ref{figure:charging}. The charging terminal is also used to retrieve the logs thus freeing the memory of the smartcard for additional logs. The logs constitute the non-repudiation evidence for any smartcard or terminal. Immediately after transferring the logs, the terminal verifies that the card is valid and that the balance is correct. This validation check involves checking that the card and terminal signatures of all transactions are valid, that the balance strictly decreases as time progresses and that the constraints described in Section \ref{section:lost} (i.e. not more than 5 transactions totalling 250 litres) are fulfilled. If any of these checks fail, then the card is revoked by toggling it's REVOKE-flag, again described further in Section \ref{section:lost}.
 
-Afterwards there are three different cases according to the result of the verification. An error means that the card must be revoked and the process ends. Otherwise, we distinct two cases for whether the card had already been charged that month. 
+Afterwards there are three different cases according to the result of the verification. An error means that the card must be revoked and the process ends. Otherwise, we distinct two cases for whether the card had already been charged that month.
 
 \usetikzlibrary{matrix,shapes,arrows,positioning,chains, calc}
 
@@ -299,14 +303,14 @@ Perform PIN check $($Sect \ref{section:lost}$)$ & & & $(1)$ \\
 \color{red}&\color{red}REVOKE & & $(9)$ \\[-1mm]
 & & If 'ok': release card & $(10)$ \\
 & & If 'charge': $B'=B+200$ & $(11)$ \\[-1mm]
-& & $m\leftarrow$ 
+& & $m\leftarrow$
 $\begin{cases}
 Certificate ID_t\\
 B'\\
 Date\\
 \end{cases}$ & $(12)$ \\[+1mm]
 \color{blue}&\color{blue}Send $m$ & & $(13)$ \\[-1mm]
-\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(14)$ \\ 
+\color{blue}$S_{c}\leftarrow\{|\#(m)|\}C_{c}$ &  & & $(14)$ \\
 \color{blue}Replace $B=B'$& & & $(15)$ \\[-1mm]
 \color{blue}&\color{blue} Send $S_{c}$ & & $(16)$ \\[-1mm]
 \color{blue}&  &\color{blue}$S_{t}\leftarrow\{|\#(m)|\}C_{t}$ & $(17)$ \\[-1mm]
@@ -338,14 +342,14 @@ To prevent card owners from disputing filling fuel and the collection of monthly
 
 Every transaction between a card and a petrol terminal is first stored in the card's logbook. This logbook has space for 6 logs. Each log includes a message (comprising of the certificate ID of the terminal, updated balance and the date of transaction) and signatures from both the petrol terminal and the card on this message.
 
-When the card is plugged into a charging terminal, these logs are uploaded automatically into the backend database and safely stored. Whenever the charging terminal updates the card balance with its monthly allowance, a log entry will similarly be created. 
+When the card is plugged into a charging terminal, these logs are uploaded automatically into the backend database and safely stored. Whenever the charging terminal updates the card balance with its monthly allowance, a log entry will similarly be created.
 
 Finally, card owners are responsible for not losing the card. In case that a card is missing or stolen the balance is reduced according to the defined maximum fuel filling amount (250 litres) per month. This is an inevitable consequence of keeping the petrol pumping phase off-line.
 
 \subsection{Lost Cards and Compromised Terminals}
 \label{section:lost}
 \subsubsection{Lost Cards}
-Cards may be misplaced or stolen. The first layer of defence against abuse by an attacker is the card PIN. This 4-digit PIN would have been randomly generated during card personalisation and not known to the attacker. PIN authentication is also carried out only after an authenticated and encrypted channel is created between the card and terminal - it cannot be eavesdropped by a MITM attack or a fake terminal. 
+Cards may be misplaced or stolen. The first layer of defence against abuse by an attacker is the card PIN. This 4-digit PIN would have been randomly generated during card personalisation and not known to the attacker. PIN authentication is also carried out only after an authenticated and encrypted channel is created between the card and terminal - it cannot be eavesdropped by a MITM attack or a fake terminal.
 
 Additionally, cards only allow three consecutive wrong PIN entries before the card is locked and all functionality prohibited. Locked cards can be re-activated by the legitimate card owner at government centres where human staff can physically authenticate the card owner e.g. against identity cards.
 
@@ -365,7 +369,7 @@ The possibility of private keys within petrol terminals being compromised is ver
 Due to time constraints, we did not implement the following aspects of the design:
 \begin{enumerate}
  \item Personalisation phase described in Section \ref{Design:Personalisation}. The workaround to demonstrate the cryptographic functionality was to use hard-coded certs, cert signatures and private keys which were generated using OpenSSL. As there is no personalisation terminal, smartcards locked due to exceeding the try-limit cannot be unlocked.
-  \item Revocation of both cards and petrol terminals as described in Section \ref{section:lost} 
+  \item Revocation of both cards and petrol terminals as described in Section \ref{section:lost}
   \item The Charging Terminal's validation checks of the card's transaction logs as described in Section \ref{subsection:chargingterminal} were not implemented. This involved signature verification and checking of transaction limits.
   \item Instead of loading two public-private keys pairs in the card, one for the purpose of key exchange and another for the purpose of public signatures \ref{personalisation}, we instead chose to use a single key pair for both. This seems unlikely to have significant security risks as the card does not act as a signing oracle, and signs only fixed length and type of data.
 \end{enumerate}
@@ -377,16 +381,16 @@ The UML state diagram of the functions implemented on the card is detailed in Fi
       \centering
       \includegraphics[scale=0.38]{img/state.jpg}
       \caption{\label{figure:state}UML State Diagram. @Saurabh, can you convert this into a nice digital diagram?}
-    \end{figure*}  
+    \end{figure*}
 
 
 
 More details of some of the states are provided below:
 \subsubsection{Process Terminal Key State}
-Mutual Authentication employs ECDH-ECDSA, which employs the SECG curve over a 193 bit binary field. A binary field is chosen to better employ the cryptographic hardware on the smartcard. 
+Mutual Authentication employs ECDH-ECDSA, which employs the SECG curve over a 193 bit binary field. A binary field is chosen to better employ the cryptographic hardware on the smartcard.
 
 \subsubsection{Change Cipher Spec State}
-The Card Initialisation Vector (IV) is generated as SHA-1(Terminal Random Nonce, Card Random Nonce, Diffie-Hellman Shared Secret, "Byte representing Card IV"), where the multiple inputs to the SHA-1 are concatenated together. The Card Encryption Key, Card MAC Key, Terminal IV, Terminal Encryption Key and Terminal IV are similarly generated by changing the last input Byte. 
+The Card Initialisation Vector (IV) is generated as SHA-1(Terminal Random Nonce, Card Random Nonce, Diffie-Hellman Shared Secret, "Byte representing Card IV"), where the multiple inputs to the SHA-1 are concatenated together. The Card Encryption Key, Card MAC Key, Terminal IV, Terminal Encryption Key and Terminal IV are similarly generated by changing the last input Byte.
 
 \subsubsection{Message Encryption and Authentication in Check PIN State}
 AES-128 with PKCS7 padding was chosen for encryption while HMAC with SHA-1 was chosen for message authentication. As padding for AES was not provided by the javacard cryptographic libraries, and we had to manually implement it. Our implementation integrates well with the Terminal's Bouncy castle 'AES-128 with PCKS7' API.
@@ -396,7 +400,7 @@ The card sends messages encrypted with the Card Encryption Key, using the card I
 The IVs are updated after each message is sent, using the last sent 16-byte block of that sent message.
 
 \subsubsection{Get Balance, Get Logs, Petrol Pump Transaction and Charging Transaction State}
-Transactions with the Petrol and Charging Terminals are implemented very closely to Figure \ref{Design:PetrolPT} and \ref{subsection:chargingterminal} in the design. 
+Transactions with the Petrol and Charging Terminals are implemented very closely to Figure \ref{Design:PetrolPT} and \ref{subsection:chargingterminal} in the design.
 
 
 \subsection{Database Design}
@@ -404,7 +408,12 @@ Transactions with the Petrol and Charging Terminals are implemented very closely
 @Romanos want to talk something about the nice Database here?
 
 \subsection{Additional protection}
-@Alex, want to talk about some of the atomicity you implemented? And also how it differs from the initial Design (if at all)?
+
+In order to protect transactions between the card and terminals against card tearing, we have implemented atomicity of operations via the JavaCard API. This includes calls to \emph{JCSystem.beginTransaction()}, \emph{JCSystem.commitTransaction()} when the transaction is successful and \emph{JCsystem.abortTransaction()} when the transaction fails because of an internal error or invalid user input (e.g. attempt to pump more petrol than the available balance allows).
+
+Furthermore, the code is modular and designed in such a way that each component returns information regarding the success of an operation. This means that in case of failure, the caller of a method can receive feedback and act according to the success status of an state change.
+
+We also make use of try/catch statemens extensively in an attempt to control the execution flow of the program such that memory corruption and other problems can be avoided entirely. Our team tried to take into consideration both the physical, but also the software security aspects into consideration when implementing the petrol rationing system.
 
 \subsection{Notes}
 Some interesting observations about javacard APIs and coding environment:
@@ -413,6 +422,6 @@ Some interesting observations about javacard APIs and coding environment:
  \item The cryptographic libraries used by the javacard and terminal are implemented slightly differently. For example, the Diffie-Hellman Key exchange (ALG\_EC\_SVDP\_DH) on Terminal returns a byte array of length 25, while the card returns a byte array of length 20. This is because the Card automatically applies a SHA-1 hash on the EC-point while Terminal does not.
  \item CMAC implementation on the javacard is buggy
 \end{enumerate}
- 
+
 \end{document}
 
